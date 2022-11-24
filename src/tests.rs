@@ -15,26 +15,26 @@ use ark_std::test_rng;
 use ark_ff::{
     Zero,
     field_new,
+    PrimeField,
 };
 
-#[test]
-fn gate_1() {
-    /*
-       q_mimc * (
-           (w_0 + c) ^ 7 - w_1_next
-       )
-    */
+struct MiMCGateTestVals<F: PrimeField> {
+    dummy: F,
+    n_rounds: usize,
+    domain_size: usize,
+    q_mimc_evals: Vec<F>,
+    c_evals: Vec<F>,
+    mimc7: Mimc7<F>,
+}
 
+fn prepare_mimc_gate_tests() -> MiMCGateTestVals<F> {
     let dummy = F::from(12345u64);
-    let mut rng = test_rng();
     let n_rounds = 91;
-
     // TODO: write a next_pow_2 function in utils.rs
     let domain_size = 128; // the next power of 2
 
     // When the number of mimc rounds = 4 and the domain size is 6, q_mimc
     // should be [1, 1, 1, 1, 0, 0]
-    
     let mut q_mimc_evals = vec![F::zero(); n_rounds];
     fill_zeroes(&mut q_mimc_evals, domain_size);
 
@@ -42,6 +42,28 @@ fn gate_1() {
     let mimc7 = Mimc7::<F>::new(seed, n_rounds);
     let mut c_evals = mimc7.cts.clone();
     fill_dummy(&mut c_evals, dummy, domain_size);
+
+    return MiMCGateTestVals { dummy, n_rounds, domain_size, q_mimc_evals, c_evals, mimc7 };
+}
+
+#[test]
+fn gate_1() {
+    /*
+       q_mimc * (
+           (w_0 + key + c) ^ 7 - w_1_next
+       )
+
+       Note that key = 0 here
+    */
+
+    let mut rng = test_rng();
+
+    let test_vals = prepare_mimc_gate_tests();
+    let n_rounds = test_vals.n_rounds;
+    let domain_size = test_vals.domain_size;
+    let q_mimc_evals = test_vals.q_mimc_evals;
+    let c_evals = test_vals.c_evals;
+    let mimc7 = test_vals.mimc7;
 
     let id_nullifier = F::from(1000u64);
     let key = F::zero();
@@ -64,7 +86,7 @@ fn gate_1() {
         q_mimc_evals,
         w_evals,
         c_evals,
-        dummy,
+        test_vals.dummy,
         domain_size,
     );
 }
@@ -76,19 +98,14 @@ fn gate_2() {
            (w_1 + key + c) ^ 7 - w_1_next
        )
     */
-
-    let dummy = F::from(12345u64);
     let mut rng = test_rng();
-    let n_rounds = 91;
-    let domain_size = 128; // the next power of 2
 
-    let mut q_mimc_evals = vec![F::zero(); n_rounds];
-    fill_zeroes(&mut q_mimc_evals, domain_size);
-
-    let seed: &str = "mimc";
-    let mimc7 = Mimc7::<F>::new(seed, n_rounds);
-    let mut c_evals = mimc7.cts.clone();
-    fill_dummy(&mut c_evals, dummy, domain_size);
+    let test_vals = prepare_mimc_gate_tests();
+    let n_rounds = test_vals.n_rounds;
+    let domain_size = test_vals.domain_size;
+    let q_mimc_evals = test_vals.q_mimc_evals;
+    let c_evals = test_vals.c_evals;
+    let mimc7 = test_vals.mimc7;
 
     let id_nullifier = F::from(1);
     let id_trapdoor = F::from(2);
@@ -112,7 +129,7 @@ fn gate_2() {
         q_mimc_evals,
         w_evals,
         c_evals,
-        dummy,
+        test_vals.dummy,
         domain_size,
     );
     
@@ -124,5 +141,58 @@ fn gate_2() {
     assert_eq!(
         id_commitment,
         id_nullifier_hash + id_nullifier + id_trapdoor + last_round_digest + key
+    );
+}
+
+#[test]
+fn gate_3() {
+    /*
+       q_mimc * (
+           (w_2 + key + c) ^ 7 - w_2_next
+       )
+    */
+    let mut rng = test_rng();
+
+    let test_vals = prepare_mimc_gate_tests();
+    let n_rounds = test_vals.n_rounds;
+    let domain_size = test_vals.domain_size;
+    let q_mimc_evals = test_vals.q_mimc_evals;
+    let c_evals = test_vals.c_evals;
+    let mimc7 = test_vals.mimc7;
+
+    let id_nullifier = F::from(1);
+    let ext_nullifier = F::from(3);
+
+    let id_nullifier_hash = mimc7.hash(id_nullifier, F::zero());
+
+    let key = id_nullifier_hash + id_nullifier;
+
+    let round_digests = compute_round_digests(
+        ext_nullifier,
+        key,
+        c_evals.clone(),
+        n_rounds,
+    );
+
+    let mut w_evals = vec![ext_nullifier; 1];
+    w_evals.extend_from_slice(&round_digests);
+    fill_blinds(&mut w_evals, &mut rng, domain_size);
+
+    mimc_check(
+        q_mimc_evals,
+        w_evals,
+        c_evals,
+        test_vals.dummy,
+        domain_size,
+    );
+    
+    let nullifier_hash = mimc7.multi_hash(&[id_nullifier, ext_nullifier], F::zero());
+    assert_eq!(nullifier_hash, field_new!(F, "2778328833414940327165159797352134351544660530548983879289181965284146860516"));
+
+    // Gate 3 does not compute the *final* MiMC7 multihash, but for completeness, check it as such:
+    let last_round_digest = round_digests[n_rounds - 1];
+    assert_eq!(
+        nullifier_hash,
+        id_nullifier_hash + id_nullifier + ext_nullifier + last_round_digest + key
     );
 }
