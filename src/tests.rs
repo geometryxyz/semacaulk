@@ -116,12 +116,13 @@ fn gate_2() {
         domain_size,
     );
     
-    let expected = mimc7.multi_hash(&[id_nullifier, id_trapdoor], F::zero());
+    let id_commitment = mimc7.multi_hash(&[id_nullifier, id_trapdoor], F::zero());
+    assert_eq!(id_commitment, field_new!(F, "5233261170300319370386085858846328736737478911451874673953613863492170606314"));
 
     // Gate 2 does not compute the *final* MiMC7 multihash, but for completeness, check it as such:
     let last_round_digest = round_digests[n_rounds - 1];
     assert_eq!(
-        expected,
+        id_commitment,
         id_nullifier_hash + id_nullifier + id_trapdoor + last_round_digest + key
     );
 }
