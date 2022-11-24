@@ -8,13 +8,12 @@ use crate::mimc7::{
     compute_round_digests,
 };
 use crate::gate_sanity_checks::{
-    gate_1 as gate_1_sanity_check,
+    mimc as mimc_check
 };
 use ark_bn254::{Fr as F};
 use ark_std::test_rng;
 use ark_ff::{
     Zero,
-    Field,
     field_new,
 };
 
@@ -29,6 +28,8 @@ fn gate_1() {
     let dummy = F::from(12345u64);
     let mut rng = test_rng();
     let n_rounds = 91;
+
+    // TODO: write a next_pow_2 function in utils.rs
     let domain_size = 128; // the next power of 2
 
     // When the number of mimc rounds = 4 and the domain size is 6, q_mimc
@@ -43,10 +44,12 @@ fn gate_1() {
     fill_dummy(&mut c_evals, dummy, domain_size);
 
     let id_nullifier = F::from(1000u64);
-    let h_s = mimc7.hash(id_nullifier, F::zero());
+    let key = F::zero();
+    let h_s = mimc7.hash(id_nullifier, key);
 
     let round_digests = compute_round_digests(
         id_nullifier,
+        key,
         c_evals.clone(),
         n_rounds,
     );
@@ -57,7 +60,7 @@ fn gate_1() {
     w_evals.extend_from_slice(&round_digests);
     fill_blinds(&mut w_evals, &mut rng, domain_size);
 
-    gate_1_sanity_check(
+    mimc_check(
         q_mimc_evals,
         w_evals,
         c_evals,
@@ -66,48 +69,59 @@ fn gate_1() {
     );
 }
 
-//#[test]
-//fn gate_2() {
-    //[>
-       //q_mimc * (
-           //(w_1 + key + c) ^ 7 - w_1_next
-       //)
-    //*/
+#[test]
+fn gate_2() {
+    /*
+       q_mimc * (
+           (w_1 + key + c) ^ 7 - w_1_next
+       )
+    */
 
-    //let dummy = F::from(12345u64);
-    //let mut rng = test_rng();
-    //let n_rounds = 91;
-    //let domain_size = 128; // the next power of 2
+    let dummy = F::from(12345u64);
+    let mut rng = test_rng();
+    let n_rounds = 91;
+    let domain_size = 128; // the next power of 2
 
-    //let mut q_mimc_evals = vec![F::zero(); n_rounds];
-    //fill_zeroes(&mut q_mimc_evals, domain_size);
+    let mut q_mimc_evals = vec![F::zero(); n_rounds];
+    fill_zeroes(&mut q_mimc_evals, domain_size);
 
-    //let seed: &str = "mimc";
-    //let mimc7 = Mimc7::<F>::new(seed, n_rounds);
-    //let mut c_evals = mimc7.cts.clone();
-    //fill_dummy(&mut c_evals, dummy, domain_size);
+    let seed: &str = "mimc";
+    let mimc7 = Mimc7::<F>::new(seed, n_rounds);
+    let mut c_evals = mimc7.cts.clone();
+    fill_dummy(&mut c_evals, dummy, domain_size);
 
-    //let id_nullifier = F::from(1);
-    //let id_trapdoor = F::from(2);
+    let id_nullifier = F::from(1);
+    let id_trapdoor = F::from(2);
 
-    //let id_nullifier_hash = mimc7.hash(id_nullifier, F::zero());
+    let id_nullifier_hash = mimc7.hash(id_nullifier, F::zero());
 
-    //let key = id_nullifier + id_nullifier_hash;
-    //println!("key: {}", key);
+    let key = id_nullifier_hash + id_nullifier;
 
-    //let mut round_digests = vec![];
-    //round_digests.push((id_trapdoor + key).pow(&[7u64, 0, 0, 0]));
-    //for i in 1..n_rounds {
-        //let w_prev = round_digests[i - 1];
-        //let c = c_evals[i];
+    let round_digests = compute_round_digests(
+        id_trapdoor,
+        key,
+        c_evals.clone(),
+        n_rounds,
+    );
 
-        //let d = (w_prev + key + c).pow(&[7u64, 0, 0, 0]);
-        //round_digests.push(d);
-        //println!("\td: {}", d);
-    //}
+    let mut w_evals = vec![id_trapdoor; 1];
+    w_evals.extend_from_slice(&round_digests);
+    fill_blinds(&mut w_evals, &mut rng, domain_size);
 
-    //let expected = mimc7.multi_hash(&[id_nullifier, id_trapdoor], F::zero());
-    //assert_eq!(expected, round_digests[90] * F::from(2) + id_trapdoor);
-    //println!("{}", expected);
-    // 0b91ebbd35d7448ecc13e75a7ceb1ce5bbe428090acfae0da2c3867a874ce6ea
-//}
+    mimc_check(
+        q_mimc_evals,
+        w_evals,
+        c_evals,
+        dummy,
+        domain_size,
+    );
+    
+    let expected = mimc7.multi_hash(&[id_nullifier, id_trapdoor], F::zero());
+
+    // Gate 2 does not compute the *final* MiMC7 multihash, but for completeness, check it as such:
+    let last_round_digest = round_digests[n_rounds - 1];
+    assert_eq!(
+        expected,
+        id_nullifier_hash + id_nullifier + id_trapdoor + last_round_digest + key
+    );
+}

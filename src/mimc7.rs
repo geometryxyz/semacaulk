@@ -1,19 +1,23 @@
-use ark_ff::PrimeField;
+use ark_ff::{PrimeField};
 use ark_std::io::Cursor;
 use tiny_keccak::{Keccak, Hasher};
 
 pub fn compute_round_digests<F: PrimeField>(
     preimage: F,
+    key: F,
     c_evals: Vec<F>,
     n_rounds: usize,
 ) -> Vec<F> {
+    // The first 
+    assert_eq!(c_evals[0], F::zero());
+
     let mut round_digests = vec![];
-    round_digests.push((preimage + c_evals[0]).pow(&[7u64, 0, 0, 0]));
+    round_digests.push((preimage + key).pow(&[7u64, 0, 0, 0]));
     for i in 1..n_rounds {
         let w_prev = round_digests[i - 1];
         let c_prev = c_evals[i];
 
-        round_digests.push((w_prev + c_prev).pow(&[7u64, 0, 0, 0]));
+        round_digests.push((w_prev + c_prev + key).pow(&[7u64, 0, 0, 0]));
     }
 
     round_digests
@@ -38,10 +42,8 @@ impl<F: PrimeField> Mimc7<F> {
         let mut r = key;
         for x in arr {
             let h = self.hash(*x, r);
-            println!("key = {}, h = {}", r, h);
             r += x;
             r += h;
-            println!("new r = {}\n", r);
         }
         r
     }
@@ -50,7 +52,7 @@ impl<F: PrimeField> Mimc7<F> {
         let seven = [7u64, 0, 0, 0];
         let mut round_digest = (x + k).pow(seven);
         for i in 1..self.n_rounds {
-            round_digest = (round_digest + self.cts[i] + k).pow(seven)
+            round_digest = (round_digest + self.cts[i] + k).pow(seven);
         }
         round_digest + k
     }
