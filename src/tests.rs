@@ -14,6 +14,7 @@ use crate::gate_sanity_checks::{
     gate_6 as gate_6_check,
     gate_7 as gate_7_check,
     gate_8 as gate_8_check,
+    gate_9 as gate_9_check,
 };
 use rand::rngs::StdRng;
 use ark_bn254::{Fr as F};
@@ -137,6 +138,17 @@ fn gen_w2_evals(
         c_evals,
         mimc7,
     )
+}
+
+fn gen_pi_evals(
+    nullifier_hash: F,
+    w_evals: &Vec<F>,
+) -> Vec<F> {
+    let mut pi_evals = vec![nullifier_hash; 1];
+    for i in 1..w_evals.len() {
+        pi_evals.push(w_evals[i - 1]);
+    }
+    pi_evals
 }
 
 #[test]
@@ -530,8 +542,49 @@ fn gate_8() {
     let ext_nullifier = F::from(3);
     let nullifier_hash = mimc7.multi_hash(&[id_nullifier, ext_nullifier], F::zero());
 
-    let mut pi_evals = vec![nullifier_hash; 1];
-    fill_dummy(&mut pi_evals, test_vals.dummy, domain_size);
+    let w_evals = gen_w2_evals(
+        id_nullifier,
+        ext_nullifier,
+        rng,
+        n_rounds,
+        domain_size,
+        &c_evals,
+        &mimc7,
+    );
+
+    let pi_evals = gen_pi_evals(nullifier_hash, &w_evals);
+
+    gate_8_check(
+        &l_evals,
+        &pi_evals,
+        &w_evals,
+        test_vals.dummy,
+        domain_size,
+        n_rounds,
+    );
+}
+
+#[test]
+fn gate_9() {
+    /*
+       Gate 9:
+
+       L_0 * (PI - w_2)
+
+    */
+    let rng = test_rng();
+
+    let test_vals = prepare_mimc_gate_tests();
+    let n_rounds = test_vals.n_rounds;
+    let domain_size = test_vals.domain_size;
+    let c_evals = test_vals.c_evals;
+    let mimc7 = test_vals.mimc7;
+
+    let l_evals = gen_l_evals(domain_size);
+
+    let id_nullifier = F::from(1);
+    let ext_nullifier = F::from(3);
+    let nullifier_hash = mimc7.multi_hash(&[id_nullifier, ext_nullifier], F::zero());
 
     let w_evals = gen_w2_evals(
         id_nullifier,
@@ -543,12 +596,14 @@ fn gate_8() {
         &mimc7,
     );
 
-    gate_8_check(
+    let pi_evals = gen_pi_evals(nullifier_hash, &w_evals);
+
+    gate_9_check(
         &l_evals,
         &pi_evals,
         &w_evals,
         test_vals.dummy,
         domain_size,
-        n_rounds,
     );
 }
+

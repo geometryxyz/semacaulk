@@ -170,3 +170,29 @@ pub fn gate_8<F: PrimeField>(
         );
     }
 }
+
+/*
+ * Checks whether the evals satisfy the gate with the following equation:
+ * 
+ * L_0 * (PI - w2)
+ */
+pub fn gate_9<F: PrimeField>(
+    l_evals: &Vec<F>,
+    pi_evals: &Vec<F>,
+    w2_evals: &Vec<F>,
+    dummy: F,
+    domain_size: usize,
+) {
+    for i in 0..domain_size {
+        let pi_next_i = if i == domain_size - 1 {
+            dummy
+        } else {
+            pi_evals[i + 1]
+        };
+
+        assert_eq!(
+            l_evals[i] * (pi_next_i - w2_evals[i]),
+            F::zero(),
+        );
+    }
+}
