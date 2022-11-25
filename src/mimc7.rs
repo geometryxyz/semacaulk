@@ -5,7 +5,7 @@ use tiny_keccak::{Keccak, Hasher};
 pub fn compute_round_digests<F: PrimeField>(
     preimage: F,
     key: F,
-    c_evals: Vec<F>,
+    c_evals: &Vec<F>,
     n_rounds: usize,
 ) -> Vec<F> {
     // The first 
