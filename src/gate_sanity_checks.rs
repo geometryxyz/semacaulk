@@ -196,3 +196,28 @@ pub fn gate_9<F: PrimeField>(
         );
     }
 }
+
+/*
+ * Checks whether the evals satisfy the gate with the following equation:
+ * 
+ * q_key_evals * (key - key_next)
+ */
+pub fn gate_10<F: PrimeField>(
+    q_key_evals: &Vec<F>,
+    key_evals: &Vec<F>,
+    dummy: F,
+    domain_size: usize,
+) {
+    for i in 0..domain_size {
+        let key_next_i = if i == domain_size - 1 {
+            dummy
+        } else {
+            key_evals[i + 1]
+        };
+
+        assert_eq!(
+            q_key_evals[i] * (key_evals[i] - key_next_i),
+            F::zero(),
+        );
+    }
+}

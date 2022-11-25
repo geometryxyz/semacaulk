@@ -15,6 +15,7 @@ use crate::gate_sanity_checks::{
     gate_7 as gate_7_check,
     gate_8 as gate_8_check,
     gate_9 as gate_9_check,
+    gate_10 as gate_10_check,
 };
 use rand::rngs::StdRng;
 use ark_bn254::{Fr as F};
@@ -149,6 +150,15 @@ fn gen_pi_evals(
         pi_evals.push(w_evals[i - 1]);
     }
     pi_evals
+}
+
+fn gen_q_key_evals(
+    n_rounds: usize,
+    domain_size: usize,
+) -> Vec<F> {
+    let mut q_key_evals = vec![F::zero(); n_rounds];
+    fill_zeroes(&mut q_key_evals, domain_size);
+    q_key_evals
 }
 
 #[test]
@@ -607,3 +617,35 @@ fn gate_9() {
     );
 }
 
+#[test]
+fn gate_10() {
+    /*
+        Gate 10:
+
+        q_key * (key - key_next)
+
+        This means that w1_next_n1 should be the full (completed) MiMC7 hash of the identity
+        nullifier and the identity trapdoor.
+     */
+
+    let test_vals = prepare_mimc_gate_tests();
+    let n_rounds = test_vals.n_rounds;
+    let domain_size = test_vals.domain_size;
+    let mimc7 = test_vals.mimc7;
+
+    let q_key_evals = gen_q_key_evals(n_rounds, domain_size);
+
+    let id_nullifier = F::from(1);
+
+    let id_nullifier_hash = mimc7.hash(id_nullifier, F::zero());
+    let key = id_nullifier_hash + id_nullifier;
+
+    let key_evals = vec![key; domain_size];
+
+    gate_10_check(
+        &q_key_evals,
+        &key_evals,
+        test_vals.dummy,
+        domain_size,
+    );
+}
