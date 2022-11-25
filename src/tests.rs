@@ -10,6 +10,7 @@ use crate::mimc7::{
 use crate::gate_sanity_checks::{
     mimc as mimc_check,
     gate_4 as gate_4_check,
+    gate_5 as gate_5_check,
     gate_7 as gate_7_check,
 };
 use rand::rngs::StdRng;
@@ -50,6 +51,12 @@ fn prepare_mimc_gate_tests() -> MiMCGateTestVals<F> {
     return MiMCGateTestVals { dummy, n_rounds, domain_size, q_mimc_evals, c_evals, mimc7 };
 }
 
+fn gen_l_evals(domain_size: usize) -> Vec<F> {
+    let mut l_evals = vec![F::one(); 1];
+    fill_zeroes(&mut l_evals, domain_size);
+    l_evals
+}
+
 fn gen_w0_evals(
     id_nullifier: F,
     mut rng: StdRng,
@@ -70,8 +77,41 @@ fn gen_w0_evals(
     w_evals.extend_from_slice(&round_digests);
 
     let id_nullifier_hash = mimc7.hash(id_nullifier, F::zero());
-    let key_row = [id_nullifier + id_nullifier_hash];
-    w_evals.extend_from_slice(&key_row);
+    w_evals.push(id_nullifier + id_nullifier_hash);
+    fill_blinds(&mut w_evals, &mut rng, domain_size);
+
+    w_evals
+}
+
+fn gen_w1_evals(
+    id_nullifier: F,
+    id_trapdoor: F,
+    mut rng: StdRng,
+    n_rounds: usize,
+    domain_size: usize,
+    c_evals: &Vec<F>,
+    mimc7: &Mimc7<F>,
+) -> Vec<F> {
+    let id_nullifier_hash = mimc7.hash(id_nullifier, F::zero());
+
+    let key = id_nullifier_hash + id_nullifier;
+
+    let round_digests = compute_round_digests(
+        id_trapdoor,
+        key,
+        &c_evals,
+        n_rounds,
+    );
+
+    let mut w_evals = vec![id_trapdoor; 1];
+    w_evals.extend_from_slice(&round_digests);
+
+    w_evals.push(
+        id_trapdoor +
+        round_digests[n_rounds - 1] +
+        (id_nullifier + id_nullifier_hash) * F::from(2)
+    );
+
     fill_blinds(&mut w_evals, &mut rng, domain_size);
 
     w_evals
@@ -135,7 +175,7 @@ fn gate_2() {
            (w_1 + key + c) ^ 7 - w_1_next
        )
     */
-    let mut rng = test_rng();
+    let rng = test_rng();
 
     let test_vals = prepare_mimc_gate_tests();
     let n_rounds = test_vals.n_rounds;
@@ -158,9 +198,15 @@ fn gate_2() {
         n_rounds,
     );
 
-    let mut w_evals = vec![id_trapdoor; 1];
-    w_evals.extend_from_slice(&round_digests);
-    fill_blinds(&mut w_evals, &mut rng, domain_size);
+    let w_evals = gen_w1_evals(
+        id_nullifier,
+        id_trapdoor,
+        rng,
+        n_rounds,
+        domain_size,
+        &c_evals,
+        &mimc7,
+    );
 
     mimc_check(
         key,
@@ -254,9 +300,7 @@ fn gate_4() {
     let c_evals = test_vals.c_evals;
     let mimc7 = test_vals.mimc7;
 
-    // [1, 0, 0, ..., 0]
-    let mut l_evals = vec![F::one(); 1];
-    fill_zeroes(&mut l_evals, domain_size);
+    let l_evals = gen_l_evals(domain_size);
 
     let id_nullifier = F::from(1);
 
@@ -290,6 +334,54 @@ fn gate_4() {
 }
 
 #[test]
+fn gate_5() {
+    /*
+        Gate 5:
+
+        L_0 * (w_1_next_n1 - w_1 - w_1_next - 2 * key)
+
+        This means that w1_next_n1 should be the full (completed) MiMC7 hash of the identity
+        nullifier and the identity trapdoor.
+     */
+    let rng = test_rng();
+
+    let test_vals = prepare_mimc_gate_tests();
+    let n_rounds = test_vals.n_rounds;
+    let domain_size = test_vals.domain_size;
+    let c_evals = test_vals.c_evals;
+    let mimc7 = test_vals.mimc7;
+
+    let l_evals = gen_l_evals(domain_size);
+
+    let id_nullifier = F::from(1);
+    let id_trapdoor = F::from(2);
+
+    let id_nullifier_hash = mimc7.hash(id_nullifier, F::zero());
+    let key = id_nullifier_hash + id_nullifier;
+
+    let w_evals = gen_w1_evals(
+        id_nullifier,
+        id_trapdoor,
+        rng,
+        n_rounds,
+        domain_size,
+        &c_evals,
+        &mimc7,
+    );
+
+    let key_evals = vec![key; domain_size];
+
+    gate_5_check(
+        l_evals,
+        w_evals,
+        key_evals,
+        test_vals.dummy,
+        domain_size,
+        n_rounds,
+    );
+}
+
+#[test]
 fn gate_7() {
     /*
        Gate 7:
@@ -307,9 +399,7 @@ fn gate_7() {
     let c_evals = test_vals.c_evals;
     let mimc7 = test_vals.mimc7;
 
-    // [1, 0, 0, ..., 0]
-    let mut l_evals = vec![F::one(); 1];
-    fill_zeroes(&mut l_evals, domain_size);
+    let l_evals = gen_l_evals(domain_size);
 
     let id_nullifier = F::from(1);
 
