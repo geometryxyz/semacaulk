@@ -50,7 +50,7 @@ fn prepare_mimc_gate_tests() -> MiMCGateTestVals<F> {
 fn gate_1() {
     /*
        q_mimc * (
-           (w_0 + key + c) ^ 7 - w_1_next
+           (w_0 + key + c) ^ 7 - w_0_next
        )
 
        Note that key = 0 here
