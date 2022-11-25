@@ -13,6 +13,7 @@ use crate::gate_sanity_checks::{
     gate_5 as gate_5_check,
     gate_6 as gate_6_check,
     gate_7 as gate_7_check,
+    gate_8 as gate_8_check,
 };
 use rand::rngs::StdRng;
 use ark_bn254::{Fr as F};
@@ -116,6 +117,26 @@ fn gen_w1_evals(
     fill_blinds(&mut w_evals, &mut rng, domain_size);
 
     w_evals
+}
+
+fn gen_w2_evals(
+    id_nullifier: F,
+    ext_nullifier: F,
+    rng: StdRng,
+    n_rounds: usize,
+    domain_size: usize,
+    c_evals: &Vec<F>,
+    mimc7: &Mimc7<F>,
+) -> Vec<F> {
+    gen_w1_evals(
+        id_nullifier,
+        ext_nullifier,
+        rng,
+        n_rounds,
+        domain_size,
+        c_evals,
+        mimc7,
+    )
 }
 
 #[test]
@@ -408,7 +429,7 @@ fn gate_6() {
     let id_nullifier_hash = mimc7.hash(id_nullifier, F::zero());
     let key = id_nullifier_hash + id_nullifier;
 
-    let w_evals = gen_w1_evals(
+    let w_evals = gen_w2_evals(
         id_nullifier,
         ext_nullifier,
         rng,
@@ -479,6 +500,53 @@ fn gate_7() {
         l_evals,
         w_evals,
         key_evals,
+        test_vals.dummy,
+        domain_size,
+        n_rounds,
+    );
+}
+
+#[test]
+fn gate_8() {
+    /*
+       Gate 8:
+
+       L_0 * (PI - w_2_next_n1)
+
+       This means that the public input should be the nullifier hash.
+
+    */
+    let rng = test_rng();
+
+    let test_vals = prepare_mimc_gate_tests();
+    let n_rounds = test_vals.n_rounds;
+    let domain_size = test_vals.domain_size;
+    let c_evals = test_vals.c_evals;
+    let mimc7 = test_vals.mimc7;
+
+    let l_evals = gen_l_evals(domain_size);
+
+    let id_nullifier = F::from(1);
+    let ext_nullifier = F::from(3);
+    let nullifier_hash = mimc7.multi_hash(&[id_nullifier, ext_nullifier], F::zero());
+
+    let mut pi_evals = vec![nullifier_hash; 1];
+    fill_dummy(&mut pi_evals, test_vals.dummy, domain_size);
+
+    let w_evals = gen_w2_evals(
+        id_nullifier,
+        ext_nullifier,
+        rng,
+        n_rounds,
+        domain_size,
+        &c_evals,
+        &mimc7,
+    );
+
+    gate_8_check(
+        &l_evals,
+        &pi_evals,
+        &w_evals,
         test_vals.dummy,
         domain_size,
         n_rounds,
