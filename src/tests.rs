@@ -11,6 +11,7 @@ use crate::gate_sanity_checks::{
     mimc as mimc_check,
     gate_4 as gate_4_check,
     gate_5 as gate_5_check,
+    gate_6 as gate_6_check,
     gate_7 as gate_7_check,
 };
 use rand::rngs::StdRng;
@@ -372,6 +373,54 @@ fn gate_5() {
     let key_evals = vec![key; domain_size];
 
     gate_5_check(
+        l_evals,
+        w_evals,
+        key_evals,
+        test_vals.dummy,
+        domain_size,
+        n_rounds,
+    );
+}
+
+#[test]
+fn gate_6() {
+    /*
+        Gate 6:
+
+        L_0 * (w_2_next_n1 - w_2 - w_2_next - 2 * key)
+
+        This means that w2_next_n1 should be the full (completed) MiMC7 hash of the identity
+        nullifier and the external nullifier.
+     */
+    let rng = test_rng();
+
+    let test_vals = prepare_mimc_gate_tests();
+    let n_rounds = test_vals.n_rounds;
+    let domain_size = test_vals.domain_size;
+    let c_evals = test_vals.c_evals;
+    let mimc7 = test_vals.mimc7;
+
+    let l_evals = gen_l_evals(domain_size);
+
+    let id_nullifier = F::from(1);
+    let ext_nullifier = F::from(3);
+
+    let id_nullifier_hash = mimc7.hash(id_nullifier, F::zero());
+    let key = id_nullifier_hash + id_nullifier;
+
+    let w_evals = gen_w1_evals(
+        id_nullifier,
+        ext_nullifier,
+        rng,
+        n_rounds,
+        domain_size,
+        &c_evals,
+        &mimc7,
+    );
+
+    let key_evals = vec![key; domain_size];
+
+    gate_6_check(
         l_evals,
         w_evals,
         key_evals,

@@ -98,6 +98,24 @@ pub fn gate_5<F: PrimeField>(
     }
 }
 
+pub fn gate_6<F: PrimeField>(
+    l_evals: Vec<F>,
+    w1_evals: Vec<F>,
+    key_evals: Vec<F>,
+    dummy: F,
+    domain_size: usize,
+    n_rounds: usize,
+) {
+    gate_5(
+        l_evals,
+        w1_evals,
+        key_evals,
+        dummy,
+        domain_size,
+        n_rounds,
+    );
+}
+
 /*
  * Checks whether the evals satisfy the gate with the following equation:
  * 
