@@ -263,9 +263,9 @@ impl<E: PairingEngine> Prover<E> {
 
         // 3. Commit
         let r1 = state.r1.unwrap();
-        let r2 = state.r1.unwrap();
-        let r3 = state.r1.unwrap();
-        let r4 = state.r1.unwrap();
+        let r2 = state.r2.unwrap();
+        let r3 = state.r3.unwrap();
+        let r4 = state.r4.unwrap();
 
         let ci_blinder = DensePolynomial::from_coefficients_slice(&[r2, r3, r4]);
         let ci_blinder_commitment = commit(&state.public_input.srs_g2, &ci_blinder);
@@ -286,7 +286,6 @@ impl<E: PairingEngine> Prover<E> {
         msgs: &VerifierMessages<E::Fr>,
     ) -> (E::Fr, E::G1Affine, E::Fr, E::G1Affine, E::G1Affine) {
         let xi_1 = msgs.xi_1.unwrap();
-        let xi_2 = msgs.xi_2.unwrap();
         let alpha = msgs.alpha.unwrap();
 
         let zi = state.zi.as_ref().unwrap();
@@ -303,12 +302,12 @@ impl<E: PairingEngine> Prover<E> {
             let zi_at_u_alpha = zi.evaluate(&u_at_alpha);
             let ci_at_u_alpha = ci.evaluate(&u_at_alpha);
 
-            let zv: DensePolynomial<_> = state.common_input.domain_v.vanishing_polynomial().into();
+            let zv_alpha = state.common_input.domain_v.evaluate_vanishing_polynomial(alpha);
 
             let mut acc = &state.witness.a * -xi_1;
             acc[0] += xi_1 * ci_at_u_alpha + zi_at_u_alpha;
 
-            let h_zv = h * &zv;
+            let h_zv = h * zv_alpha;
 
             &acc - &h_zv
         };
@@ -319,7 +318,7 @@ impl<E: PairingEngine> Prover<E> {
         let (p2_eval, p2_proof) = open(&state.public_input.srs_g1, &p2, alpha);
 
         // sanity
-        // assert_eq!(p2_eval, E::Fr::zero());
+        assert_eq!(p2_eval, E::Fr::zero());
 
         (u_eval, u_proof, p1_eval, p1_proof, p2_proof)
     }

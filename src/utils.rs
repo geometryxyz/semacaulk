@@ -68,7 +68,7 @@ pub fn open<G: AffineCurve>(
 ) -> (G::ScalarField, G) {
     let q = poly / &DensePolynomial::from_coefficients_slice(&[-challenge, G::ScalarField::one()]);
     let proof = commit(srs, &q);
-    (q.evaluate(&challenge), proof.into())
+    (poly.evaluate(&challenge), proof.into())
 }
 
 #[cfg(test)]
