@@ -1,6 +1,6 @@
 use std::{cmp::max, collections::BTreeMap, marker::PhantomData};
 
-use ark_ec::{AffineCurve, PairingEngine};
+use ark_ec::{AffineCurve, PairingEngine, ProjectiveCurve};
 use ark_ff::{FftField, Field, One, PrimeField, Zero};
 use ark_poly::{
     univariate::DensePolynomial, EvaluationDomain, GeneralEvaluationDomain, Polynomial,
@@ -8,10 +8,11 @@ use ark_poly::{
 };
 use ark_std::{cfg_into_iter, rand::RngCore, UniformRand};
 
-use crate::utils::construct_lagrange_basis;
+use crate::utils::{commit, construct_lagrange_basis, open};
 
 use super::{
     precomputed::{self, Precomputed},
+    proof::Proof,
     verifier::VerifierMessages,
     CommonInput, PublicInput,
 };
@@ -26,6 +27,7 @@ pub struct WitnessInput<F: Field> {
 
 struct State<'a, E: PairingEngine> {
     // init data in the state
+    pub(crate) public_input: &'a PublicInput<E>,
     pub(crate) common_input: &'a CommonInput<E>,
     pub(crate) witness: &'a WitnessInput<E::Fr>,
     pub(crate) precomputed: &'a Precomputed<E>,
@@ -54,33 +56,58 @@ pub struct Prover<E: PairingEngine> {
 
 impl<E: PairingEngine> Prover<E> {
     pub fn prove<R: RngCore>(
+        public_input: &PublicInput<E>,
         common_input: &CommonInput<E>,
         witness: &WitnessInput<E::Fr>,
         precomputed: &Precomputed<E>,
         zk_rng: &mut R,
-    ) {
-        let mut state = Self::init(common_input, witness, precomputed);
+    ) -> Proof<E> {
+        // TODO: init transcript
+        // TODO: put pub data in transcript 
+
+        let mut state = Self::init(public_input, common_input, witness, precomputed);
         let mut verifier_msgs = VerifierMessages::<E::Fr>::empty();
 
-        let (zi, ci, u) = Self::first_round(&mut state, zk_rng);
-
-        // commit to zi, ci, u
+        // first round
+        let (zi_commitment, ci_commitment, u_commitment) = Self::first_round(&mut state, zk_rng);
+        // TODO: put commitments in transcript
 
         // get first message
         verifier_msgs.receive_first_msg(zk_rng); //TODO: this should be from fs_rng in FiatShamir
 
         // second round
-        Self::second_round(&mut state, &verifier_msgs);
+        let (w_commitment, h_commitment) = Self::second_round(&mut state, &verifier_msgs);
+        // TODO: put commitments in transcript
 
         // get second message
+        verifier_msgs.receive_second_msg(zk_rng); //TODO: this should be from fs_rng in FiatShamir
+
+        // third round
+        let (u_eval, u_proof, p1_eval, p1_proof, p2_proof) =
+            Self::third_round(&state, &verifier_msgs);
+
+        Proof {
+            zi_commitment,
+            ci_commitment,
+            u_commitment,
+            w_commitment,
+            h_commitment,
+            u_eval,
+            u_proof,
+            p1_eval,
+            p1_proof,
+            p2_proof,
+        }
     }
 
     fn init<'a>(
+        public_input: &'a PublicInput<E>,
         common_input: &'a CommonInput<E>,
         witness: &'a WitnessInput<E::Fr>,
         precomputed: &'a Precomputed<E>,
     ) -> State<'a, E> {
         State {
+            public_input,
             common_input,
             witness,
             precomputed,
@@ -104,11 +131,7 @@ impl<E: PairingEngine> Prover<E> {
     fn first_round<R: RngCore>(
         state: &mut State<E>,
         rng: &mut R,
-    ) -> (
-        DensePolynomial<E::Fr>,
-        DensePolynomial<E::Fr>,
-        DensePolynomial<E::Fr>,
-    ) {
+    ) -> (E::G1Affine, E::G1Affine, E::G1Affine) {
         // 1. sample blinding factors
         let r1 = E::Fr::rand(rng);
         let r2 = E::Fr::rand(rng);
@@ -166,17 +189,27 @@ impl<E: PairingEngine> Prover<E> {
         let u_blind = &DensePolynomial::from_coefficients_slice(&[r5, r6]) * &zv;
         u += &u_blind;
 
-        // store data in the state
-        state.zi = Some(zi.clone());
-        state.ci = Some(ci.clone());
-        state.u = Some(u.clone());
-
         // 8. Commit
+        let zi_commitment = commit(&state.public_input.srs_g1, &zi);
+        let ci_commitment = commit(&state.public_input.srs_g1, &ci);
+        let u_commitment = commit(&state.public_input.srs_g1, &u);
 
-        (zi, ci, u)
+        // store data in the state
+        state.zi = Some(zi);
+        state.ci = Some(ci);
+        state.u = Some(u);
+
+        (
+            zi_commitment.into(),
+            ci_commitment.into(),
+            u_commitment.into(),
+        )
     }
 
-    fn second_round<'a>(state: &mut State<'a, E>, msgs: &VerifierMessages<E::Fr>) {
+    fn second_round<'a>(
+        state: &mut State<'a, E>,
+        msgs: &VerifierMessages<E::Fr>,
+    ) -> (E::G2Affine, E::G1Affine) {
         let xi_1 = msgs.xi_1.unwrap();
         let xi_2 = msgs.xi_2.unwrap();
 
@@ -228,15 +261,30 @@ impl<E: PairingEngine> Prover<E> {
         // sanity
         assert!(r.is_zero());
 
-        // store data in the state
-        state.zi_of_ui = Some(zi_of_ui.clone());
-        state.ci_of_ui = Some(ci_of_ui.clone());
-        state.h = Some(h.clone());
-
         // 3. Commit
+        let r1 = state.r1.unwrap();
+        let r2 = state.r1.unwrap();
+        let r3 = state.r1.unwrap();
+        let r4 = state.r1.unwrap();
+
+        let ci_blinder = DensePolynomial::from_coefficients_slice(&[r2, r3, r4]);
+        let ci_blinder_commitment = commit(&state.public_input.srs_g2, &ci_blinder);
+
+        let w_commitment = w1_xi2_w2.mul(r1.inverse().unwrap().into_repr()) - ci_blinder_commitment;
+        let h_commitment = commit(&state.public_input.srs_g1, &h);
+
+        // store data in the state
+        state.zi_of_ui = Some(zi_of_ui);
+        state.ci_of_ui = Some(ci_of_ui);
+        state.h = Some(h);
+
+        (w_commitment.into(), h_commitment.into())
     }
 
-    fn third_round<'a>(state: &State<'a, E>, msgs: &VerifierMessages<E::Fr>) {
+    fn third_round<'a>(
+        state: &State<'a, E>,
+        msgs: &VerifierMessages<E::Fr>,
+    ) -> (E::Fr, E::G1Affine, E::Fr, E::G1Affine, E::G1Affine) {
         let xi_1 = msgs.xi_1.unwrap();
         let xi_2 = msgs.xi_2.unwrap();
         let alpha = msgs.alpha.unwrap();
@@ -245,7 +293,6 @@ impl<E: PairingEngine> Prover<E> {
         let ci = state.ci.as_ref().unwrap();
         let u = state.u.as_ref().unwrap();
         let h = state.h.as_ref().unwrap();
-
 
         // 1. Compute P1
         let p1 = zi + &(ci * xi_1);
@@ -267,7 +314,14 @@ impl<E: PairingEngine> Prover<E> {
         };
 
         // 3. Open
+        let (u_eval, u_proof) = open(&state.public_input.srs_g1, u, alpha);
+        let (p1_eval, p1_proof) = open(&state.public_input.srs_g1, &p1, u_eval);
+        let (p2_eval, p2_proof) = open(&state.public_input.srs_g1, &p2, alpha);
 
+        // sanity
+        // assert_eq!(p2_eval, E::Fr::zero());
+
+        (u_eval, u_proof, p1_eval, p1_proof, p2_proof)
     }
 }
 
@@ -294,7 +348,7 @@ mod prover_tests {
         let domain_v = GeneralEvaluationDomain::<F>::new(v).unwrap();
 
         let (srs, srs_g2) = unsafe_setup::<Bn254, StdRng>(max_power, max_power, &mut rng);
-        let pi = PublicInput::<Bn254> {
+        let public_input = PublicInput::<Bn254> {
             srs_g1: srs,
             srs_g2,
         };
@@ -330,9 +384,15 @@ mod prover_tests {
         };
 
         let mut precomputed = Precomputed::<Bn254>::empty();
-        precomputed.precompute_w1(&pi.srs_g2, &[1, 2, 5, 7], &c, &domain_h);
-        precomputed.precompute_w2(&pi.srs_g2, &[1, 2, 5, 7], &domain_h);
+        precomputed.precompute_w1(&public_input.srs_g2, &[1, 2, 5, 7], &c, &domain_h);
+        precomputed.precompute_w2(&public_input.srs_g2, &[1, 2, 5, 7], &domain_h);
 
-        Prover::prove(&common_input, &witness, &precomputed, &mut rng);
+        Prover::prove(
+            &public_input,
+            &common_input,
+            &witness,
+            &precomputed,
+            &mut rng,
+        );
     }
 }

@@ -2,7 +2,7 @@ use std::{cmp::max, iter};
 
 use ark_ec::{msm::VariableBaseMSM, AffineCurve, PairingEngine};
 use ark_ff::{FftField, Field, One, PrimeField};
-use ark_poly::{univariate::DensePolynomial, UVPolynomial};
+use ark_poly::{univariate::DensePolynomial, Polynomial, UVPolynomial};
 use ark_std::{rand::RngCore, UniformRand};
 
 pub fn unsafe_setup<E: PairingEngine, R: RngCore>(
@@ -59,6 +59,16 @@ pub fn construct_lagrange_basis<F: FftField>(evaluation_domain: &[F]) -> Vec<Den
 pub fn commit<G: AffineCurve>(srs: &[G], poly: &DensePolynomial<G::ScalarField>) -> G::Projective {
     let coeff_scalars: Vec<_> = poly.coeffs.iter().map(|c| c.into_repr()).collect();
     VariableBaseMSM::multi_scalar_mul(&srs, &coeff_scalars)
+}
+
+pub fn open<G: AffineCurve>(
+    srs: &[G],
+    poly: &DensePolynomial<G::ScalarField>,
+    challenge: G::ScalarField,
+) -> (G::ScalarField, G) {
+    let q = poly / &DensePolynomial::from_coefficients_slice(&[-challenge, G::ScalarField::one()]);
+    let proof = commit(srs, &q);
+    (q.evaluate(&challenge), proof.into())
 }
 
 #[cfg(test)]

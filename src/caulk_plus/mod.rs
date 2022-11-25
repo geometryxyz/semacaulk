@@ -2,6 +2,7 @@ use ark_ec::PairingEngine;
 use ark_poly::{EvaluationDomain, GeneralEvaluationDomain};
 
 pub mod precomputed;
+pub mod proof;
 pub mod prover;
 pub mod verifier;
 
