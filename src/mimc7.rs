@@ -15,9 +15,9 @@ pub fn compute_round_digests<F: PrimeField>(
     round_digests.push((preimage + key).pow(&[7u64, 0, 0, 0]));
     for i in 1..n_rounds {
         let w_prev = round_digests[i - 1];
-        let c_prev = c_evals[i];
+        let c = c_evals[i];
 
-        round_digests.push((w_prev + c_prev + key).pow(&[7u64, 0, 0, 0]));
+        round_digests.push((w_prev + c + key).pow(&[7u64, 0, 0, 0]));
     }
 
     round_digests

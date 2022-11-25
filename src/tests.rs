@@ -14,6 +14,7 @@ use ark_bn254::{Fr as F};
 use ark_std::test_rng;
 use ark_ff::{
     Zero,
+    One,
     field_new,
     PrimeField,
 };
@@ -35,7 +36,7 @@ fn prepare_mimc_gate_tests() -> MiMCGateTestVals<F> {
 
     // When the number of mimc rounds = 4 and the domain size is 6, q_mimc
     // should be [1, 1, 1, 1, 0, 0]
-    let mut q_mimc_evals = vec![F::zero(); n_rounds];
+    let mut q_mimc_evals = vec![F::one(); n_rounds];
     fill_zeroes(&mut q_mimc_evals, domain_size);
 
     let seed: &str = "mimc";
@@ -83,6 +84,7 @@ fn gate_1() {
     fill_blinds(&mut w_evals, &mut rng, domain_size);
 
     mimc_check(
+        key,
         q_mimc_evals,
         w_evals,
         c_evals,
@@ -126,6 +128,7 @@ fn gate_2() {
     fill_blinds(&mut w_evals, &mut rng, domain_size);
 
     mimc_check(
+        key,
         q_mimc_evals,
         w_evals,
         c_evals,
@@ -179,6 +182,7 @@ fn gate_3() {
     fill_blinds(&mut w_evals, &mut rng, domain_size);
 
     mimc_check(
+        key,
         q_mimc_evals,
         w_evals,
         c_evals,
@@ -195,4 +199,38 @@ fn gate_3() {
         nullifier_hash,
         id_nullifier_hash + id_nullifier + ext_nullifier + last_round_digest + key
     );
+}
+
+#[test]
+fn gates_4_and_7() {
+    /*
+       Gate 4:
+
+       L_0 * (w_0_next_n1 - w_0 - w_0_next_n)
+
+       This means that w_0_next_n1 should equal to the sum of id_nullifier and id_nullifier_hash.
+
+       Gate 7:
+
+       L_0 * (key - w_0_next_n1)
+
+       This means that the key should equal the sum of id_nullifier and id_nullifier_hash.
+
+    */
+    let mut rng = test_rng();
+
+    let test_vals = prepare_mimc_gate_tests();
+    let n_rounds = test_vals.n_rounds;
+    let domain_size = test_vals.domain_size;
+    let q_mimc_evals = test_vals.q_mimc_evals;
+    let c_evals = test_vals.c_evals;
+    let mimc7 = test_vals.mimc7;
+
+    let id_nullifier = F::from(1);
+
+    let id_nullifier_hash = mimc7.hash(id_nullifier, F::zero());
+
+    let key = id_nullifier_hash + id_nullifier;
+
+    //let 
 }
