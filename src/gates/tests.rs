@@ -1,13 +1,13 @@
-use crate::utils::{
+use crate::gates::utils::{
     fill_zeroes,
     fill_blinds,
     fill_dummy,
 };
-use crate::mimc7::{
+use crate::gates::mimc7::{
     Mimc7,
     compute_round_digests,
 };
-use crate::gate_sanity_checks::{
+use crate::gates::gate_sanity_checks::{
     mimc as mimc_check,
     gate_4 as gate_4_check,
     gate_5 as gate_5_check,
