@@ -2,28 +2,27 @@ use ark_ff::PrimeField;
 
 /*
  * Checks whether the evals satisfy the gate with the following equation:
- * q_mimc * (w0 + key + c)^7 - w0_next = 0
+ * q_mimc * (w + key + c)^7 - w_next = 0
  */
 pub fn mimc<F: PrimeField>(
     key: F,
     q_mimc_evals: &Vec<F>,
-    w0_evals: &Vec<F>,
+    w_evals: &Vec<F>,
     c_evals: &Vec<F>,
     dummy: F,
     domain_size: usize,
 ) {
     for i in 0..domain_size {
-        let w0_next_i = if i == domain_size - 1 {
+        let w_next_i = if i == domain_size - 1 {
             dummy
         } else {
-            w0_evals[i + 1]
+            w_evals[i + 1]
         };
 
         let result = q_mimc_evals[i] * (
-            w0_next_i - (w0_evals[i] + key + c_evals[i]).pow(&[7, 0, 0, 0])
+            w_next_i - (w_evals[i] + key + c_evals[i]).pow(&[7, 0, 0, 0])
         );
 
-        println!("{}", i);
         assert_eq!(result, F::zero());
     }
 }

@@ -301,10 +301,16 @@ fn gate_3() {
         &c_evals,
         n_rounds,
     );
-
-    let mut w_evals = vec![ext_nullifier; 1];
-    w_evals.extend_from_slice(&round_digests);
-    fill_blinds(&mut w_evals, &mut rng, domain_size);
+ 
+    let w_evals = gen_w2_evals(
+        id_nullifier,
+        ext_nullifier,
+        rng,
+        n_rounds,
+        domain_size,
+        &c_evals,
+        &mimc7,
+    );
 
     mimc_check(
         key,
