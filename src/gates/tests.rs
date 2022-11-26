@@ -9,13 +9,13 @@ use crate::gates::mimc7::{
 };
 use crate::gates::gate_sanity_checks::{
     mimc as mimc_check,
-    gate_4 as gate_4_check,
-    gate_5 as gate_5_check,
-    gate_6 as gate_6_check,
-    gate_7 as gate_7_check,
-    gate_8 as gate_8_check,
+    gate_4_key_sum as gate_4_key_sum_check,
+    gate_5_id_comm_final as gate_5_id_comm_final_check,
+    gate_6_nullifier_hash_final as gate_6_nullifier_hash_final_check,
+    gate_7_key_col as gate_7_key_col_check,
+    gate_8_nullifier_hash_col as gate_8_nullifier_hash_col_check,
     gate_9 as gate_9_check,
-    gate_10 as gate_10_check,
+    gate_10_key_constant as gate_10_key_constant_check
 };
 use rand::rngs::StdRng;
 use ark_bn254::{Fr as F};
@@ -162,8 +162,10 @@ fn gen_q_key_evals(
 }
 
 #[test]
-fn gate_1() {
+fn id_nullifier_gate() {
     /*
+       Gate 1:
+
        q_mimc * (
            (w_0 + key + c) ^ 7 - w_0_next
        )
@@ -213,8 +215,9 @@ fn gate_1() {
 }
 
 #[test]
-fn gate_2() {
+fn id_comm_lrd() {
     /*
+     Gate 2:
        q_mimc * (
            (w_1 + key + c) ^ 7 - w_1_next
        )
@@ -273,8 +276,10 @@ fn gate_2() {
 }
 
 #[test]
-fn gate_3() {
+fn nullifier_hash_lrd() {
     /*
+       Gate 3:
+
        q_mimc * (
            (w_2 + key + c) ^ 7 - w_2_next
        )
@@ -333,7 +338,7 @@ fn gate_3() {
 }
 
 #[test]
-fn gate_4() {
+fn key_sum() {
     /*
        Gate 4:
 
@@ -374,7 +379,7 @@ fn gate_4() {
         &mimc7,
     );
 
-    gate_4_check(
+    gate_4_key_sum_check(
         l_evals,
         w_evals,
         test_vals.dummy,
@@ -384,7 +389,7 @@ fn gate_4() {
 }
 
 #[test]
-fn gate_5() {
+fn id_comm_final() {
     /*
         Gate 5:
 
@@ -421,7 +426,7 @@ fn gate_5() {
 
     let key_evals = vec![key; domain_size];
 
-    gate_5_check(
+    gate_5_id_comm_final_check(
         l_evals,
         w_evals,
         key_evals,
@@ -432,7 +437,7 @@ fn gate_5() {
 }
 
 #[test]
-fn gate_6() {
+fn nullifier_hash_final() {
     /*
         Gate 6:
 
@@ -469,7 +474,7 @@ fn gate_6() {
 
     let key_evals = vec![key; domain_size];
 
-    gate_6_check(
+    gate_6_nullifier_hash_final_check(
         l_evals,
         w_evals,
         key_evals,
@@ -480,7 +485,7 @@ fn gate_6() {
 }
 
 #[test]
-fn gate_7() {
+fn key_col() {
     /*
        Gate 7:
 
@@ -524,7 +529,7 @@ fn gate_7() {
 
     let key_evals = vec![key; domain_size];
 
-    gate_7_check(
+    gate_7_key_col_check(
         l_evals,
         w_evals,
         key_evals,
@@ -535,7 +540,7 @@ fn gate_7() {
 }
 
 #[test]
-fn gate_8() {
+fn nullifier_hash_col() {
     /*
        Gate 8:
 
@@ -570,7 +575,7 @@ fn gate_8() {
 
     let pi_evals = gen_pi_evals(nullifier_hash, &w_evals);
 
-    gate_8_check(
+    gate_8_nullifier_hash_col_check(
         &l_evals,
         &pi_evals,
         &w_evals,
@@ -624,7 +629,7 @@ fn gate_9() {
 }
 
 #[test]
-fn gate_10() {
+fn key_constant() {
     /*
         Gate 10:
 
@@ -648,7 +653,7 @@ fn gate_10() {
 
     let key_evals = vec![key; domain_size];
 
-    gate_10_check(
+    gate_10_key_constant_check(
         &q_key_evals,
         &key_evals,
         test_vals.dummy,

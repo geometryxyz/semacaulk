@@ -32,7 +32,7 @@ pub fn mimc<F: PrimeField>(
  * 
  * L_0 * (w0_next_n1 - w0 - w0_next_n)
  */
-pub fn gate_4<F: PrimeField>(
+pub fn gate_4_key_sum<F: PrimeField>(
     l_evals: Vec<F>,
     w0_evals: Vec<F>,
     dummy: F,
@@ -67,7 +67,7 @@ pub fn gate_4<F: PrimeField>(
  * 
  * L_0 * (w_1_next_n1 - w_1 - w_1_next - 2 * key)
  */
-pub fn gate_5<F: PrimeField>(
+pub fn gate_5_id_comm_final<F: PrimeField>(
     l_evals: Vec<F>,
     w1_evals: Vec<F>,
     key_evals: Vec<F>,
@@ -97,7 +97,7 @@ pub fn gate_5<F: PrimeField>(
     }
 }
 
-pub fn gate_6<F: PrimeField>(
+pub fn gate_6_nullifier_hash_final<F: PrimeField>(
     l_evals: Vec<F>,
     w1_evals: Vec<F>,
     key_evals: Vec<F>,
@@ -105,7 +105,7 @@ pub fn gate_6<F: PrimeField>(
     domain_size: usize,
     n_rounds: usize,
 ) {
-    gate_5(
+    gate_5_id_comm_final(
         l_evals,
         w1_evals,
         key_evals,
@@ -120,7 +120,7 @@ pub fn gate_6<F: PrimeField>(
  * 
  * L_0 * (key - w0_next_n1)
  */
-pub fn gate_7<F: PrimeField>(
+pub fn gate_7_key_col<F: PrimeField>(
     l_evals: Vec<F>,
     w0_evals: Vec<F>,
     key_evals: Vec<F>,
@@ -147,7 +147,7 @@ pub fn gate_7<F: PrimeField>(
  * 
  * L_0 * (PI - w2_next_n1)
  */
-pub fn gate_8<F: PrimeField>(
+pub fn gate_8_nullifier_hash_col<F: PrimeField>(
     l_evals: &Vec<F>,
     pi_evals: &Vec<F>,
     w2_evals: &Vec<F>,
@@ -201,7 +201,7 @@ pub fn gate_9<F: PrimeField>(
  * 
  * q_key_evals * (key - key_next)
  */
-pub fn gate_10<F: PrimeField>(
+pub fn gate_10_key_constant<F: PrimeField>(
     q_key_evals: &Vec<F>,
     key_evals: &Vec<F>,
     dummy: F,
