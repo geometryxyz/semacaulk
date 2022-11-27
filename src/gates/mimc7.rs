@@ -1,6 +1,6 @@
-use ark_ff::{PrimeField};
+use ark_ff::PrimeField;
 use ark_std::io::Cursor;
-use tiny_keccak::{Keccak, Hasher};
+use tiny_keccak::{Hasher, Keccak};
 
 pub fn compute_round_digests<F: PrimeField>(
     preimage: F,
@@ -8,7 +8,7 @@ pub fn compute_round_digests<F: PrimeField>(
     c_evals: &Vec<F>,
     n_rounds: usize,
 ) -> Vec<F> {
-    // The first 
+    // The first
     assert_eq!(c_evals[0], F::zero());
 
     let mut round_digests = vec![];
@@ -26,7 +26,7 @@ pub fn compute_round_digests<F: PrimeField>(
 pub struct Mimc7<F: PrimeField> {
     pub seed: String,
     pub n_rounds: usize,
-    pub cts: Vec<F>
+    pub cts: Vec<F>,
 }
 
 impl<F: PrimeField> Mimc7<F> {
@@ -34,7 +34,7 @@ impl<F: PrimeField> Mimc7<F> {
         Self {
             seed: seed.into(),
             n_rounds,
-            cts: Self::initialize_constants(seed, n_rounds)
+            cts: Self::initialize_constants(seed, n_rounds),
         }
     }
 
@@ -88,31 +88,48 @@ mod mimc7_tests {
 
     #[test]
     fn test_simple_hash() {
-        let f: F = field_new!(F, "21888242871839275222246405745257275088548364400416034343698204186575808495617");
+        let f: F = field_new!(
+            F,
+            "21888242871839275222246405745257275088548364400416034343698204186575808495617"
+        );
         assert_eq!(f, F::zero());
 
         let seed: &str = "mimc";
-        let n_rounds = 91; 
+        let n_rounds = 91;
 
         let mimc7 = Mimc7::<F>::new(seed, n_rounds);
 
         let hash = mimc7.hash(F::from(1000u64), F::from(0));
-        assert_eq!(hash, field_new!(F, "16067226203059564164358864664785075013352803000046344251956454165853453063400"));
+        assert_eq!(
+            hash,
+            field_new!(
+                F,
+                "16067226203059564164358864664785075013352803000046344251956454165853453063400"
+            )
+        );
     }
 
     #[test]
     fn test_multi_hash() {
-        let f: F = field_new!(F, "21888242871839275222246405745257275088548364400416034343698204186575808495617");
+        let f: F = field_new!(
+            F,
+            "21888242871839275222246405745257275088548364400416034343698204186575808495617"
+        );
         assert_eq!(f, F::zero());
 
         let seed: &str = "mimc";
-        let n_rounds = 91; 
+        let n_rounds = 91;
 
         let mimc7 = Mimc7::<F>::new(seed, n_rounds);
 
         // From https://github.com/iden3/circomlibjs/blob/main/test/mimc7.js
         let hash = mimc7.multi_hash(&[F::from(1), F::from(2)], F::from(0));
-        assert_eq!(hash, field_new!(F, "5233261170300319370386085858846328736737478911451874673953613863492170606314"));
+        assert_eq!(
+            hash,
+            field_new!(
+                F,
+                "5233261170300319370386085858846328736737478911451874673953613863492170606314"
+            )
+        );
     }
 }
-

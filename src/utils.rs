@@ -5,6 +5,24 @@ use ark_ff::{FftField, Field, One, PrimeField};
 use ark_poly::{univariate::DensePolynomial, Polynomial, UVPolynomial};
 use ark_std::{rand::RngCore, UniformRand};
 
+pub fn shift_dense_poly<F: Field>(
+    p: &DensePolynomial<F>,
+    shifting_factor: &F,
+) -> DensePolynomial<F> {
+    if *shifting_factor == F::one() {
+        return p.clone();
+    }
+
+    let mut coeffs = p.coeffs().to_vec();
+    let mut acc = F::one();
+    for i in 0..coeffs.len() {
+        coeffs[i] = coeffs[i] * acc;
+        acc *= shifting_factor;
+    }
+
+    DensePolynomial::from_coefficients_vec(coeffs)
+}
+
 pub fn unsafe_setup<E: PairingEngine, R: RngCore>(
     max_power_g1: usize,
     max_power_g2: usize,

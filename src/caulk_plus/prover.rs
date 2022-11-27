@@ -1,26 +1,26 @@
-use std::{cmp::max, collections::BTreeMap, marker::PhantomData};
+use std::{cmp::max, marker::PhantomData};
 
 use ark_ec::{AffineCurve, PairingEngine, ProjectiveCurve};
-use ark_ff::{FftField, Field, One, PrimeField, Zero};
+use ark_ff::{to_bytes, Field, One, PrimeField, Zero};
 use ark_poly::{
     univariate::DensePolynomial, EvaluationDomain, GeneralEvaluationDomain, Polynomial,
     UVPolynomial,
 };
 use ark_std::{cfg_into_iter, rand::RngCore, UniformRand};
 
-use crate::utils::{commit, construct_lagrange_basis, open};
+use crate::{
+    rng::FiatShamirRng,
+    utils::{commit, construct_lagrange_basis, open},
+};
 
 use super::{
-    precomputed::{self, Precomputed},
-    proof::Proof,
-    verifier::VerifierMessages,
-    CommonInput, PublicInput,
+    precomputed::Precomputed, proof::Proof, verifier::VerifierMessages, CommonInput, PublicInput,
 };
 
 pub struct WitnessInput<F: Field> {
     indices: Vec<usize>,
     values: Vec<F>,
-    c: DensePolynomial<F>,
+    _c: DensePolynomial<F>,
     a: DensePolynomial<F>,
     mapping: Vec<usize>,
 }
@@ -61,26 +61,20 @@ impl<E: PairingEngine> Prover<E> {
         witness: &WitnessInput<E::Fr>,
         precomputed: &Precomputed<E>,
         zk_rng: &mut R,
+        fs_rng: &mut impl FiatShamirRng, // Since we use caulk+ as subprotocol, transcript will already be initialized
     ) -> Proof<E> {
-        // TODO: init transcript
-        // TODO: put pub data in transcript 
-
         let mut state = Self::init(public_input, common_input, witness, precomputed);
         let mut verifier_msgs = VerifierMessages::<E::Fr>::empty();
 
         // first round
         let (zi_commitment, ci_commitment, u_commitment) = Self::first_round(&mut state, zk_rng);
-        // TODO: put commitments in transcript
-
-        // get first message
-        verifier_msgs.receive_first_msg(zk_rng); //TODO: this should be from fs_rng in FiatShamir
+        fs_rng.absorb(&to_bytes![&zi_commitment, &ci_commitment, &u_commitment].unwrap());
+        verifier_msgs.first_msg(fs_rng);
 
         // second round
         let (w_commitment, h_commitment) = Self::second_round(&mut state, &verifier_msgs);
-        // TODO: put commitments in transcript
-
-        // get second message
-        verifier_msgs.receive_second_msg(zk_rng); //TODO: this should be from fs_rng in FiatShamir
+        fs_rng.absorb(&to_bytes![&w_commitment, &h_commitment].unwrap());
+        verifier_msgs.second_msg(fs_rng);
 
         // third round
         let (u_eval, u_proof, p1_eval, p1_proof, p2_proof) =
@@ -267,7 +261,7 @@ impl<E: PairingEngine> Prover<E> {
         let r3 = state.r3.unwrap();
         let r4 = state.r4.unwrap();
 
-        let ci_blinder = DensePolynomial::from_coefficients_slice(&[r2, r3, r4]);
+        let ci_blinder = &DensePolynomial::from_coefficients_slice(&[r2, r3, r4]);
         let ci_blinder_commitment = commit(&state.public_input.srs_g2, &ci_blinder);
 
         let w_commitment = w1_xi2_w2.mul(r1.inverse().unwrap().into_repr()) - ci_blinder_commitment;
@@ -302,7 +296,10 @@ impl<E: PairingEngine> Prover<E> {
             let zi_at_u_alpha = zi.evaluate(&u_at_alpha);
             let ci_at_u_alpha = ci.evaluate(&u_at_alpha);
 
-            let zv_alpha = state.common_input.domain_v.evaluate_vanishing_polynomial(alpha);
+            let zv_alpha = state
+                .common_input
+                .domain_v
+                .evaluate_vanishing_polynomial(alpha);
 
             let mut acc = &state.witness.a * -xi_1;
             acc[0] += xi_1 * ci_at_u_alpha + zi_at_u_alpha;
@@ -326,11 +323,20 @@ impl<E: PairingEngine> Prover<E> {
 
 #[cfg(test)]
 mod prover_tests {
-    use crate::utils::unsafe_setup;
+    use crate::{
+        caulk_plus::verifier::Verifier,
+        rng::{FiatShamirRng, SimpleHashFiatShamirRng},
+        utils::unsafe_setup,
+    };
 
     use super::*;
-    use ark_bn254::{Bn254, Fr as F, G1Affine, G2Affine};
+    use ark_bn254::{Bn254, Fr as F};
+    use ark_ff::to_bytes;
     use ark_std::{rand::rngs::StdRng, test_rng};
+    use blake2::Blake2s;
+    use rand_chacha::ChaChaRng;
+
+    type FS = SimpleHashFiatShamirRng<Blake2s, ChaChaRng>;
 
     fn to_field<F: Field>(evals: &[u64]) -> Vec<F> {
         evals.iter().map(|&e| F::from(e)).collect()
@@ -346,17 +352,10 @@ mod prover_tests {
         let v = 4;
         let domain_v = GeneralEvaluationDomain::<F>::new(v).unwrap();
 
-        let (srs, srs_g2) = unsafe_setup::<Bn254, StdRng>(max_power, max_power, &mut rng);
+        let (srs_g1, srs_g2) = unsafe_setup::<Bn254, StdRng>(max_power, max_power, &mut rng);
         let public_input = PublicInput::<Bn254> {
-            srs_g1: srs,
+            srs_g1: srs_g1.clone(),
             srs_g2,
-        };
-
-        let common_input = CommonInput::<Bn254> {
-            domain_h: domain_h.clone(),
-            domain_v: domain_v.clone(),
-            c_commitment: G1Affine::zero(), //for now
-            a_commitment: G1Affine::zero(), // for now
         };
 
         let evals = &[132, 321, 213141, 32193, 43892, 12319, 321341, 32910841];
@@ -368,30 +367,43 @@ mod prover_tests {
         let c = DensePolynomial::from_coefficients_slice(&domain_h.ifft(&c_evals));
         let a = DensePolynomial::from_coefficients_slice(&domain_v.ifft(&a_evals));
 
-        // for elem in domain_v.elements() {
-        //     println!("a_I: {}", a.evaluate(&elem));
-        // }
+        let c_commitment = commit(&srs_g1, &c).into_affine();
+        let a_commitment = commit(&srs_g1, &a).into_affine();
 
-        // println!("==============");
+        let common_input = CommonInput::<Bn254> {
+            domain_h: domain_h.clone(),
+            domain_v: domain_v.clone(),
+            c_commitment,
+            a_commitment,
+        };
 
         let witness = WitnessInput::<F> {
             indices: vec![1, 2, 5, 7],
             values: a_evals,
-            c: c.clone(),
+            _c: c.clone(),
             a,
             mapping,
         };
+
+        let mut fs_rng = FS::initialize(&to_bytes![&[0u8]].unwrap());
 
         let mut precomputed = Precomputed::<Bn254>::empty();
         precomputed.precompute_w1(&public_input.srs_g2, &[1, 2, 5, 7], &c, &domain_h);
         precomputed.precompute_w2(&public_input.srs_g2, &[1, 2, 5, 7], &domain_h);
 
-        Prover::prove(
+        let proof = Prover::prove(
             &public_input,
             &common_input,
             &witness,
             &precomputed,
             &mut rng,
+            &mut fs_rng,
         );
+
+        // Repeat initialization
+        let mut fs_rng = FS::initialize(&to_bytes![&[0u8]].unwrap());
+
+        let res = Verifier::verify(&public_input, &common_input, &proof, &mut fs_rng);
+        assert_eq!(res.is_ok(), true);
     }
 }

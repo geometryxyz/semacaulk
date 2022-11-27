@@ -19,9 +19,8 @@ pub fn mimc<F: PrimeField>(
             w_evals[i + 1]
         };
 
-        let result = q_mimc_evals[i] * (
-            w_next_i - (w_evals[i] + key + c_evals[i]).pow(&[7, 0, 0, 0])
-        );
+        let result =
+            q_mimc_evals[i] * (w_next_i - (w_evals[i] + key + c_evals[i]).pow(&[7, 0, 0, 0]));
 
         assert_eq!(result, F::zero());
     }
@@ -29,7 +28,7 @@ pub fn mimc<F: PrimeField>(
 
 /*
  * Checks whether the evals satisfy the gate with the following equation:
- * 
+ *
  * L_0 * (w0_next_n1 - w0 - w0_next_n)
  */
 pub fn gate_4_key_sum<F: PrimeField>(
@@ -58,13 +57,12 @@ pub fn gate_4_key_sum<F: PrimeField>(
             l_evals[i] * (w0_next_n1 - w0_evals[i] - w0_next_n),
             F::zero(),
         );
-
     }
 }
 
 /*
  * Checks whether the evals satisfy the gate with the following equation:
- * 
+ *
  * L_0 * (w_1_next_n1 - w_1 - w_1_next - 2 * key)
  */
 pub fn gate_5_id_comm_final<F: PrimeField>(
@@ -105,19 +103,12 @@ pub fn gate_6_nullifier_hash_final<F: PrimeField>(
     domain_size: usize,
     n_rounds: usize,
 ) {
-    gate_5_id_comm_final(
-        l_evals,
-        w1_evals,
-        key_evals,
-        dummy,
-        domain_size,
-        n_rounds,
-    );
+    gate_5_id_comm_final(l_evals, w1_evals, key_evals, dummy, domain_size, n_rounds);
 }
 
 /*
  * Checks whether the evals satisfy the gate with the following equation:
- * 
+ *
  * L_0 * (key - w0_next_n1)
  */
 pub fn gate_7_key_col<F: PrimeField>(
@@ -135,16 +126,13 @@ pub fn gate_7_key_col<F: PrimeField>(
         } else {
             dummy
         };
-        assert_eq!(
-            l_evals[i] * (key_evals[i] - w0_next_n1),
-            F::zero(),
-        );
+        assert_eq!(l_evals[i] * (key_evals[i] - w0_next_n1), F::zero(),);
     }
 }
 
 /*
  * Checks whether the evals satisfy the gate with the following equation:
- * 
+ *
  * L_0 * (PI - w2_next_n1)
  */
 pub fn gate_8_nullifier_hash_col<F: PrimeField>(
@@ -163,16 +151,13 @@ pub fn gate_8_nullifier_hash_col<F: PrimeField>(
             dummy
         };
 
-        assert_eq!(
-            l_evals[i] * (pi_evals[i] - w2_next_n1),
-            F::zero(),
-        );
+        assert_eq!(l_evals[i] * (pi_evals[i] - w2_next_n1), F::zero(),);
     }
 }
 
 /*
  * Checks whether the evals satisfy the gate with the following equation:
- * 
+ *
  * L_0 * (PI - w2)
  */
 pub fn gate_9<F: PrimeField>(
@@ -189,16 +174,13 @@ pub fn gate_9<F: PrimeField>(
             pi_evals[i + 1]
         };
 
-        assert_eq!(
-            l_evals[i] * (pi_next_i - w2_evals[i]),
-            F::zero(),
-        );
+        assert_eq!(l_evals[i] * (pi_next_i - w2_evals[i]), F::zero(),);
     }
 }
 
 /*
  * Checks whether the evals satisfy the gate with the following equation:
- * 
+ *
  * q_key_evals * (key - key_next)
  */
 pub fn gate_10_key_constant<F: PrimeField>(
@@ -214,9 +196,6 @@ pub fn gate_10_key_constant<F: PrimeField>(
             key_evals[i + 1]
         };
 
-        assert_eq!(
-            q_key_evals[i] * (key_evals[i] - key_next_i),
-            F::zero(),
-        );
+        assert_eq!(q_key_evals[i] * (key_evals[i] - key_next_i), F::zero(),);
     }
 }

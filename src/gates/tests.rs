@@ -1,31 +1,17 @@
-use crate::gates::utils::{
-    fill_zeroes,
-    fill_blinds,
-    fill_dummy,
-};
-use crate::gates::mimc7::{
-    Mimc7,
-    compute_round_digests,
-};
 use crate::gates::gate_sanity_checks::{
-    mimc as mimc_check,
-    gate_4_key_sum as gate_4_key_sum_check,
+    gate_10_key_constant as gate_10_key_constant_check, gate_4_key_sum as gate_4_key_sum_check,
     gate_5_id_comm_final as gate_5_id_comm_final_check,
     gate_6_nullifier_hash_final as gate_6_nullifier_hash_final_check,
     gate_7_key_col as gate_7_key_col_check,
-    gate_8_nullifier_hash_col as gate_8_nullifier_hash_col_check,
-    gate_9 as gate_9_check,
-    gate_10_key_constant as gate_10_key_constant_check
+    gate_8_nullifier_hash_col as gate_8_nullifier_hash_col_check, gate_9 as gate_9_check,
+    mimc as mimc_check,
 };
-use rand::rngs::StdRng;
-use ark_bn254::{Fr as F};
+use crate::gates::mimc7::{compute_round_digests, Mimc7};
+use crate::gates::utils::{fill_blinds, fill_dummy, fill_zeroes};
+use ark_bn254::Fr as F;
+use ark_ff::{field_new, One, PrimeField, Zero};
 use ark_std::test_rng;
-use ark_ff::{
-    Zero,
-    One,
-    field_new,
-    PrimeField,
-};
+use rand::rngs::StdRng;
 
 struct MiMCGateTestVals<F: PrimeField> {
     dummy: F,
@@ -52,7 +38,14 @@ fn prepare_mimc_gate_tests() -> MiMCGateTestVals<F> {
     let mut c_evals = mimc7.cts.clone();
     fill_dummy(&mut c_evals, dummy, domain_size);
 
-    return MiMCGateTestVals { dummy, n_rounds, domain_size, q_mimc_evals, c_evals, mimc7 };
+    return MiMCGateTestVals {
+        dummy,
+        n_rounds,
+        domain_size,
+        q_mimc_evals,
+        c_evals,
+        mimc7,
+    };
 }
 
 fn gen_l_evals(domain_size: usize) -> Vec<F> {
@@ -71,12 +64,7 @@ fn gen_w0_evals(
 ) -> Vec<F> {
     let key = F::zero();
 
-    let round_digests = compute_round_digests(
-        id_nullifier,
-        key,
-        &c_evals,
-        n_rounds,
-    );
+    let round_digests = compute_round_digests(id_nullifier, key, &c_evals, n_rounds);
     let mut w_evals = vec![id_nullifier; 1];
     w_evals.extend_from_slice(&round_digests);
 
@@ -100,20 +88,13 @@ fn gen_w1_evals(
 
     let key = id_nullifier_hash + id_nullifier;
 
-    let round_digests = compute_round_digests(
-        id_trapdoor,
-        key,
-        &c_evals,
-        n_rounds,
-    );
+    let round_digests = compute_round_digests(id_trapdoor, key, &c_evals, n_rounds);
 
     let mut w_evals = vec![id_trapdoor; 1];
     w_evals.extend_from_slice(&round_digests);
 
     w_evals.push(
-        id_trapdoor +
-        round_digests[n_rounds - 1] +
-        (id_nullifier + id_nullifier_hash) * F::from(2)
+        id_trapdoor + round_digests[n_rounds - 1] + (id_nullifier + id_nullifier_hash) * F::from(2),
     );
 
     fill_blinds(&mut w_evals, &mut rng, domain_size);
@@ -141,10 +122,7 @@ fn gen_w2_evals(
     )
 }
 
-fn gen_pi_evals(
-    nullifier_hash: F,
-    w_evals: &Vec<F>,
-) -> Vec<F> {
+fn gen_pi_evals(nullifier_hash: F, w_evals: &Vec<F>) -> Vec<F> {
     let mut pi_evals = vec![nullifier_hash; 1];
     for i in 1..w_evals.len() {
         pi_evals.push(w_evals[i - 1]);
@@ -152,10 +130,7 @@ fn gen_pi_evals(
     pi_evals
 }
 
-fn gen_q_key_evals(
-    n_rounds: usize,
-    domain_size: usize,
-) -> Vec<F> {
+fn gen_q_key_evals(n_rounds: usize, domain_size: usize) -> Vec<F> {
     let mut q_key_evals = vec![F::zero(); n_rounds];
     fill_zeroes(&mut q_key_evals, domain_size);
     q_key_evals
@@ -186,23 +161,17 @@ fn id_nullifier_gate() {
     let key = F::zero();
     let h_s = mimc7.hash(id_nullifier, key);
 
-    let round_digests = compute_round_digests(
-        id_nullifier,
-        key,
-        &c_evals,
-        n_rounds,
-    );
+    let round_digests = compute_round_digests(id_nullifier, key, &c_evals, n_rounds);
     assert_eq!(*round_digests.last().unwrap(), h_s);
-    assert_eq!(h_s, field_new!(F, "16067226203059564164358864664785075013352803000046344251956454165853453063400"));
-
-    let w_evals = gen_w0_evals(
-        id_nullifier,
-        rng,
-        n_rounds,
-        domain_size,
-        &c_evals,
-        &mimc7,
+    assert_eq!(
+        h_s,
+        field_new!(
+            F,
+            "16067226203059564164358864664785075013352803000046344251956454165853453063400"
+        )
     );
+
+    let w_evals = gen_w0_evals(id_nullifier, rng, n_rounds, domain_size, &c_evals, &mimc7);
 
     mimc_check(
         key,
@@ -238,12 +207,7 @@ fn id_comm_lrd() {
 
     let key = id_nullifier_hash + id_nullifier;
 
-    let round_digests = compute_round_digests(
-        id_trapdoor,
-        key,
-        &c_evals,
-        n_rounds,
-    );
+    let round_digests = compute_round_digests(id_trapdoor, key, &c_evals, n_rounds);
 
     let w_evals = gen_w1_evals(
         id_nullifier,
@@ -263,9 +227,15 @@ fn id_comm_lrd() {
         test_vals.dummy,
         domain_size,
     );
-    
+
     let id_commitment = mimc7.multi_hash(&[id_nullifier, id_trapdoor], F::zero());
-    assert_eq!(id_commitment, field_new!(F, "5233261170300319370386085858846328736737478911451874673953613863492170606314"));
+    assert_eq!(
+        id_commitment,
+        field_new!(
+            F,
+            "5233261170300319370386085858846328736737478911451874673953613863492170606314"
+        )
+    );
 
     // Gate 2 does not compute the *final* MiMC7 multihash, but for completeness, check it as such:
     let last_round_digest = round_digests[n_rounds - 1];
@@ -300,13 +270,8 @@ fn nullifier_hash_lrd() {
 
     let key = id_nullifier_hash + id_nullifier;
 
-    let round_digests = compute_round_digests(
-        ext_nullifier,
-        key,
-        &c_evals,
-        n_rounds,
-    );
- 
+    let round_digests = compute_round_digests(ext_nullifier, key, &c_evals, n_rounds);
+
     let w_evals = gen_w2_evals(
         id_nullifier,
         ext_nullifier,
@@ -325,9 +290,15 @@ fn nullifier_hash_lrd() {
         test_vals.dummy,
         domain_size,
     );
-    
+
     let nullifier_hash = mimc7.multi_hash(&[id_nullifier, ext_nullifier], F::zero());
-    assert_eq!(nullifier_hash, field_new!(F, "2778328833414940327165159797352134351544660530548983879289181965284146860516"));
+    assert_eq!(
+        nullifier_hash,
+        field_new!(
+            F,
+            "2778328833414940327165159797352134351544660530548983879289181965284146860516"
+        )
+    );
 
     // Gate 3 does not compute the *final* MiMC7 multihash, but for completeness, check it as such:
     let last_round_digest = round_digests[n_rounds - 1];
@@ -361,43 +332,25 @@ fn key_sum() {
 
     let key = F::zero();
 
-    let round_digests = compute_round_digests(
-        id_nullifier,
-        key,
-        &c_evals,
-        n_rounds,
-    );
+    let round_digests = compute_round_digests(id_nullifier, key, &c_evals, n_rounds);
 
     assert_eq!(round_digests.len(), n_rounds);
 
-    let w_evals = gen_w0_evals(
-        id_nullifier,
-        rng,
-        n_rounds,
-        domain_size,
-        &c_evals,
-        &mimc7,
-    );
+    let w_evals = gen_w0_evals(id_nullifier, rng, n_rounds, domain_size, &c_evals, &mimc7);
 
-    gate_4_key_sum_check(
-        l_evals,
-        w_evals,
-        test_vals.dummy,
-        domain_size,
-        n_rounds,
-    );
+    gate_4_key_sum_check(l_evals, w_evals, test_vals.dummy, domain_size, n_rounds);
 }
 
 #[test]
 fn id_comm_final() {
     /*
-        Gate 5:
+       Gate 5:
 
-        L_0 * (w_1_next_n1 - w_1 - w_1_next - 2 * key)
+       L_0 * (w_1_next_n1 - w_1 - w_1_next - 2 * key)
 
-        This means that w1_next_n1 should be the full (completed) MiMC7 hash of the identity
-        nullifier and the identity trapdoor.
-     */
+       This means that w1_next_n1 should be the full (completed) MiMC7 hash of the identity
+       nullifier and the identity trapdoor.
+    */
     let rng = test_rng();
 
     let test_vals = prepare_mimc_gate_tests();
@@ -439,13 +392,13 @@ fn id_comm_final() {
 #[test]
 fn nullifier_hash_final() {
     /*
-        Gate 6:
+       Gate 6:
 
-        L_0 * (w_2_next_n1 - w_2 - w_2_next - 2 * key)
+       L_0 * (w_2_next_n1 - w_2 - w_2_next - 2 * key)
 
-        This means that w2_next_n1 should be the full (completed) MiMC7 hash of the identity
-        nullifier and the external nullifier.
-     */
+       This means that w2_next_n1 should be the full (completed) MiMC7 hash of the identity
+       nullifier and the external nullifier.
+    */
     let rng = test_rng();
 
     let test_vals = prepare_mimc_gate_tests();
@@ -506,23 +459,11 @@ fn key_col() {
 
     let id_nullifier = F::from(1);
 
-    let round_digests = compute_round_digests(
-        id_nullifier,
-        F::zero(),
-        &c_evals,
-        n_rounds,
-    );
+    let round_digests = compute_round_digests(id_nullifier, F::zero(), &c_evals, n_rounds);
 
     assert_eq!(round_digests.len(), n_rounds);
 
-    let w_evals = gen_w0_evals(
-        id_nullifier,
-        rng,
-        n_rounds,
-        domain_size,
-        &c_evals,
-        &mimc7,
-    );
+    let w_evals = gen_w0_evals(id_nullifier, rng, n_rounds, domain_size, &c_evals, &mimc7);
 
     let id_nullifier_hash = mimc7.hash(id_nullifier, F::zero());
     let key = id_nullifier_hash + id_nullifier;
@@ -619,25 +560,19 @@ fn gate_9() {
 
     let pi_evals = gen_pi_evals(nullifier_hash, &w_evals);
 
-    gate_9_check(
-        &l_evals,
-        &pi_evals,
-        &w_evals,
-        test_vals.dummy,
-        domain_size,
-    );
+    gate_9_check(&l_evals, &pi_evals, &w_evals, test_vals.dummy, domain_size);
 }
 
 #[test]
 fn key_constant() {
     /*
-        Gate 10:
+       Gate 10:
 
-        q_key * (key - key_next)
+       q_key * (key - key_next)
 
-        This means that w1_next_n1 should be the full (completed) MiMC7 hash of the identity
-        nullifier and the identity trapdoor.
-     */
+       This means that w1_next_n1 should be the full (completed) MiMC7 hash of the identity
+       nullifier and the identity trapdoor.
+    */
 
     let test_vals = prepare_mimc_gate_tests();
     let n_rounds = test_vals.n_rounds;
@@ -653,10 +588,5 @@ fn key_constant() {
 
     let key_evals = vec![key; domain_size];
 
-    gate_10_key_constant_check(
-        &q_key_evals,
-        &key_evals,
-        test_vals.dummy,
-        domain_size,
-    );
+    gate_10_key_constant_check(&q_key_evals, &key_evals, test_vals.dummy, domain_size);
 }
