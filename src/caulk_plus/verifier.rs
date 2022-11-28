@@ -43,8 +43,9 @@ struct EvaluationProof<E: PairingEngine> {
 fn batch_evaluation_proof_pairings<E: PairingEngine>(
     evaluation_proofs: &[EvaluationProof<E>],
     u: E::Fr,
-) -> (E::G1Prepared, E::G1Prepared) {
-    let powers_of_u = iter::successors(Some(E::Fr::one()), |u_pow| Some(u_pow.clone() * u));
+    u_first: E::Fr, // Do not start with u^0 by default, maybe there are pre-batched checks
+) -> (E::G1Affine, E::G1Affine) {
+    let powers_of_u = iter::successors(Some(u_first), |u_pow| Some(u_pow.clone() * u));
 
     let mut lhs = E::G1Projective::zero();
     let mut rhs = E::G1Projective::zero();
@@ -68,7 +69,7 @@ fn batch_evaluation_proof_pairings<E: PairingEngine>(
         rhs = rhs + rhs_i
     }
 
-    ((-lhs.into_affine()).into(), rhs.into_affine().into())
+    (lhs.into_affine(), rhs.into_affine())
 }
 
 pub struct Verifier<E: PairingEngine> {
@@ -137,21 +138,13 @@ impl<E: PairingEngine> Verifier<E> {
         // 3. check openings
         let ci_and_zh: E::G1Affine = {
             // TODO: [x^n - 1] can be precomputed
-            -(common_input.c_commitment
+            common_input.c_commitment
                 + -proof.ci_commitment
                 + (public_input.srs_g1[common_input.domain_h.size()]
                     + -E::G1Affine::prime_subgroup_generator())
                 .mul(xi_2.into_repr())
-                .into())
+                .into()
         };
-
-        let res = E::product_of_pairings(&[
-            (ci_and_zh.into(), public_input.srs_g2[0].into()),
-            (proof.zi_commitment.into(), proof.w_commitment.into()),
-        ]);
-        if res != E::Fqk::one() {
-            return Err(Error::FinalPairingCheckFailed);
-        }
 
         // TODO: this to can be precomputed
         let g2_gen: E::G2Prepared = E::G2Affine::prime_subgroup_generator().into();
@@ -159,11 +152,12 @@ impl<E: PairingEngine> Verifier<E> {
 
         let u = E::Fr::rand(fs_rng);
         let evaluation_proofs = &[u_proof, p1_proof, p2_proof];
-        let (lhs_batched, rhs_batched) = batch_evaluation_proof_pairings(evaluation_proofs, u);
+        let (lhs_kzg_batched, rhs_kzg_batched) = batch_evaluation_proof_pairings(evaluation_proofs, u, u);
         
         let res = E::product_of_pairings(&[
-            (lhs_batched, x_g2),
-            (rhs_batched, g2_gen),
+            ((-lhs_kzg_batched).into(), x_g2), 
+            ((rhs_kzg_batched + -ci_and_zh).into(), g2_gen),
+            (proof.zi_commitment.into(), proof.w_commitment.into())
         ]);
         if res != E::Fqk::one() {
             return Err(Error::FinalPairingCheckFailed);
