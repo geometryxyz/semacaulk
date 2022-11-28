@@ -9,9 +9,9 @@ use ark_poly::{
 use ark_std::{cfg_into_iter, rand::RngCore, UniformRand};
 
 use crate::{
+    kzg::{commit, open},
     rng::FiatShamirRng,
     utils::{construct_lagrange_basis, shift_dense_poly},
-    kzg::{commit, open}
 };
 
 use super::{
@@ -23,7 +23,6 @@ pub struct WitnessInput<F: Field> {
     pub(crate) values: Vec<F>,
     pub(crate) _c: DensePolynomial<F>,
     pub(crate) a: DensePolynomial<F>,
-    pub(crate) rotation: usize, 
     pub(crate) mapping: Vec<usize>,
 }
 
@@ -83,7 +82,7 @@ impl<E: PairingEngine> Prover<E> {
         let (u_eval, u_proof, p1_eval, p1_proof, p2_proof) =
             Self::third_round(&state, &verifier_msgs);
         fs_rng.absorb(&to_bytes![&u_eval, &u_proof, p1_eval, p1_proof, p2_proof].unwrap());
-        
+
         let proof = Proof {
             zi_commitment,
             ci_commitment,
