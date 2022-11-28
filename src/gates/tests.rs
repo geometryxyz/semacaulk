@@ -49,8 +49,8 @@ fn prepare_mimc_gate_tests() -> MiMCGateTestVals<F> {
 }
 
 fn gen_l_evals(domain_size: usize) -> Vec<F> {
-    let mut l_evals = vec![F::one(); 1];
-    fill_zeroes(&mut l_evals, domain_size);
+    let mut l_evals = vec![F::zero(); domain_size];
+    l_evals.extend_from_slice(&[F::zero(), F::one()]);
     l_evals
 }
 
