@@ -67,8 +67,9 @@ mod caulk_plus_tests {
     use ark_std::{rand::rngs::StdRng, test_rng};
     use blake2::Blake2s;
     use rand_chacha::ChaChaRng;
+    use sha3::Keccak256;
 
-    type FS = SimpleHashFiatShamirRng<Blake2s, ChaChaRng>;
+    type FS = SimpleHashFiatShamirRng<Keccak256, ChaChaRng>;
 
     fn to_field<F: Field>(evals: &[u64]) -> Vec<F> {
         evals.iter().map(|&e| F::from(e)).collect()
