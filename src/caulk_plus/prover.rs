@@ -61,7 +61,7 @@ impl<E: PairingEngine> Prover<E> {
         witness: &WitnessInput<E::Fr>,
         precomputed: &Precomputed<E>,
         zk_rng: &mut R,
-        fs_rng: &mut impl FiatShamirRng, // Since we use caulk+ as subprotocol, transcript will already be initialized
+        fs_rng: &mut impl FiatShamirRng, // Since we use caulk+ as subprotocol, at this moment transcript is already initialized
     ) -> Proof<E> {
         let mut state = Self::init(public_input, common_input, witness, precomputed);
         let mut verifier_msgs = VerifierMessages::<E::Fr>::empty();
@@ -77,7 +77,7 @@ impl<E: PairingEngine> Prover<E> {
         verifier_msgs.second_msg(fs_rng);
 
         // third round
-        let (u_eval, u_proof, p1_eval, p1_proof, p2_proof) =
+        let (u_eval, u_proof, p1_eval, p1_proof, p2_proof, p2_commit) =
             Self::third_round(&state, &verifier_msgs);
         fs_rng.absorb(&to_bytes![&u_eval, &u_proof, p1_eval, p1_proof, p2_proof].unwrap());
         
@@ -92,6 +92,8 @@ impl<E: PairingEngine> Prover<E> {
             p1_eval,
             p1_proof,
             p2_proof,
+
+            p2_commit
         }
     }
 
@@ -279,7 +281,7 @@ impl<E: PairingEngine> Prover<E> {
     fn third_round<'a>(
         state: &State<'a, E>,
         msgs: &VerifierMessages<E::Fr>,
-    ) -> (E::Fr, E::G1Affine, E::Fr, E::G1Affine, E::G1Affine) {
+    ) -> (E::Fr, E::G1Affine, E::Fr, E::G1Affine, E::G1Affine, E::G1Affine) {
         let xi_1 = msgs.xi_1.unwrap();
         let alpha = msgs.alpha.unwrap();
 
@@ -318,7 +320,24 @@ impl<E: PairingEngine> Prover<E> {
         // sanity
         assert_eq!(p2_eval, E::Fr::zero());
 
-        (u_eval, u_proof, p1_eval, p1_proof, p2_proof)
+        let q = &p2 / &DensePolynomial::from_coefficients_slice(&[-alpha, E::Fr::one()]);
+        assert_eq!(&q * &DensePolynomial::from_coefficients_slice(&[-alpha, E::Fr::one()]), p2);
+        assert_eq!(commit(&state.public_input.srs_g1, &q).into_affine(), p2_proof);
+
+        let d_commit = commit(&state.public_input.srs_g2, &DensePolynomial::from_coefficients_slice(&[-alpha, E::Fr::one()]));
+
+
+        let p2_commit = commit(&state.public_input.srs_g1, &p2).into_affine();
+        let lhs = E::pairing(p2_proof, d_commit);
+        let rhs = E::pairing(p2_commit, E::G2Affine::prime_subgroup_generator());
+
+        // let rhs = E::pairing(p2_proof.mul(alpha.into_repr()).into_affine() + p2_commit, E::G2Affine::prime_subgroup_generator());
+        // let lhs = E::pairing(p2_proof, state.public_input.srs_g2[1]);
+        // let rhs = E::pairing(p2_proof.mul(alpha.into_repr()).into_affine() + p2_commit, E::G2Affine::prime_subgroup_generator());
+        assert_eq!(lhs, rhs);
+
+
+        (u_eval, u_proof, p1_eval, p1_proof, p2_proof, p2_commit)
     }
 }
 

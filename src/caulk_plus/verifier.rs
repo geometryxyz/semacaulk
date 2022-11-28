@@ -127,8 +127,10 @@ impl<E: PairingEngine> Verifier<E> {
             - common_input.a_commitment.mul(xi_1.into_repr())
             - proof.h_commitment.mul(zv_at_alpha.into_repr());
 
+        assert_eq!(p2.into(), proof.p2_commit);
+
         let p2_proof = EvaluationProof::<E> {
-            p: p2.into_affine(), 
+            p: proof.p2_commit, 
             q: proof.p2_proof, 
             opening_challenge: *alpha, 
             opening: E::Fr::zero()

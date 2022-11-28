@@ -18,4 +18,7 @@ pub struct Proof<E: PairingEngine> {
     pub(crate) p1_proof: E::G1Affine,
 
     pub(crate) p2_proof: E::G1Affine,
+
+    pub(crate) p2_commit: E::G1Affine,
+
 }
