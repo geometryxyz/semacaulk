@@ -379,9 +379,7 @@ mod precomputed_test {
             ci += &(ti * eval)
         }
 
-        let (srs_g1, srs_g2) = unsafe_setup::<Bn254, StdRng>(max_power, max_power, &mut rng);
-
-        let zh_c = srs_g1[domain.size()] + -G1Affine::prime_subgroup_generator();
+        let (_, srs_g2) = unsafe_setup::<Bn254, StdRng>(max_power, max_power, &mut rng);
 
         let mut precomputed = Precomputed::<Bn254>::empty();
 

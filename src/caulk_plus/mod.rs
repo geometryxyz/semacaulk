@@ -6,6 +6,12 @@ pub mod proof;
 pub mod prover;
 pub mod verifier;
 
+/*
+    Modified caulk+ argument for efficient membership proofs
+    Note: In this modification zV is specifically = {1}, so we always have that both domain_h and domain_v are powers of two
+    Note: We do not consider duplicates in this modification even though it's probably possible to extend it
+*/
+
 pub struct PublicInput<E: PairingEngine> {
     pub(crate) srs_g1: Vec<E::G1Affine>,
     pub(crate) srs_g2: Vec<E::G2Affine>,

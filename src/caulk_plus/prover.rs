@@ -79,7 +79,8 @@ impl<E: PairingEngine> Prover<E> {
         // third round
         let (u_eval, u_proof, p1_eval, p1_proof, p2_proof) =
             Self::third_round(&state, &verifier_msgs);
-
+        fs_rng.absorb(&to_bytes![&u_eval, &u_proof, p1_eval, p1_proof, p2_proof].unwrap());
+        
         Proof {
             zi_commitment,
             ci_commitment,
