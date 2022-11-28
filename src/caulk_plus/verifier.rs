@@ -127,10 +127,8 @@ impl<E: PairingEngine> Verifier<E> {
             - common_input.a_commitment.mul(xi_1.into_repr())
             - proof.h_commitment.mul(zv_at_alpha.into_repr());
 
-        assert_eq!(p2.into(), proof.p2_commit);
-
         let p2_proof = EvaluationProof::<E> {
-            p: proof.p2_commit, 
+            p: p2.into_affine(), 
             q: proof.p2_proof, 
             opening_challenge: *alpha, 
             opening: E::Fr::zero()
@@ -160,7 +158,7 @@ impl<E: PairingEngine> Verifier<E> {
         let x_g2: E::G2Prepared = public_input.srs_g2[1].into();
 
         let u = E::Fr::rand(fs_rng);
-        let evaluation_proofs = &[u_proof, p1_proof]; // TODO!!!! p2_proof not working
+        let evaluation_proofs = &[u_proof, p1_proof, p2_proof];
         let (lhs_batched, rhs_batched) = batch_evaluation_proof_pairings(evaluation_proofs, u);
         
         let res = E::product_of_pairings(&[
