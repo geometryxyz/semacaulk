@@ -85,6 +85,9 @@ pub fn open<G: AffineCurve>(
     challenge: G::ScalarField,
 ) -> (G::ScalarField, G) {
     let q = poly / &DensePolynomial::from_coefficients_slice(&[-challenge, G::ScalarField::one()]);
+    if srs.len() - 1 < q.degree() {
+        panic!("SRS size to small! Can't commit to polynomial of degree {} with srs of size {}", q.degree(), srs.len());
+    }
     let proof = commit(srs, &q);
     (poly.evaluate(&challenge), proof.into())
 }

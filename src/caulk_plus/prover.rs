@@ -346,7 +346,7 @@ mod prover_tests {
     #[test]
     fn test_simple_proof() {
         let mut rng = test_rng();
-        let max_power = 30;
+        let max_power = 32;
         let h = 8;
         let domain_h = GeneralEvaluationDomain::<F>::new(h).unwrap();
 
