@@ -10,7 +10,8 @@ use ark_std::{cfg_into_iter, rand::RngCore, UniformRand};
 
 use crate::{
     rng::FiatShamirRng,
-    utils::{commit, construct_lagrange_basis, open},
+    utils::{construct_lagrange_basis, shift_dense_poly},
+    kzg::{commit, open}
 };
 
 use super::{
@@ -18,11 +19,12 @@ use super::{
 };
 
 pub struct WitnessInput<F: Field> {
-    indices: Vec<usize>,
-    values: Vec<F>,
-    _c: DensePolynomial<F>,
-    a: DensePolynomial<F>,
-    mapping: Vec<usize>,
+    pub(crate) indices: Vec<usize>,
+    pub(crate) values: Vec<F>,
+    pub(crate) _c: DensePolynomial<F>,
+    pub(crate) a: DensePolynomial<F>,
+    pub(crate) rotation: usize, 
+    pub(crate) mapping: Vec<usize>,
 }
 
 struct State<'a, E: PairingEngine> {
@@ -31,6 +33,7 @@ struct State<'a, E: PairingEngine> {
     pub(crate) common_input: &'a CommonInput<E>,
     pub(crate) witness: &'a WitnessInput<E::Fr>,
     pub(crate) precomputed: &'a Precomputed<E>,
+    pub(crate) shifted_a: DensePolynomial<E::Fr>,
 
     // data after first round
     pub(crate) r1: Option<E::Fr>,
@@ -62,7 +65,7 @@ impl<E: PairingEngine> Prover<E> {
         precomputed: &Precomputed<E>,
         zk_rng: &mut R,
         fs_rng: &mut impl FiatShamirRng, // Since we use caulk+ as subprotocol, at this moment transcript is already initialized
-    ) -> Proof<E> {
+    ) -> (Proof<E>, E::Fr) {
         let mut state = Self::init(public_input, common_input, witness, precomputed);
         let mut verifier_msgs = VerifierMessages::<E::Fr>::empty();
 
@@ -81,7 +84,7 @@ impl<E: PairingEngine> Prover<E> {
             Self::third_round(&state, &verifier_msgs);
         fs_rng.absorb(&to_bytes![&u_eval, &u_proof, p1_eval, p1_proof, p2_proof].unwrap());
         
-        Proof {
+        let proof = Proof {
             zi_commitment,
             ci_commitment,
             u_commitment,
@@ -92,7 +95,12 @@ impl<E: PairingEngine> Prover<E> {
             p1_eval,
             p1_proof,
             p2_proof,
-        }
+        };
+
+        // This is temporary until it's integrated with upper quotient protocol
+        let alpha = verifier_msgs.alpha.as_ref().unwrap();
+        let a_opening_at_rotation = state.shifted_a.evaluate(alpha);
+        (proof, a_opening_at_rotation)
     }
 
     fn init<'a>(
@@ -101,11 +109,15 @@ impl<E: PairingEngine> Prover<E> {
         witness: &'a WitnessInput<E::Fr>,
         precomputed: &'a Precomputed<E>,
     ) -> State<'a, E> {
+        let omega_pow_rotation = common_input.domain_h.element(common_input.rotation);
+        let shifted_a = shift_dense_poly(&witness.a, &omega_pow_rotation);
         State {
             public_input,
             common_input,
             witness,
             precomputed,
+            shifted_a,
+
             r1: None,
             r2: None,
             r3: None,
@@ -248,7 +260,7 @@ impl<E: PairingEngine> Prover<E> {
         let ci_of_ui =
             DensePolynomial::from_coefficients_slice(&extended_domain.ifft(&ci_of_u_evals));
 
-        let num = &zi_of_ui + &(&(&ci_of_ui - &state.witness.a) * xi_1);
+        let num = &zi_of_ui + &(&(&ci_of_ui - &state.shifted_a) * xi_1);
         let (h, r) = num
             .divide_by_vanishing_poly(state.common_input.domain_v)
             .unwrap();
@@ -288,6 +300,8 @@ impl<E: PairingEngine> Prover<E> {
         let u = state.u.as_ref().unwrap();
         let h = state.h.as_ref().unwrap();
 
+        let a_opening_at_rotation = state.shifted_a.evaluate(&alpha);
+
         // 1. Compute P1
         let p1 = zi + &(ci * xi_1);
 
@@ -302,12 +316,11 @@ impl<E: PairingEngine> Prover<E> {
                 .domain_v
                 .evaluate_vanishing_polynomial(alpha);
 
-            let mut acc = &state.witness.a * -xi_1;
-            acc[0] += xi_1 * ci_at_u_alpha + zi_at_u_alpha;
+            let free_coeff = xi_1 * ci_at_u_alpha + zi_at_u_alpha - xi_1 * a_opening_at_rotation;
+            let mut h_zv = h * -zv_alpha;
+            h_zv[0] += free_coeff;
 
-            let h_zv = h * zv_alpha;
-
-            &acc - &h_zv
+            h_zv
         };
 
         // 3. Open
@@ -319,92 +332,5 @@ impl<E: PairingEngine> Prover<E> {
         assert_eq!(p2_eval, E::Fr::zero());
 
         (u_eval, u_proof, p1_eval, p1_proof, p2_proof)
-    }
-}
-
-#[cfg(test)]
-mod prover_tests {
-    use crate::{
-        caulk_plus::verifier::Verifier,
-        rng::{FiatShamirRng, SimpleHashFiatShamirRng},
-        utils::unsafe_setup,
-    };
-
-    use super::*;
-    use ark_bn254::{Bn254, Fr as F};
-    use ark_ff::to_bytes;
-    use ark_std::{rand::rngs::StdRng, test_rng};
-    use blake2::Blake2s;
-    use rand_chacha::ChaChaRng;
-
-    type FS = SimpleHashFiatShamirRng<Blake2s, ChaChaRng>;
-
-    fn to_field<F: Field>(evals: &[u64]) -> Vec<F> {
-        evals.iter().map(|&e| F::from(e)).collect()
-    }
-
-    #[test]
-    fn test_simple_proof() {
-        let mut rng = test_rng();
-        let max_power = 32;
-        let h = 8;
-        let domain_h = GeneralEvaluationDomain::<F>::new(h).unwrap();
-
-        let v = 4;
-        let domain_v = GeneralEvaluationDomain::<F>::new(v).unwrap();
-
-        let (srs_g1, srs_g2) = unsafe_setup::<Bn254, StdRng>(max_power, max_power, &mut rng);
-        let public_input = PublicInput::<Bn254> {
-            srs_g1: srs_g1.clone(),
-            srs_g2,
-        };
-
-        let evals = &[132, 321, 213141, 32193, 43892, 12319, 321341, 32910841];
-        let c_evals = to_field::<F>(evals);
-
-        let a_evals = vec![c_evals[1], c_evals[2], c_evals[5], c_evals[7]];
-        let mapping = vec![1, 2, 5, 7];
-
-        let c = DensePolynomial::from_coefficients_slice(&domain_h.ifft(&c_evals));
-        let a = DensePolynomial::from_coefficients_slice(&domain_v.ifft(&a_evals));
-
-        let c_commitment = commit(&srs_g1, &c).into_affine();
-        let a_commitment = commit(&srs_g1, &a).into_affine();
-
-        let common_input = CommonInput::<Bn254> {
-            domain_h: domain_h.clone(),
-            domain_v: domain_v.clone(),
-            c_commitment,
-            a_commitment,
-        };
-
-        let witness = WitnessInput::<F> {
-            indices: vec![1, 2, 5, 7],
-            values: a_evals,
-            _c: c.clone(),
-            a,
-            mapping,
-        };
-
-        let mut fs_rng = FS::initialize(&to_bytes![&[0u8]].unwrap());
-
-        let mut precomputed = Precomputed::<Bn254>::empty();
-        precomputed.precompute_w1(&public_input.srs_g2, &[1, 2, 5, 7], &c, &domain_h);
-        precomputed.precompute_w2(&public_input.srs_g2, &[1, 2, 5, 7], &domain_h);
-
-        let proof = Prover::prove(
-            &public_input,
-            &common_input,
-            &witness,
-            &precomputed,
-            &mut rng,
-            &mut fs_rng,
-        );
-
-        // Repeat initialization
-        let mut fs_rng = FS::initialize(&to_bytes![&[0u8]].unwrap());
-
-        let res = Verifier::verify(&public_input, &common_input, &proof, &mut fs_rng);
-        assert_eq!(res.is_ok(), true);
     }
 }

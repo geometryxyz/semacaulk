@@ -3,3 +3,4 @@ pub mod error;
 pub mod gates;
 pub mod rng;
 pub mod utils;
+pub mod kzg;

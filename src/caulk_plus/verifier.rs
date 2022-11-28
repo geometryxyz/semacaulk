@@ -81,6 +81,7 @@ impl<E: PairingEngine> Verifier<E> {
         public_input: &PublicInput<E>,
         common_input: &CommonInput<E>,
         proof: &Proof<E>,
+        a_opening_at_rotation: E::Fr,
         fs_rng: &mut impl FiatShamirRng,
     ) -> Result<(), Error> {
         let mut verifier_msgs = VerifierMessages::<E::Fr>::empty();
@@ -124,9 +125,8 @@ impl<E: PairingEngine> Verifier<E> {
 
         // 2. compute p2 & opening proof
         let zv_at_alpha = common_input.domain_v.evaluate_vanishing_polynomial(*alpha);
-        let p2 = E::G1Affine::prime_subgroup_generator().mul(proof.p1_eval.into_repr())
-            - common_input.a_commitment.mul(xi_1.into_repr())
-            - proof.h_commitment.mul(zv_at_alpha.into_repr());
+        let p2 = E::G1Affine::prime_subgroup_generator().mul(proof.p1_eval - *xi_1 * a_opening_at_rotation) 
+            - proof.h_commitment.mul(zv_at_alpha);
 
         let p2_proof = EvaluationProof::<E> {
             p: p2.into_affine(), 
