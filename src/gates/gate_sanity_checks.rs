@@ -29,7 +29,7 @@ pub fn mimc<F: PrimeField>(
 /*
  * Checks whether the evals satisfy the gate with the following equation:
  *
- * L_0 * (w0_next_n1 - w0 - w0_next_n)
+ * L_i * (w0_next_n1 - w0 - w0_next_n)
  */
 pub fn gate_4_key_sum<F: PrimeField>(
     l_evals: Vec<F>,
@@ -63,7 +63,7 @@ pub fn gate_4_key_sum<F: PrimeField>(
 /*
  * Checks whether the evals satisfy the gate with the following equation:
  *
- * L_0 * (w_1_next_n1 - w_1 - w_1_next - 2 * key)
+ * L_i * (w_1_next_n1 - w_1 - w_1_next - 2 * key)
  */
 pub fn gate_5_id_comm_final<F: PrimeField>(
     l_evals: Vec<F>,
@@ -109,7 +109,7 @@ pub fn gate_6_nullifier_hash_final<F: PrimeField>(
 /*
  * Checks whether the evals satisfy the gate with the following equation:
  *
- * L_0 * (key - w0_next_n1)
+ * L_i * (key - w0_next_n1)
  */
 pub fn gate_7_key_col<F: PrimeField>(
     l_evals: Vec<F>,
@@ -133,7 +133,7 @@ pub fn gate_7_key_col<F: PrimeField>(
 /*
  * Checks whether the evals satisfy the gate with the following equation:
  *
- * L_0 * (PI - w2_next_n1)
+ * L_i * (PI - w2_next_n1)
  */
 pub fn gate_8_nullifier_hash_col<F: PrimeField>(
     l_evals: &Vec<F>,
@@ -158,7 +158,7 @@ pub fn gate_8_nullifier_hash_col<F: PrimeField>(
 /*
  * Checks whether the evals satisfy the gate with the following equation:
  *
- * L_0 * (PI - w2)
+ * L_i * (PI - w2)
  */
 pub fn gate_9<F: PrimeField>(
     l_evals: &Vec<F>,
