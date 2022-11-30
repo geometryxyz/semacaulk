@@ -2,11 +2,24 @@
 pragma solidity ^0.8.13;
 
 contract KeccakMT {
-    function verifyMerklePath(
-        //uint256 _index,
-        //bytes32[] memory _proof
+    function genRootFromPath(
+        uint256 _index,
+        bytes32 _leaf,
+        bytes32[] memory _proof
     ) public pure returns (bytes32) {
-        return bytes32(0x0);
+        uint256 r;
+        bytes32 levelHash = _leaf;
+        for (uint256 i = 0; i < _proof.length; i ++) {
+            r = _index % 2;
+            _index /= 2;
+
+            if (r == 0) {
+                levelHash = hashPair(levelHash, _proof[i]);
+            } else {
+                levelHash = hashPair(_proof[i], levelHash);
+            }
+        }
+        return levelHash;
     }
 
     // From openzeppelin-contracts/contracts/utils/cryptography/MerkleProof.sol
