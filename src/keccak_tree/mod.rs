@@ -29,7 +29,7 @@ mod tests {
 
     #[test]
     fn test_keccak_mt() {
-        let mut tree = KeccakTree::new(3, [0; 32]);
+        let tree = KeccakTree::new(3, [0; 32]);
         assert_eq!(
             hex::encode(tree.root()),
             "b4c11951957c6f8f642c4af61cd6b24640fec6dc7fc607ee8206a99e92410d30"

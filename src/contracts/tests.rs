@@ -4,7 +4,6 @@ use ethers::core::utils::hex;
 use ethers::abi::Contract;
 use ethers::providers::{Provider, Http};
 use ethers::contract::abigen;
-use hex::decode;
 
 use ethers::{prelude::*, utils::Anvil};
 // use eyre::Result;
@@ -47,22 +46,21 @@ pub async fn test_keccak_mt() {
     use keccack_mt::KeccackMT;
     use ethers::core::types::U256;
 
-    // 1. compile the contract (note this requires that you are inside the `examples` directory) and
-    // launch anvil
+    // 1. Launch anvil
     let anvil = Anvil::new().spawn();
 
-    // 2. instantiate our wallet
+    // 2. Instantiate the wallet
     let wallet: LocalWallet = anvil.keys()[0].clone().into();
 
-    // 3. connect to the network
+    // 3. Connect to the network
     let provider =
         Provider::<Http>::try_from(anvil.endpoint()).unwrap().interval(Duration::from_millis(10u64));
 
-    // 4. instantiate the client with the wallet
+    // 4. Instantiate the client with the wallet
     let client = Arc::new(SignerMiddleware::new(provider, wallet.with_chain_id(anvil.chain_id())));
 
-    // 5. deploy contract
-    let keccak_mt_contract = KeccackMT::deploy(client, ()).unwrap().send().await.unwrap();;
+    // 5. Deploy contract
+    let keccak_mt_contract = KeccackMT::deploy(client, ()).unwrap().send().await.unwrap();
 
     let mut tree = KeccakTree::new(4, [0; 32]);
 
@@ -78,7 +76,7 @@ pub async fn test_keccak_mt() {
 
         let leaf = tree.leaves()[index];
 
-        // 6. call contract function
+        // 6. Call the contract function
         let index = U256::from(index);
         let result = keccak_mt_contract.gen_root_from_path(index, leaf, flattened_proof).call().await.unwrap();
         assert_eq!(hex::encode(tree.root()), hex::encode(result));
