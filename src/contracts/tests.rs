@@ -4,12 +4,17 @@ use ethers::core::utils::hex;
 use ethers::abi::Contract;
 use ethers::providers::{Provider, Http};
 use ethers::contract::abigen;
+use ark_std::{rand::rngs::StdRng, test_rng};
+use ark_bn254::{Bn254, Fr, FrParameters};
 
+use crate::kzg::{unsafe_setup_g1, commit};
+use crate::commit_to_lagrange_bases;
+use crate::compute_lagrange_tree;
+use ethers::core::types::U256;
 use ethers::{prelude::*, utils::Anvil};
-// use eyre::Result;
 use std::{convert::TryFrom, sync::Arc, time::Duration};
-use semaphore::merkle_tree::Branch;
 use crate::keccak_tree::{
+    Branch,
     KeccakTree,
     KeccakMerkleProof,
 };
@@ -43,23 +48,21 @@ pub async fn test_keccak_256() {
 #[tokio::test]
 pub async fn test_keccak_mt() {
     abigen!(KeccackMT, "./src/contracts/out/KeccakMT.sol/KeccakMT.json",);
-    use keccack_mt::KeccackMT;
-    use ethers::core::types::U256;
 
-    // 1. Launch anvil
+    // Launch anvil
     let anvil = Anvil::new().spawn();
 
-    // 2. Instantiate the wallet
+    // Instantiate the wallet
     let wallet: LocalWallet = anvil.keys()[0].clone().into();
 
-    // 3. Connect to the network
+    // Connect to the network
     let provider =
         Provider::<Http>::try_from(anvil.endpoint()).unwrap().interval(Duration::from_millis(10u64));
 
-    // 4. Instantiate the client with the wallet
+    // Instantiate the client with the wallet
     let client = Arc::new(SignerMiddleware::new(provider, wallet.with_chain_id(anvil.chain_id())));
 
-    // 5. Deploy contract
+    // Deploy contract
     let keccak_mt_contract = KeccackMT::deploy(client, ()).unwrap().send().await.unwrap();
 
     let mut tree = KeccakTree::new(4, [0; 32]);
@@ -76,9 +79,58 @@ pub async fn test_keccak_mt() {
 
         let leaf = tree.leaves()[index];
 
-        // 6. Call the contract function
+        // Call the contract function
         let index = U256::from(index);
         let result = keccak_mt_contract.gen_root_from_path(index, leaf, flattened_proof).call().await.unwrap();
         assert_eq!(hex::encode(tree.root()), hex::encode(result));
+    }
+}
+
+#[tokio::test]
+pub async fn test_semacaulk_insert() {
+    abigen!(Semacaulk, "./src/contracts/out/Semacaulk.sol/Semacaulk.json",);
+
+    // Launch anvil
+    let anvil = Anvil::new().spawn();
+
+    // Instantiate the wallet
+    let wallet: LocalWallet = anvil.keys()[0].clone().into();
+
+    // Connect to the network
+    let provider =
+        Provider::<Http>::try_from(anvil.endpoint()).unwrap().interval(Duration::from_millis(10u64));
+
+    // Instantiate the client with the wallet
+    let client = Arc::new(SignerMiddleware::new(provider, wallet.with_chain_id(anvil.chain_id())));
+
+    // Construct the tree of commitments to the Lagrange bases
+    let domain_size = 8;
+    let mut rng = test_rng();
+
+    let srs_g1 = unsafe_setup_g1::<Bn254, StdRng>(domain_size, &mut rng);
+    let lagrange_comms = commit_to_lagrange_bases::<Bn254>(domain_size, srs_g1);
+
+    let tree = compute_lagrange_tree::<Bn254>(lagrange_comms);
+    let root = tree.root();
+
+    println!("tree root: {}", hex::encode(tree.root()));
+
+    // Deploy contract
+    let keccak_mt_contract = Semacaulk::deploy(client, root).unwrap().send().await.unwrap();
+
+    for index in 0..tree.num_leaves() {
+        println!("index: {}", index);
+        let proof = tree.proof(index).unwrap();
+        let flattened_proof = flatten_proof(&proof);
+
+        let leaf = tree.leaves()[index];
+        println!("leaf: {}", hex::encode(leaf));
+
+        // Call the contract function
+        let index = U256::from(index);
+        let result = keccak_mt_contract.insert_identity(U256::zero(), leaf, flattened_proof).send().await.unwrap().await.unwrap().expect("no receipt found");
+
+        let new_index = keccak_mt_contract.current_index().call().await.unwrap();
+        println!("new index: {}", new_index);
     }
 }

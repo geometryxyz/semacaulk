@@ -8,17 +8,18 @@ pub mod kzg;
 pub mod keccak_tree;
 
 use crate::utils::construct_lagrange_basis;
+use crate::kzg::{unsafe_setup_g1, commit};
+use crate::keccak_tree::KeccakTree;
+use std::ops::Add;
 use ark_ff::FpParameters;
 use ark_ff::BigInteger;
-//use ark_std::Zero;
-use ethers::core::utils::keccak256;
-use ethers::types::U256;
+use ark_ff::bytes::ToBytes;
 use ark_poly::{EvaluationDomain, GeneralEvaluationDomain};
 use ark_bn254::{Bn254, Fr, FrParameters};
 use ark_ec::{AffineCurve, ProjectiveCurve, PairingEngine};
 use ark_std::{rand::rngs::StdRng, test_rng};
-use crate::kzg::{unsafe_setup_g1, commit};
-use std::ops::Add;
+use ethers::core::utils::keccak256;
+use ethers::types::U256;
 
 use ark_ff::PrimeField;
 
@@ -98,4 +99,42 @@ pub fn test_compute_empty_accumulator() {
     let lagrange_comms = commit_to_lagrange_bases::<Bn254>(domain_size, srs_g1);
     let empty_accumulator = compute_empty_accumulator::<Bn254>(lagrange_comms);
     println!("{}", empty_accumulator);
+}
+
+pub fn compute_lagrange_tree<E: PairingEngine>(
+    lagrange_comms: Vec<E::G1Affine>,
+) -> KeccakTree {
+
+    let mut tree = KeccakTree::new(4, [0; 32]);
+
+    assert_eq!(tree.num_leaves(), lagrange_comms.len());
+
+    for (i, p) in lagrange_comms.iter().enumerate() {
+        let mut b = Vec::with_capacity(64);
+        let _ = p.write(&mut b);
+
+        // Slice to the first 64 bytes, since the 65th byte indicates whether the point is the
+        // point at infinity and we don't need it
+        let b = &b.get(0..64).unwrap();
+
+        let leaf = keccak256(b);
+
+        println!("{}", hex::encode(leaf));
+
+        tree.set(i, leaf);
+    }
+
+    tree
+}
+    
+#[test]
+pub fn test_compute_lagrange_tree() {
+    let domain_size = 8;
+    let mut rng = test_rng();
+
+    let srs_g1 = unsafe_setup_g1::<Bn254, StdRng>(domain_size, &mut rng);
+    let lagrange_comms = commit_to_lagrange_bases::<Bn254>(domain_size, srs_g1);
+
+    let tree = compute_lagrange_tree::<Bn254>(lagrange_comms);
+    println!("{}", hex::encode(tree.root()));
 }

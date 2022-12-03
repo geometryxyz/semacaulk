@@ -21,6 +21,7 @@ impl Hasher for Keccak256 {
 
 pub type KeccakTree = MerkleTree<Keccak256>;
 pub type KeccakMerkleProof = Proof<Keccak256>;
+pub type Branch = semaphore::merkle_tree::Branch<Keccak256>;
 
 #[cfg(test)]
 mod tests {
