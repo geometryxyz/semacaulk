@@ -1,6 +1,6 @@
 use std::{marker::PhantomData, iter};
 
-use ark_ec::{AffineCurve, PairingEngine, ProjectiveCurve, bls12::G2Prepared};
+use ark_ec::{AffineCurve, PairingEngine, ProjectiveCurve};
 use ark_ff::{to_bytes, Field, One, PrimeField, Zero};
 use ark_poly::EvaluationDomain;
 use ark_std::{rand::RngCore, UniformRand};

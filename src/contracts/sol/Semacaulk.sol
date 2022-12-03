@@ -33,13 +33,16 @@ contract Semacaulk is KeccakMT {
 
     function insertIdentity(
         uint256 _identityCommitment,
-        bytes32 _lagrangeLeaf,
+        bytes32 _lagrangeLeafX,
+        bytes32 _lagrangeLeafY,
         bytes32[] memory _lagrangeMerkleProof
     ) public {
+        bytes32 lagrangeLeaf = keccak256(abi.encodePacked(_lagrangeLeafX, _lagrangeLeafY));
+
         // 1. Verify that _lagrangeLeaf exists in the lagrange tree at index currentIndex
         bytes32 generatedRoot = genRootFromPath(
             currentIndex,
-            _lagrangeLeaf,
+            lagrangeLeaf,
             _lagrangeMerkleProof
         );
 

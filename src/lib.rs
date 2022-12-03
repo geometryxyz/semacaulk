@@ -102,7 +102,7 @@ pub fn test_compute_empty_accumulator() {
 }
 
 pub fn compute_lagrange_tree<E: PairingEngine>(
-    lagrange_comms: Vec<E::G1Affine>,
+    lagrange_comms: &Vec<E::G1Affine>,
 ) -> KeccakTree {
 
     let mut tree = KeccakTree::new(4, [0; 32]);
@@ -119,8 +119,6 @@ pub fn compute_lagrange_tree<E: PairingEngine>(
 
         let leaf = keccak256(b);
 
-        println!("{}", hex::encode(leaf));
-
         tree.set(i, leaf);
     }
 
@@ -135,6 +133,6 @@ pub fn test_compute_lagrange_tree() {
     let srs_g1 = unsafe_setup_g1::<Bn254, StdRng>(domain_size, &mut rng);
     let lagrange_comms = commit_to_lagrange_bases::<Bn254>(domain_size, srs_g1);
 
-    let tree = compute_lagrange_tree::<Bn254>(lagrange_comms);
+    let tree = compute_lagrange_tree::<Bn254>(&lagrange_comms);
     println!("{}", hex::encode(tree.root()));
 }

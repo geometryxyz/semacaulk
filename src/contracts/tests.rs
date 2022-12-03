@@ -1,13 +1,13 @@
 use tokio::test;
 use ethers::core::utils::keccak256;
 use ethers::core::utils::hex;
-use ethers::abi::Contract;
 use ethers::providers::{Provider, Http};
 use ethers::contract::abigen;
 use ark_std::{rand::rngs::StdRng, test_rng};
-use ark_bn254::{Bn254, Fr, FrParameters};
+use ark_bn254::Bn254;
+use ark_ff::ToBytes;
 
-use crate::kzg::{unsafe_setup_g1, commit};
+use crate::kzg::unsafe_setup_g1;
 use crate::commit_to_lagrange_bases;
 use crate::compute_lagrange_tree;
 use ethers::core::types::U256;
@@ -110,27 +110,37 @@ pub async fn test_semacaulk_insert() {
     let srs_g1 = unsafe_setup_g1::<Bn254, StdRng>(domain_size, &mut rng);
     let lagrange_comms = commit_to_lagrange_bases::<Bn254>(domain_size, srs_g1);
 
-    let tree = compute_lagrange_tree::<Bn254>(lagrange_comms);
+    let tree = compute_lagrange_tree::<Bn254>(&lagrange_comms);
     let root = tree.root();
-
-    println!("tree root: {}", hex::encode(tree.root()));
 
     // Deploy contract
     let keccak_mt_contract = Semacaulk::deploy(client, root).unwrap().send().await.unwrap();
 
     for index in 0..tree.num_leaves() {
-        println!("index: {}", index);
         let proof = tree.proof(index).unwrap();
         let flattened_proof = flatten_proof(&proof);
 
-        let leaf = tree.leaves()[index];
-        println!("leaf: {}", hex::encode(leaf));
+        let l_i = &lagrange_comms[index];
+        let mut l_i_x = Vec::with_capacity(32);
+        let mut l_i_y = Vec::with_capacity(32);
+        let _ = l_i.x.write(&mut l_i_x);
+        let _ = l_i.y.write(&mut l_i_y);
 
         // Call the contract function
         let index = U256::from(index);
-        let result = keccak_mt_contract.insert_identity(U256::zero(), leaf, flattened_proof).send().await.unwrap().await.unwrap().expect("no receipt found");
+        let result = keccak_mt_contract.insert_identity(
+            U256::zero(),
+            l_i_x.try_into().unwrap(),
+            l_i_y.try_into().unwrap(),
+            flattened_proof,
+        ).send()
+        .await.unwrap()
+        .await.unwrap()
+        .expect("no receipt found");
+        assert_eq!(result.status.unwrap(), ethers::types::U64::from(1));
 
+        // Check that currentIndex is incremented
         let new_index = keccak_mt_contract.current_index().call().await.unwrap();
-        println!("new index: {}", new_index);
+        assert_eq!(new_index, index + 1);
     }
 }
