@@ -1,12 +1,19 @@
-# semacaulk
+# Semacaulk
 
-Semacaulk custom prover&amp;verifier based on https://hackmd.io/@akinovak/SyE1Z3fLs/edit
+Semacaulk is a custom prover and verifier of set membership proofs which uses
+an on-chain polynomial commitment to enable cheap insertions, and techniques
+which make verification no more expensive than verifying a Groth16 proof.
+
+For a detailed specification, please refer to
+[https://hackmd.io/@akinovak/SyE1Z3fLs](this document.)
 
 ## Quick start
 
-1. Install Rust using [these instructions](https://www.rust-lang.org/learn/get-started).
+1. Install Rust using [these
+   instructions](https://www.rust-lang.org/learn/get-started).
 
-2. Install Foundry using [these instructions](https://github.com/foundry-rs/foundry#installation).
+2. Install Foundry using [these
+   instructions](https://github.com/foundry-rs/foundry#installation).
 
 3. Clone this repository.
 

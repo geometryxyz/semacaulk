@@ -60,7 +60,7 @@ pub fn commit_to_lagrange_bases<E: PairingEngine>(
 }
 
 pub fn compute_empty_accumulator<E: PairingEngine>(
-    lagrange_comms: Vec<E::G1Affine>,
+    lagrange_comms: &Vec<E::G1Affine>,
 ) -> E::G1Affine {
     let zero: [u8; 32] = compute_zero_leaf::<E::Fr>();
     let zero_bigint = <<E as PairingEngine>::Fr as PrimeField>::from_be_bytes_mod_order(&zero);
@@ -97,7 +97,7 @@ pub fn test_compute_empty_accumulator() {
 
     let srs_g1 = unsafe_setup_g1::<Bn254, StdRng>(domain_size, &mut rng);
     let lagrange_comms = commit_to_lagrange_bases::<Bn254>(domain_size, srs_g1);
-    let empty_accumulator = compute_empty_accumulator::<Bn254>(lagrange_comms);
+    let empty_accumulator = compute_empty_accumulator::<Bn254>(&lagrange_comms);
     println!("{}", empty_accumulator);
 }
 

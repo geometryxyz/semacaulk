@@ -10,6 +10,7 @@ use ark_ff::ToBytes;
 use crate::kzg::unsafe_setup_g1;
 use crate::commit_to_lagrange_bases;
 use crate::compute_lagrange_tree;
+use crate::compute_empty_accumulator;
 use ethers::core::types::U256;
 use ethers::{prelude::*, utils::Anvil};
 use std::{convert::TryFrom, sync::Arc, time::Duration};
@@ -84,6 +85,8 @@ pub async fn test_keccak_mt() {
         let result = keccak_mt_contract.gen_root_from_path(index, leaf, flattened_proof).call().await.unwrap();
         assert_eq!(hex::encode(tree.root()), hex::encode(result));
     }
+
+    drop(anvil);
 }
 
 #[tokio::test]
@@ -110,11 +113,30 @@ pub async fn test_semacaulk_insert() {
     let srs_g1 = unsafe_setup_g1::<Bn254, StdRng>(domain_size, &mut rng);
     let lagrange_comms = commit_to_lagrange_bases::<Bn254>(domain_size, srs_g1);
 
+    let empty_accumulator = compute_empty_accumulator::<Bn254>(&lagrange_comms);
+    let mut empty_accumulator_x = Vec::with_capacity(32);
+    let _ = empty_accumulator.x.write(&mut empty_accumulator_x);
+    let mut empty_accumulator_y = Vec::with_capacity(32);
+    let _ = empty_accumulator.y.write(&mut empty_accumulator_y);
+
+    let empty_accumulator_x: [u8; 32] = empty_accumulator_x.try_into().unwrap();
+    let empty_accumulator_y: [u8; 32] = empty_accumulator_y.try_into().unwrap();
+
     let tree = compute_lagrange_tree::<Bn254>(&lagrange_comms);
     let root = tree.root();
 
     // Deploy contract
-    let keccak_mt_contract = Semacaulk::deploy(client, root).unwrap().send().await.unwrap();
+    let semacaulk_contract = Semacaulk::deploy(
+        client,
+        (
+            root,
+            U256::from_big_endian(&empty_accumulator_x),
+            U256::from_big_endian(&empty_accumulator_y),
+        )
+    ).unwrap()
+    .send()
+    .await
+    .unwrap();
 
     for index in 0..tree.num_leaves() {
         let proof = tree.proof(index).unwrap();
@@ -126,21 +148,27 @@ pub async fn test_semacaulk_insert() {
         let _ = l_i.x.write(&mut l_i_x);
         let _ = l_i.y.write(&mut l_i_y);
 
+        let l_i_x: [u8; 32] = l_i_x.try_into().unwrap();
+        let l_i_y: [u8; 32] = l_i_y.try_into().unwrap();
+
         // Call the contract function
         let index = U256::from(index);
-        let result = keccak_mt_contract.insert_identity(
-            U256::zero(),
-            l_i_x.try_into().unwrap(),
-            l_i_y.try_into().unwrap(),
+        let result = semacaulk_contract.insert_identity(
+            U256::from(1234), // TODO: change
+            U256::from_big_endian(&l_i_x),
+            U256::from_big_endian(&l_i_y),
             flattened_proof,
         ).send()
         .await.unwrap()
         .await.unwrap()
         .expect("no receipt found");
         assert_eq!(result.status.unwrap(), ethers::types::U64::from(1));
+        println!("Gas used by insertIdentity(): {:?}", result.gas_used.unwrap());
 
         // Check that currentIndex is incremented
-        let new_index = keccak_mt_contract.current_index().call().await.unwrap();
+        let new_index = semacaulk_contract.get_current_index().call().await.unwrap();
         assert_eq!(new_index, index + 1);
     }
+
+    drop(anvil);
 }
