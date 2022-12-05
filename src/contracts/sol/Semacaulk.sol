@@ -25,7 +25,7 @@ contract Semacaulk is KeccakMT, BN254 {
      *  ).toString(16)
      */
     uint256 NOTHING_UP_MY_SLEEVE_ZERO = 
-        uint256(keccak256(abi.encodePacked('Semacaulk'))) % SNARK_SCALAR_FIELD;
+        uint256(keccak256(abi.encodePacked('Semacaulk'))) % PRIME_R;
 
     // Custom errors
     error RootMismatch(bytes32 _generatedRoot);
@@ -62,7 +62,7 @@ contract Semacaulk is KeccakMT, BN254 {
         }
 
         // 2. Compute (v - zero) * Li_comm
-        uint256 n = SNARK_SCALAR_FIELD;
+        uint256 n = PRIME_R;
         uint256 negZero = mulmod(NOTHING_UP_MY_SLEEVE_ZERO, n - 1, n);
         uint256 vMinusNegZero = addmod(_identityCommitment, negZero, n);
 
