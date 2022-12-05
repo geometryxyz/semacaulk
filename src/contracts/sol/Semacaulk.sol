@@ -64,14 +64,14 @@ contract Semacaulk is KeccakMT, BN254 {
         // 2. Compute (v - zero) * Li_comm
         uint256 n = PRIME_R;
         uint256 negZero = mulmod(NOTHING_UP_MY_SLEEVE_ZERO, n - 1, n);
-        uint256 vMinusNegZero = addmod(_identityCommitment, negZero, n);
+        uint256 vMinusZero = addmod(_identityCommitment, negZero, n);
 
         G1Point memory l = G1Point(_lagrangeLeafX, _lagrangeLeafY);
 
-        G1Point memory newPoint = mul(l, vMinusNegZero);
+        G1Point memory newPoint = mul(l, vMinusZero);
 
         // 3. Update the accumulator
-        accumulator = plus(accumulator, negate(newPoint));
+        accumulator = plus(accumulator, newPoint);
 
         // Increment the index
         currentIndex += 1;

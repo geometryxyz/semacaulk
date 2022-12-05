@@ -53,7 +53,7 @@ impl<E: PairingEngine> Accumulator<E> {
         // C - (v - zero) * li_comm
         let v_minus_zero = value - self.zero;
         let v_minus_zero_mul_li_comm = self.lagrange_comms[index].mul(v_minus_zero);
-        let p = self.point + -v_minus_zero_mul_li_comm.into_affine();
+        let p = self.point + v_minus_zero_mul_li_comm.into_affine();
         self.point = p.clone()
     }
 }
