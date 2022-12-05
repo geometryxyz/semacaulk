@@ -5,6 +5,27 @@ use ark_std::UniformRand;
 use rand::RngCore;
 use std::{cmp::max, iter};
 
+// Unsafe setup only for G1 points
+pub fn unsafe_setup_g1<E: PairingEngine, R: RngCore>(
+    size: usize,
+    rng: &mut R,
+) -> Vec<E::G1Affine> {
+    let tau = E::Fr::rand(rng);
+    let powers_of_tau: Vec<E::Fr> = iter::successors(Some(E::Fr::one()), |p| Some(p.clone() * tau))
+        .take(size)
+        .collect();
+
+    let g1_gen = E::G1Affine::prime_subgroup_generator();
+
+    let srs_g1: Vec<E::G1Affine> = powers_of_tau
+        .iter()
+        .take(size+ 1)
+        .map(|tp| g1_gen.mul(tp.into_repr()).into())
+        .collect();
+    srs_g1
+}
+
+// Unsafe setup for G1 and G2 points
 pub fn unsafe_setup<E: PairingEngine, R: RngCore>(
     max_power_g1: usize,
     max_power_g2: usize,

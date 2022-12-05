@@ -254,7 +254,7 @@ fn nullifier_hash_lrd() {
            (w_2 + key + c) ^ 7 - w_2_next
        )
     */
-    let mut rng = test_rng();
+    let rng = test_rng();
 
     let test_vals = prepare_mimc_gate_tests();
     let n_rounds = test_vals.n_rounds;

@@ -1,9 +1,5 @@
-use std::{cmp::max, iter};
-
-use ark_ec::{msm::VariableBaseMSM, AffineCurve, PairingEngine};
-use ark_ff::{FftField, Field, One, PrimeField};
-use ark_poly::{univariate::DensePolynomial, Polynomial, UVPolynomial};
-use ark_std::{rand::RngCore, UniformRand};
+use ark_ff::{FftField, Field};
+use ark_poly::{univariate::DensePolynomial, UVPolynomial};
 
 pub fn shift_dense_poly<F: Field>(
     p: &DensePolynomial<F>,
