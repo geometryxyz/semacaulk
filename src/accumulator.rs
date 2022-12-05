@@ -5,11 +5,9 @@ use ark_poly::{EvaluationDomain, GeneralEvaluationDomain};
 use std::ops::Add;
 use ethers::core::utils::keccak256;
 use ethers::types::U256;
-use ark_bn254::Fr;
 use crate::keccak_tree::KeccakTree;
 use crate::utils::construct_lagrange_basis;
 use crate::kzg::commit;
-//use ark_ff::bytes::ToBytes;
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct Accumulator<E: PairingEngine> {
@@ -138,24 +136,6 @@ pub fn compute_lagrange_tree<E: PairingEngine>(
     tree
 }
 
-#[test]
-pub fn test_compute_zero_leaf() {
-    let zero = compute_zero_leaf::<Fr>();
-    let mut z = Vec::with_capacity(32);
-    let _ = zero.write(&mut z);
-
-    /*
-         To reproduce this value, run the following in a JS console:
-         e = require('ethers')
-         (
-             BigInt(e.utils.solidityKeccak256(['string'], ['Semacaulk'])) %
-                 BigInt('21888242871839275222246405745257275088548364400416034343698204186575808495617')
-         ).toString(16)
-     */
-
-    assert_eq!(hex::encode(z), "251a679ce76f71008e8f811649361985e499a17da6411eef0ba206cd72b3771f");
-}
-
 #[cfg(test)]
 mod tests {
     use super::{
@@ -169,6 +149,25 @@ mod tests {
     };
     use ark_bn254::{Bn254, Fr};
     use ark_std::{rand::rngs::StdRng, test_rng};
+    use ark_ff::ToBytes;
+
+    #[test]
+    pub fn test_compute_zero_leaf() {
+        let zero = compute_zero_leaf::<Fr>();
+        let mut z = Vec::with_capacity(32);
+        let _ = zero.write(&mut z);
+
+        /*
+             To reproduce this value, run the following in a JS console:
+             e = require('ethers')
+             (
+                 BigInt(e.utils.solidityKeccak256(['string'], ['Semacaulk'])) %
+                     BigInt('21888242871839275222246405745257275088548364400416034343698204186575808495617')
+             ).toString(16)
+         */
+
+        assert_eq!(hex::encode(z), "251a679ce76f71008e8f811649361985e499a17da6411eef0ba206cd72b3771f");
+    }
 
     #[test]
     fn test_accumulator() {

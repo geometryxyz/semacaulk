@@ -2,7 +2,7 @@ use ark_ff::{FromBytes, ToBytes};
 use ark_std::convert::From;
 use ark_std::marker::PhantomData;
 use ark_std::rand::{RngCore, SeedableRng};
-use digest::Digest;
+use sha3::Digest;
 
 /// An RNG suitable for Fiat-Shamir transforms
 pub trait FiatShamirRng: RngCore {

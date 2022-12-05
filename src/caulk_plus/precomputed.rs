@@ -91,8 +91,8 @@ mod precomputed_test {
     use ark_bn254::{Bn254, Fr as F, G1Affine, G2Projective};
     use rand::rngs::StdRng;
 
-    use crate::utils::construct_lagrange_basis;
     use crate::kzg::{commit, unsafe_setup};
+    use crate::utils::construct_lagrange_basis;
 
     use super::Precomputed;
 
@@ -412,6 +412,5 @@ mod precomputed_test {
         let w1_xi2_w2_by_hand = w1 + w2.mul(xi_2.into_repr()).into();
 
         assert_eq!(w1_xi2_w2, w1_xi2_w2_by_hand);
-
     }
 }

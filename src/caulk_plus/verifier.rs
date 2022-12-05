@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, iter};
+use std::{iter, marker::PhantomData};
 
 use ark_ec::{AffineCurve, PairingEngine, ProjectiveCurve};
 use ark_ff::{to_bytes, Field, One, PrimeField, Zero};
@@ -98,8 +98,16 @@ impl<E: PairingEngine> Verifier<E> {
         fs_rng.absorb(&to_bytes![&proof.w_commitment, &proof.h_commitment].unwrap());
         verifier_msgs.second_msg(fs_rng);
 
-        fs_rng.absorb(&to_bytes![&proof.u_eval, &proof.u_proof, proof.p1_eval, proof.p1_proof, proof.p2_proof].unwrap());
-
+        fs_rng.absorb(
+            &to_bytes![
+                &proof.u_eval,
+                &proof.u_proof,
+                proof.p1_eval,
+                proof.p1_proof,
+                proof.p2_proof
+            ]
+            .unwrap(),
+        );
 
         // TODO: create get methods which return error if some msm is None
         let xi_1 = verifier_msgs.xi_1.as_ref().unwrap();
@@ -117,23 +125,24 @@ impl<E: PairingEngine> Verifier<E> {
         // 1. compute p1 & opening proof
         let p1 = proof.zi_commitment + proof.ci_commitment.mul(xi_1.into_repr()).into();
         let p1_proof = EvaluationProof::<E> {
-            p: p1, 
-            q: proof.p1_proof, 
-            opening_challenge: proof.u_eval, 
-            opening: proof.p1_eval
-        };  
+            p: p1,
+            q: proof.p1_proof,
+            opening_challenge: proof.u_eval,
+            opening: proof.p1_eval,
+        };
 
         // 2. compute p2 & opening proof
         let zv_at_alpha = common_input.domain_v.evaluate_vanishing_polynomial(*alpha);
-        let p2 = E::G1Affine::prime_subgroup_generator().mul(proof.p1_eval - *xi_1 * a_opening_at_rotation) 
+        let p2 = E::G1Affine::prime_subgroup_generator()
+            .mul(proof.p1_eval - *xi_1 * a_opening_at_rotation)
             - proof.h_commitment.mul(zv_at_alpha);
 
         let p2_proof = EvaluationProof::<E> {
-            p: p2.into_affine(), 
-            q: proof.p2_proof, 
-            opening_challenge: *alpha, 
-            opening: E::Fr::zero()
-        };  
+            p: p2.into_affine(),
+            q: proof.p2_proof,
+            opening_challenge: *alpha,
+            opening: E::Fr::zero(),
+        };
 
         // 3. check openings
         let ci_and_zh: E::G1Affine = {
@@ -152,12 +161,13 @@ impl<E: PairingEngine> Verifier<E> {
 
         let u = E::Fr::rand(fs_rng);
         let evaluation_proofs = &[u_proof, p1_proof, p2_proof];
-        let (lhs_kzg_batched, rhs_kzg_batched) = batch_evaluation_proof_pairings(evaluation_proofs, u, u);
-        
+        let (lhs_kzg_batched, rhs_kzg_batched) =
+            batch_evaluation_proof_pairings(evaluation_proofs, u, u);
+
         let res = E::product_of_pairings(&[
-            ((-lhs_kzg_batched).into(), x_g2), 
+            ((-lhs_kzg_batched).into(), x_g2),
             ((rhs_kzg_batched + -ci_and_zh).into(), g2_gen),
-            (proof.zi_commitment.into(), proof.w_commitment.into())
+            (proof.zi_commitment.into(), proof.w_commitment.into()),
         ]);
         if res != E::Fqk::one() {
             return Err(Error::FinalPairingCheckFailed);

@@ -19,6 +19,7 @@ hex = "0.4.3"
 semaphore = { git = "https://github.com/worldcoin/semaphore-rs" }
 serde = "1.0"
 ark-bn254 = "0.3.0"
+sha3 = "0.10.6"
 
 [dev-dependencies]
 rand_chacha = { version = "0.3.0", default-features = false }

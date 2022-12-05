@@ -1,9 +1,9 @@
-use ark_ec::{PairingEngine, AffineCurve, msm::VariableBaseMSM};
-use ark_poly::{univariate::DensePolynomial, UVPolynomial, Polynomial};
-use rand::RngCore;
-use ark_std::{UniformRand};
+use ark_ec::{msm::VariableBaseMSM, AffineCurve, PairingEngine};
 use ark_ff::{One, PrimeField};
-use std::{iter, cmp::max};
+use ark_poly::{univariate::DensePolynomial, Polynomial, UVPolynomial};
+use ark_std::UniformRand;
+use rand::RngCore;
+use std::{cmp::max, iter};
 
 // Unsafe setup only for G1 points
 pub fn unsafe_setup_g1<E: PairingEngine, R: RngCore>(
@@ -66,7 +66,11 @@ pub fn open<G: AffineCurve>(
 ) -> (G::ScalarField, G) {
     let q = poly / &DensePolynomial::from_coefficients_slice(&[-challenge, G::ScalarField::one()]);
     if srs.len() - 1 < q.degree() {
-        panic!("SRS size to small! Can't commit to polynomial of degree {} with srs of size {}", q.degree(), srs.len());
+        panic!(
+            "SRS size to small! Can't commit to polynomial of degree {} with srs of size {}",
+            q.degree(),
+            srs.len()
+        );
     }
     let proof = commit(srs, &q);
     (poly.evaluate(&challenge), proof.into())

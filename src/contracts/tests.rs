@@ -3,10 +3,9 @@ use ethers::core::utils::keccak256;
 use ethers::core::utils::hex;
 use ethers::providers::{Provider, Http};
 use ethers::contract::abigen;
-use ethers::abi::AbiEncode;
 use ark_std::{rand::rngs::StdRng, test_rng};
 use ark_bn254::{Bn254, Fr, Fq};
-use ark_ff::{PrimeField, ToBytes, UniformRand};
+use ark_ff::{PrimeField, UniformRand};
 use crate::kzg::unsafe_setup_g1;
 use crate::{
     accumulator::{
@@ -20,9 +19,7 @@ use ethers::core::types::U256;
 use ethers::{prelude::*, utils::Anvil};
 use std::{convert::TryFrom, sync::Arc, time::Duration};
 use crate::keccak_tree::{
-    Branch,
     KeccakTree,
-    KeccakMerkleProof,
     flatten_proof,
 };
 
@@ -122,7 +119,6 @@ pub async fn test_semacaulk_insert() {
     let lagrange_comms = commit_to_lagrange_bases::<Bn254>(domain_size, &srs_g1);
 
     let mut acc = Accumulator::<Bn254>::new(zero, &lagrange_comms);
-    let empty_accumulator = acc.point;
 
     let empty_accumulator_x = f_to_u256::<Fq>(acc.point.x);
     let empty_accumulator_y = f_to_u256::<Fq>(acc.point.y);

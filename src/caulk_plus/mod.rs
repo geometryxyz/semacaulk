@@ -31,7 +31,7 @@ impl<E: PairingEngine> CommonInput<E> {
         order_m: usize,
         c_commitment: E::G1Affine,
         a_commitment: E::G1Affine,
-        rotation: usize
+        rotation: usize,
     ) -> Self {
         let domain_h = GeneralEvaluationDomain::new(order_n).unwrap();
         let domain_v = GeneralEvaluationDomain::new(order_m).unwrap();
@@ -40,7 +40,7 @@ impl<E: PairingEngine> CommonInput<E> {
             domain_v,
             c_commitment,
             a_commitment,
-            rotation
+            rotation,
         }
     }
 }
@@ -48,20 +48,25 @@ impl<E: PairingEngine> CommonInput<E> {
 #[cfg(test)]
 mod caulk_plus_tests {
     use crate::{
-        caulk_plus::{verifier::Verifier, PublicInput, CommonInput, prover::{WitnessInput, Prover}, precomputed::Precomputed},
+        caulk_plus::{
+            precomputed::Precomputed,
+            prover::{Prover, WitnessInput},
+            verifier::Verifier,
+            CommonInput, PublicInput,
+        },
+        kzg::{commit, unsafe_setup},
         rng::{FiatShamirRng, SimpleHashFiatShamirRng},
-        kzg::{unsafe_setup, commit},
     };
 
     use ark_bn254::{Bn254, Fr as F};
     use ark_ec::ProjectiveCurve;
-    use ark_ff::{to_bytes, Field};
     use ark_poly::{GeneralEvaluationDomain, EvaluationDomain, univariate::DensePolynomial, UVPolynomial};
+    use ark_ff::{to_bytes, Field};
     use ark_std::{rand::rngs::StdRng, test_rng};
-    use blake2::Blake2s;
     use rand_chacha::ChaChaRng;
+    use sha3::Keccak256;
 
-    type FS = SimpleHashFiatShamirRng<Blake2s, ChaChaRng>;
+    type FS = SimpleHashFiatShamirRng<Keccak256, ChaChaRng>;
 
     fn to_field<F: Field>(evals: &[u64]) -> Vec<F> {
         evals.iter().map(|&e| F::from(e)).collect()
@@ -172,7 +177,7 @@ mod caulk_plus_tests {
             domain_v: domain_v.clone(),
             c_commitment,
             a_commitment,
-            rotation: 5
+            rotation: 5,
         };
 
         let witness = WitnessInput::<F> {
@@ -180,7 +185,6 @@ mod caulk_plus_tests {
             values: vec![c_evals[5]],
             _c: c.clone(),
             a,
-            rotation: 5,
             mapping,
         };
 
@@ -202,7 +206,13 @@ mod caulk_plus_tests {
         // Repeat initialization
         let mut fs_rng = FS::initialize(&to_bytes![&[0u8]].unwrap());
 
-        let res = Verifier::verify(&public_input, &common_input, &proof, a_opening_at_rotation, &mut fs_rng);
+        let res = Verifier::verify(
+            &public_input,
+            &common_input,
+            &proof,
+            a_opening_at_rotation,
+            &mut fs_rng,
+        );
         assert_eq!(res.is_ok(), true);
     }
 }
