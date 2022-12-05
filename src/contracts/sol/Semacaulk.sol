@@ -9,15 +9,15 @@ contract Semacaulk is KeccakMT, BN254 {
     uint256 currentIndex;
     G1Point accumulator;
 
-    // Errors
-    error RootMismatch(bytes32 _generatedRoot);
-
     /*
      * By setting the value of unset (empty) tree leaves to this
      * nothing-up-my-sleeve value, the authors demonstrate, via the property of
      * second-preimage resistance of Keccak256, that they do not have its
      * preimage and therefore cannot spend funds they do not own.
      * To reproduce this value, run the following in a JS console:
+     *
+     * TODO: should this be mod Fq instead of Fr?
+     *
      *  e = require('ethers')
      *  (
      *      BigInt(e.utils.solidityKeccak256(['string'], ['Semacaulk'])) %
@@ -27,12 +27,18 @@ contract Semacaulk is KeccakMT, BN254 {
     uint256 NOTHING_UP_MY_SLEEVE_ZERO = 
         uint256(keccak256(abi.encodePacked('Semacaulk'))) % SNARK_SCALAR_FIELD;
 
+    // Custom errors
+    error RootMismatch(bytes32 _generatedRoot);
+
     constructor(
         bytes32 _lagrangeTreeRoot,
         uint256 _accumulatorX,
         uint256 _accumulatorY
     ) {
+        // TODO: range-check _lagrangeTreeRoot
         lagrangeTreeRoot = _lagrangeTreeRoot;
+
+        // TODO: validate the point
         accumulator = G1Point(_accumulatorX, _accumulatorY);
     }
 
@@ -51,15 +57,18 @@ contract Semacaulk is KeccakMT, BN254 {
             _lagrangeMerkleProof
         );
 
-        if (generatedRoot == lagrangeTreeRoot) {
+        if (generatedRoot != lagrangeTreeRoot) {
             revert RootMismatch({ _generatedRoot: generatedRoot });
         }
 
         // 2. Compute (v - zero) * Li_comm
-        uint256 negZero = mulmod(NOTHING_UP_MY_SLEEVE_ZERO, SNARK_SCALAR_FIELD - 1, SNARK_SCALAR_FIELD);
-        uint256 vMinusNegZero = addmod(_identityCommitment, negZero, SNARK_SCALAR_FIELD);
+        uint256 n = SNARK_SCALAR_FIELD;
+        uint256 negZero = mulmod(NOTHING_UP_MY_SLEEVE_ZERO, n - 1, n);
+        uint256 vMinusNegZero = addmod(_identityCommitment, negZero, n);
 
-        G1Point memory newPoint = mul(G1Point(_lagrangeLeafX, _lagrangeLeafY), vMinusNegZero);
+        G1Point memory l = G1Point(_lagrangeLeafX, _lagrangeLeafY);
+
+        G1Point memory newPoint = mul(l, vMinusNegZero);
 
         // 3. Update the accumulator
         accumulator = plus(accumulator, negate(newPoint));

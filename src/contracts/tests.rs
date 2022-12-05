@@ -3,14 +3,19 @@ use ethers::core::utils::keccak256;
 use ethers::core::utils::hex;
 use ethers::providers::{Provider, Http};
 use ethers::contract::abigen;
+use ethers::abi::AbiEncode;
 use ark_std::{rand::rngs::StdRng, test_rng};
-use ark_bn254::Bn254;
-use ark_ff::ToBytes;
-
+use ark_bn254::{Bn254, Fr, Fq};
+use ark_ff::{PrimeField, ToBytes, UniformRand};
 use crate::kzg::unsafe_setup_g1;
-use crate::commit_to_lagrange_bases;
-use crate::compute_lagrange_tree;
-use crate::compute_empty_accumulator;
+use crate::{
+    accumulator::{
+        Accumulator,
+        compute_zero_leaf,
+        commit_to_lagrange_bases,
+        compute_lagrange_tree,
+    },
+};
 use ethers::core::types::U256;
 use ethers::{prelude::*, utils::Anvil};
 use std::{convert::TryFrom, sync::Arc, time::Duration};
@@ -18,18 +23,16 @@ use crate::keccak_tree::{
     Branch,
     KeccakTree,
     KeccakMerkleProof,
+    flatten_proof,
 };
 
-fn flatten_proof(proof: &KeccakMerkleProof) -> Vec<[u8; 32]> {
-    let mut result = Vec::with_capacity(proof.0.len());
-    for branch in &proof.0 {
-        let hash = match branch {
-            Branch::Left(hash) => hash,
-            Branch::Right(hash) => hash,
-        };
-        result.push(hash.clone());
-    }
-    result
+pub fn f_to_u256<F: PrimeField>(
+    val: F
+) -> U256 {
+    let mut b = Vec::with_capacity(32);
+    let _ = val.write(&mut b);
+    let b_as_arr: [u8; 32] = b.try_into().unwrap();
+    U256::from_little_endian(&b_as_arr)
 }
 
 #[test]
@@ -101,7 +104,10 @@ pub async fn test_semacaulk_insert() {
 
     // Connect to the network
     let provider =
-        Provider::<Http>::try_from(anvil.endpoint()).unwrap().interval(Duration::from_millis(10u64));
+        Provider::<Http>::try_from(anvil.endpoint())
+        //Provider::<Http>::try_from("http://localhost:8545")
+        .unwrap()
+        .interval(Duration::from_millis(10u64));
 
     // Instantiate the client with the wallet
     let client = Arc::new(SignerMiddleware::new(provider, wallet.with_chain_id(anvil.chain_id())));
@@ -110,17 +116,16 @@ pub async fn test_semacaulk_insert() {
     let domain_size = 8;
     let mut rng = test_rng();
 
+    let zero = compute_zero_leaf::<Fr>();
     let srs_g1 = unsafe_setup_g1::<Bn254, StdRng>(domain_size, &mut rng);
-    let lagrange_comms = commit_to_lagrange_bases::<Bn254>(domain_size, srs_g1);
 
-    let empty_accumulator = compute_empty_accumulator::<Bn254>(&lagrange_comms);
-    let mut empty_accumulator_x = Vec::with_capacity(32);
-    let _ = empty_accumulator.x.write(&mut empty_accumulator_x);
-    let mut empty_accumulator_y = Vec::with_capacity(32);
-    let _ = empty_accumulator.y.write(&mut empty_accumulator_y);
+    let lagrange_comms = commit_to_lagrange_bases::<Bn254>(domain_size, &srs_g1);
 
-    let empty_accumulator_x: [u8; 32] = empty_accumulator_x.try_into().unwrap();
-    let empty_accumulator_y: [u8; 32] = empty_accumulator_y.try_into().unwrap();
+    let mut acc = Accumulator::<Bn254>::new(zero, &lagrange_comms);
+    let empty_accumulator = acc.point;
+
+    let empty_accumulator_x = f_to_u256::<Fq>(acc.point.x);
+    let empty_accumulator_y = f_to_u256::<Fq>(acc.point.y);
 
     let tree = compute_lagrange_tree::<Bn254>(&lagrange_comms);
     let root = tree.root();
@@ -130,8 +135,8 @@ pub async fn test_semacaulk_insert() {
         client,
         (
             root,
-            U256::from_big_endian(&empty_accumulator_x),
-            U256::from_big_endian(&empty_accumulator_y),
+            empty_accumulator_x,
+            empty_accumulator_y,
         )
     ).unwrap()
     .send()
@@ -143,31 +148,41 @@ pub async fn test_semacaulk_insert() {
         let flattened_proof = flatten_proof(&proof);
 
         let l_i = &lagrange_comms[index];
-        let mut l_i_x = Vec::with_capacity(32);
-        let mut l_i_y = Vec::with_capacity(32);
-        let _ = l_i.x.write(&mut l_i_x);
-        let _ = l_i.y.write(&mut l_i_y);
+        let l_i_x = f_to_u256(l_i.x);
+        let l_i_y = f_to_u256(l_i.y);
 
-        let l_i_x: [u8; 32] = l_i_x.try_into().unwrap();
-        let l_i_y: [u8; 32] = l_i_y.try_into().unwrap();
+        let new_leaf = Fr::rand(&mut rng);
+        let new_leaf_u256 = f_to_u256(new_leaf);
 
-        // Call the contract function
-        let index = U256::from(index);
+        println!("index: {}", index);
+
+        // Insert the leaf on chain
         let result = semacaulk_contract.insert_identity(
-            U256::from(1234), // TODO: change
-            U256::from_big_endian(&l_i_x),
-            U256::from_big_endian(&l_i_y),
+            new_leaf_u256,
+            l_i_x,
+            l_i_y,
             flattened_proof,
-        ).send()
+        )
+        .send()
         .await.unwrap()
         .await.unwrap()
         .expect("no receipt found");
+
+        //println!("{:?}", result);
         assert_eq!(result.status.unwrap(), ethers::types::U64::from(1));
+        
         println!("Gas used by insertIdentity(): {:?}", result.gas_used.unwrap());
 
         // Check that currentIndex is incremented
         let new_index = semacaulk_contract.get_current_index().call().await.unwrap();
-        assert_eq!(new_index, index + 1);
+        assert_eq!(new_index, U256::from(index + 1));
+
+        // Insert the leaf off-chain
+        acc.update(index, new_leaf);
+
+        let onchain_point = semacaulk_contract.get_accumulator().call().await.unwrap();
+        assert_eq!(f_to_u256(acc.point.x), onchain_point.x);
+        assert_eq!(f_to_u256(acc.point.y), onchain_point.y);
     }
 
     drop(anvil);

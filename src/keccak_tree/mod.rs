@@ -23,6 +23,19 @@ pub type KeccakTree = MerkleTree<Keccak256>;
 pub type KeccakMerkleProof = Proof<Keccak256>;
 pub type Branch = semaphore::merkle_tree::Branch<Keccak256>;
 
+pub fn flatten_proof(proof: &KeccakMerkleProof) -> Vec<[u8; 32]> {
+    let mut result = Vec::with_capacity(proof.0.len());
+    for branch in &proof.0 {
+        let hash = match branch {
+            Branch::Left(hash) => hash,
+            Branch::Right(hash) => hash,
+        };
+        result.push(hash.clone());
+    }
+    result
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::KeccakTree;
