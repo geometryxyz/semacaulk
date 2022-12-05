@@ -58,6 +58,7 @@ impl<E: PairingEngine> Accumulator<E> {
     }
 }
 
+// Convert an F value to U256 for use with ethers-rs
 pub fn f_modulus_as_u256<F: PrimeField>() -> U256 {
     let m = F::zero() - F::one();
 
@@ -69,7 +70,7 @@ pub fn f_modulus_as_u256<F: PrimeField>() -> U256 {
     r
 }
 
-// TODO: may be wrong
+// Compute the keccak256 hash of "Semacaulk" using ethers-rs, and return the result mod F.
 pub fn compute_zero_leaf<F: PrimeField>() -> F {
     let preimage = "Semacaulk".as_bytes();
     let hash_bytes = keccak256(preimage);
@@ -104,11 +105,18 @@ pub fn commit_to_lagrange_bases<E: PairingEngine>(
     comm_lagrnage_bases
 }
 
+// Hash the X and Y values of a vector of Lagrange commitments, and insert them into a tree.
 pub fn compute_lagrange_tree<E: PairingEngine>(
     lagrange_comms: &Vec<E::G1Affine>,
 ) -> KeccakTree {
+    let mut pow = 1u32;
+    let target = lagrange_comms.len() as u64;
+    while 2u64.pow(pow) < target {
+        pow += 1;
+    }
+    pow += 1;
 
-    let mut tree = KeccakTree::new(4, [0; 32]);
+    let mut tree = KeccakTree::new(pow as usize, [0; 32]);
 
     assert_eq!(tree.num_leaves(), lagrange_comms.len());
 
@@ -182,9 +190,7 @@ mod tests {
 
         let point = compute_empty_accumulator::<Bn254>(zero, &lagrange_comms);
         assert_eq!(acc.point, point);
-        println!("{}", acc.point);
 
         acc.update(0, Fr::from(123));
-        println!("{}", acc.point);
     }
 }
