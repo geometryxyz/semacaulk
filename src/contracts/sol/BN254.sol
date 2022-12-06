@@ -15,6 +15,33 @@ contract BN254 {
         uint256 y;
     }
 
+    // G2 group element where x \in Fp2 = x0 * z + x1
+    struct G2Point {
+        uint256 x0;
+        uint256 x1;
+        uint256 y0;
+        uint256 y1;
+    }
+
+    /// @return the generator of G1
+    // solhint-disable-next-line func-name-mixedcase
+    function P1() internal pure returns (G1Point memory) {
+        return G1Point(1, 2);
+    }
+
+    /// @return the generator of G2
+    // solhint-disable-next-line func-name-mixedcase
+    function P2() internal pure returns (G2Point memory) {
+        return
+            G2Point({
+                x0: 0x198e9393920d483a7260bfb731fb5d25f1aa493335a9e71297e485b7aef312c2,
+                x1: 0x1800deef121f1e76426a00665e5c4479674322d4f75edadd46debd5cd992f6ed,
+                y0: 0x090689d0585ff075ec9e99ad690c3395bc4b313370b38ef355acdadcd122975b,
+                y1: 0x12c85ea5db8c6deb4aab71808dcb408fe3d1e7690c43d37b4ce6cc0166fa7daa
+            });
+    }
+
+
     /*
      * @return The negation of p, i.e. p.plus(p.negate()) should be zero. 
      */
@@ -80,5 +107,49 @@ contract BN254 {
         require(success, "BN254: plus failed");
 
         return result;
+    }
+
+    /// @dev Evaluate the following pairing product:
+    /// @dev e(-a1, a2).e(b1, b2).e(c1, c2) == 1
+    /// @dev caller needs to ensure that a1, a2, b1, b2, c1 and c2 are within proper group
+    /// @notice credit: Aztec, Spilsbury Holdings Ltd
+    function caulkPlusPairing(
+        G1Point memory a1,
+        G2Point memory a2,
+        G1Point memory b1,
+        G2Point memory b2,
+        G1Point memory c1,
+        G2Point memory c2
+    ) internal view returns (bool) {
+        uint256 out;
+        bool success;
+        assembly {
+            let mPtr := mload(0x40)
+            mstore(mPtr, mload(a1))
+            mstore(add(mPtr, 0x20), mload(add(a1, 0x20)))
+            mstore(add(mPtr, 0x40), mload(a2))
+            mstore(add(mPtr, 0x60), mload(add(a2, 0x20)))
+            mstore(add(mPtr, 0x80), mload(add(a2, 0x40)))
+            mstore(add(mPtr, 0xa0), mload(add(a2, 0x60)))
+
+            mstore(add(mPtr, 0xc0), mload(b1))
+            mstore(add(mPtr, 0xe0), mload(add(b1, 0x20)))
+            mstore(add(mPtr, 0x100), mload(b2))
+            mstore(add(mPtr, 0x120), mload(add(b2, 0x20)))
+            mstore(add(mPtr, 0x140), mload(add(b2, 0x40)))
+            mstore(add(mPtr, 0x160), mload(add(b2, 0x60)))
+
+            mstore(add(mPtr, 0x180), mload(c1))
+            mstore(add(mPtr, 0x1a0), mload(add(c1, 0x20)))
+            mstore(add(mPtr, 0x1c0), mload(c2))
+            mstore(add(mPtr, 0x1e0), mload(add(c2, 0x20)))
+            mstore(add(mPtr, 0x200), mload(add(c2, 0x40)))
+            mstore(add(mPtr, 0x220), mload(add(c2, 0x60)))
+
+            success := staticcall(gas(), 8, mPtr, 0x240, 0x00, 0x20)
+            out := mload(0x00)
+        }
+        require(success, "Bn254: Pairing check failed!");
+        return (out != 0);
     }
 }
