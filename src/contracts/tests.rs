@@ -1,6 +1,7 @@
 use ark_ec::AffineCurve;
 use ark_ec::PairingEngine;
 use ark_ec::ProjectiveCurve;
+use ark_ff::BigInteger256;
 use ark_ff::Field;
 use ark_ff::One;
 use ark_ff::Zero;
@@ -39,6 +40,11 @@ pub fn f_to_u256<F: PrimeField>(
     U256::from_little_endian(&b_as_arr)
 }
 
+// pub fn from_u256<F: PrimeField>(x: U256) {
+//     let bytes = x.0;
+//     let f: F = F::from_le_bytes_mod_order(bytes)
+// }
+
 pub fn formate_g1(pt: G1Affine) -> [U256; 2] {
     [
         f_to_u256(pt.x),
@@ -49,14 +55,28 @@ pub fn formate_g1(pt: G1Affine) -> [U256; 2] {
 pub fn formate_g2(pt: G2Affine) -> [[U256; 2]; 2] {
     [
         [
-            f_to_u256(pt.x.c0),
-            f_to_u256(pt.x.c1)
+            f_to_u256(pt.x.c1),
+            f_to_u256(pt.x.c0)
         ], 
         [
-            f_to_u256(pt.y.c0),
-            f_to_u256(pt.y.c1)
+            f_to_u256(pt.y.c1),
+            f_to_u256(pt.y.c0)
         ]
     ]
+}
+
+#[test]
+pub async fn test_u256_conversion() {
+    let mut rng = test_rng(); 
+
+    let f = Fr::rand(&mut rng); 
+    let f_converted = f_to_u256(f);
+
+    let repr = f.into_repr().0;
+    assert_eq!(f_converted.0, repr);
+
+    let f_back = Fr::from_repr(BigInteger256::new(f_converted.0)).unwrap();
+    assert_eq!(f_back, f);
 }
 
 #[test]
@@ -237,7 +257,7 @@ pub async fn test_pairing() {
 
     let lagrange_comms = commit_to_lagrange_bases::<Bn254>(domain_size, &srs_g1);
 
-    let mut acc = Accumulator::<Bn254>::new(zero, &lagrange_comms);
+    let acc = Accumulator::<Bn254>::new(zero, &lagrange_comms);
 
     let empty_accumulator_x = f_to_u256::<Fq>(acc.point.x);
     let empty_accumulator_y = f_to_u256::<Fq>(acc.point.y);
@@ -306,7 +326,7 @@ pub async fn test_pairing() {
     .call()
     .await.unwrap();
 
-    println!("res: {}", result);
+    assert!(result);
 
     drop(anvil);
 }

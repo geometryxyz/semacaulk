@@ -15,6 +15,7 @@ contract BN254 {
         uint256 y;
     }
 
+    // G2 group element where x \in Fp2 = x0 * z + x1
     struct G2Point {
         uint256 x0;
         uint256 x1;
