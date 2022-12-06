@@ -1,10 +1,17 @@
+use ark_ec::AffineCurve;
+use ark_ec::PairingEngine;
+use ark_ec::ProjectiveCurve;
+use ark_ff::Field;
+use ark_ff::One;
+use ark_ff::Zero;
+use semaphore::protocol::G1;
 use tokio::test;
 use ethers::core::utils::keccak256;
 use ethers::core::utils::hex;
 use ethers::providers::{Provider, Http};
 use ethers::contract::abigen;
 use ark_std::{rand::rngs::StdRng, test_rng};
-use ark_bn254::{Bn254, Fr, Fq};
+use ark_bn254::{Bn254, Fr, Fq, G1Affine, G2Affine, Fq12};
 use ark_ff::{PrimeField, UniformRand};
 use crate::kzg::unsafe_setup_g1;
 use crate::{
@@ -30,6 +37,26 @@ pub fn f_to_u256<F: PrimeField>(
     let _ = val.write(&mut b);
     let b_as_arr: [u8; 32] = b.try_into().unwrap();
     U256::from_little_endian(&b_as_arr)
+}
+
+pub fn formate_g1(pt: G1Affine) -> [U256; 2] {
+    [
+        f_to_u256(pt.x),
+        f_to_u256(pt.y)
+    ]
+}
+
+pub fn formate_g2(pt: G2Affine) -> [[U256; 2]; 2] {
+    [
+        [
+            f_to_u256(pt.x.c0),
+            f_to_u256(pt.x.c1)
+        ], 
+        [
+            f_to_u256(pt.y.c0),
+            f_to_u256(pt.y.c1)
+        ]
+    ]
 }
 
 #[test]
@@ -180,6 +207,106 @@ pub async fn test_semacaulk_insert() {
         assert_eq!(f_to_u256(acc.point.x), onchain_point.x);
         assert_eq!(f_to_u256(acc.point.y), onchain_point.y);
     }
+
+    drop(anvil);
+}
+
+#[tokio::test]
+pub async fn test_pairing() {
+    abigen!(Semacaulk, "./src/contracts/out/Semacaulk.sol/Semacaulk.json",);
+
+    // Launch anvil
+    let anvil = Anvil::new().spawn();
+
+    // Instantiate the wallet
+    let wallet: LocalWallet = anvil.keys()[0].clone().into();
+
+    // Connect to the network
+    let provider =
+        Provider::<Http>::try_from(anvil.endpoint()).unwrap().interval(Duration::from_millis(10u64));
+
+    // Instantiate the client with the wallet
+    let client = Arc::new(SignerMiddleware::new(provider, wallet.with_chain_id(anvil.chain_id())));
+
+    // Construct the tree of commitments to the Lagrange bases
+    let domain_size = 8;
+    let mut rng = test_rng();
+
+    let zero = compute_zero_leaf::<Fr>();
+    let srs_g1 = unsafe_setup_g1::<Bn254, StdRng>(domain_size, &mut rng);
+
+    let lagrange_comms = commit_to_lagrange_bases::<Bn254>(domain_size, &srs_g1);
+
+    let mut acc = Accumulator::<Bn254>::new(zero, &lagrange_comms);
+
+    let empty_accumulator_x = f_to_u256::<Fq>(acc.point.x);
+    let empty_accumulator_y = f_to_u256::<Fq>(acc.point.y);
+
+    let tree = compute_lagrange_tree::<Bn254>(&lagrange_comms);
+    let root = tree.root();
+    
+    // Deploy contract
+    let semacaulk_contract = Semacaulk::deploy(
+        client,
+        (
+            root,
+            empty_accumulator_x,
+            empty_accumulator_y,
+        )
+    ).unwrap()
+    .send()
+    .await
+    .unwrap();
+
+    /*
+        Pairing tests that: e(-a1, a2).e(b1, b2).e(c2, c3) == 1
+    */
+
+    let mut rng = test_rng();
+    let a2 = Fr::rand(&mut rng);
+
+    let b1 = Fr::rand(&mut rng);
+    let b2 = Fr::rand(&mut rng);
+
+    let c1 = Fr::rand(&mut rng);
+    let c2 = Fr::rand(&mut rng);
+
+    let a1 = (b1 * b2 + c1 * c2) * a2.inverse().unwrap();
+
+    // Sanity 1
+    assert_eq!(-a1 * a2 + b1 * b2 + c1 * c2, Fr::zero());
+
+    let g1 = G1Affine::prime_subgroup_generator();
+    let g2 = G2Affine::prime_subgroup_generator();
+
+    let a1 = g1.mul(-a1).into_affine();
+    let a2 = g2.mul(a2).into_affine();
+    let b1 = g1.mul(b1).into_affine();
+    let b2 = g2.mul(b2).into_affine();
+    let c1 = g1.mul(c1).into_affine();
+    let c2 = g2.mul(c2).into_affine();
+
+    let res = Bn254::product_of_pairings(&[
+        (a1.into(), a2.into()), 
+        (b1.into(), b2.into()), 
+        (c1.into(), c2.into())
+    ]);
+
+    // Sanity 2
+    assert_eq!(res, Fq12::one());
+
+    let result: bool = semacaulk_contract.verify_proof(
+        formate_g1(a1),
+        formate_g2(a2),
+        formate_g1(b1),
+        formate_g2(b2),
+        formate_g1(c1),
+        formate_g2(c2),
+    )
+    .call()
+    .await.unwrap();
+
+    println!("res: {}", result);
 
     drop(anvil);
 }
