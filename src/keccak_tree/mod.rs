@@ -1,6 +1,6 @@
+use ethers::core::utils::keccak256;
 use semaphore::merkle_tree::{Hasher, MerkleTree, Proof};
 use serde::{Deserialize, Serialize};
-use ethers::core::utils::keccak256;
 
 #[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Keccak256;
@@ -34,7 +34,6 @@ pub fn flatten_proof(proof: &KeccakMerkleProof) -> Vec<[u8; 32]> {
     }
     result
 }
-
 
 #[cfg(test)]
 mod tests {

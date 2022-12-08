@@ -60,8 +60,10 @@ mod caulk_plus_tests {
 
     use ark_bn254::{Bn254, Fr as F};
     use ark_ec::ProjectiveCurve;
-    use ark_poly::{GeneralEvaluationDomain, EvaluationDomain, univariate::DensePolynomial, UVPolynomial};
     use ark_ff::{to_bytes, Field};
+    use ark_poly::{
+        univariate::DensePolynomial, EvaluationDomain, GeneralEvaluationDomain, UVPolynomial,
+    };
     use ark_std::{rand::rngs::StdRng, test_rng};
     use rand_chacha::ChaChaRng;
     use sha3::Keccak256;

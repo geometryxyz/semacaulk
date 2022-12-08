@@ -3,6 +3,8 @@ pragma solidity ^0.8.13;
 
 import { KeccakMT } from "./KeccakMT.sol";
 import { BN254 } from "./BN254.sol";
+import { TranscriptLibrary } from "./Transcrip.sol";
+import { Types } from "./Types.sol";
 
 contract Semacaulk is KeccakMT, BN254 {
     bytes32 public lagrangeTreeRoot;
@@ -26,6 +28,9 @@ contract Semacaulk is KeccakMT, BN254 {
      */
     uint256 NOTHING_UP_MY_SLEEVE_ZERO = 
         uint256(keccak256(abi.encodePacked('Semacaulk'))) % PRIME_R;
+
+    // TranscriptLibrary.Transcript memory transcript = TranscriptLibrary.new_transcript(
+    // );
 
     // Custom errors
     error RootMismatch(bytes32 _generatedRoot);
@@ -77,7 +82,21 @@ contract Semacaulk is KeccakMT, BN254 {
         currentIndex += 1;
     }
 
-  /// @dev Temporary function that invokes pairing check
+    function verifyTranscript() public pure returns(uint256) {
+        TranscriptLibrary.Transcript memory transcript = TranscriptLibrary.new_transcript();
+
+        uint256 u1 = 100; 
+
+        TranscriptLibrary.update_with_u256(transcript, u1);
+
+        Types.G1Point memory pt = Types.G1Point(1, 2);
+
+        TranscriptLibrary.update_with_g1(transcript, pt);
+
+        return TranscriptLibrary.get_challenge(transcript);
+    }
+
+    /// @dev Temporary function that invokes pairing check
     function verifyProof(
         uint[2] memory a1,
         uint[2][2] memory a2,
