@@ -1,13 +1,13 @@
-use serde::{Deserialize, Serialize};
-use ark_ec::{PairingEngine, AffineCurve, ProjectiveCurve};
+use crate::keccak_tree::KeccakTree;
+use crate::kzg::commit;
+use crate::utils::construct_lagrange_basis;
+use ark_ec::{AffineCurve, PairingEngine, ProjectiveCurve};
 use ark_ff::{PrimeField, ToBytes};
 use ark_poly::{EvaluationDomain, GeneralEvaluationDomain};
-use std::ops::Add;
 use ethers::core::utils::keccak256;
 use ethers::types::U256;
-use crate::keccak_tree::KeccakTree;
-use crate::utils::construct_lagrange_basis;
-use crate::kzg::commit;
+use serde::{Deserialize, Serialize};
+use std::ops::Add;
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct Accumulator<E: PairingEngine> {
@@ -30,10 +30,7 @@ pub fn compute_empty_accumulator<E: PairingEngine>(
 }
 
 impl<E: PairingEngine> Accumulator<E> {
-    pub fn new(
-        zero: E::Fr,
-        lagrange_comms: &Vec<E::G1Affine>,
-    ) -> Self {
+    pub fn new(zero: E::Fr, lagrange_comms: &Vec<E::G1Affine>) -> Self {
         let point = compute_empty_accumulator::<E>(zero, &lagrange_comms);
 
         Self {
@@ -43,11 +40,7 @@ impl<E: PairingEngine> Accumulator<E> {
         }
     }
 
-    pub fn update(
-        &mut self,
-        index: usize,
-        value: E::Fr,
-    ) {
+    pub fn update(&mut self, index: usize, value: E::Fr) {
         assert_eq!(index < self.lagrange_comms.len(), true);
 
         // C - (v - zero) * li_comm
@@ -77,7 +70,8 @@ pub fn compute_zero_leaf<F: PrimeField>() -> F {
 
     // the hash of "Semacaulk" % field order
     let hash = U256::from_big_endian(hash_bytes.as_slice())
-        .div_mod(f_modulus_as_u256::<F>()).1;
+        .div_mod(f_modulus_as_u256::<F>())
+        .1;
 
     let mut z = [0u8; 32];
     hash.to_big_endian(&mut z);
@@ -106,9 +100,7 @@ pub fn commit_to_lagrange_bases<E: PairingEngine>(
 }
 
 // Hash the X and Y values of a vector of Lagrange commitments, and insert them into a tree.
-pub fn compute_lagrange_tree<E: PairingEngine>(
-    lagrange_comms: &Vec<E::G1Affine>,
-) -> KeccakTree {
+pub fn compute_lagrange_tree<E: PairingEngine>(lagrange_comms: &Vec<E::G1Affine>) -> KeccakTree {
     let mut pow = 1u32;
     let target = lagrange_comms.len() as u64;
     while 2u64.pow(pow) < target {
@@ -147,17 +139,12 @@ pub fn compute_lagrange_tree<E: PairingEngine>(
 #[cfg(test)]
 mod tests {
     use super::{
-        Accumulator,
-        compute_zero_leaf,
-        commit_to_lagrange_bases,
-        compute_empty_accumulator,
+        commit_to_lagrange_bases, compute_empty_accumulator, compute_zero_leaf, Accumulator,
     };
-    use crate::{
-        kzg::unsafe_setup_g1,
-    };
+    use crate::kzg::unsafe_setup_g1;
     use ark_bn254::{Bn254, Fr};
-    use ark_std::{rand::rngs::StdRng, test_rng};
     use ark_ff::ToBytes;
+    use ark_std::{rand::rngs::StdRng, test_rng};
 
     #[test]
     pub fn test_compute_zero_leaf() {
@@ -166,15 +153,18 @@ mod tests {
         let _ = zero.write(&mut z);
 
         /*
-             To reproduce this value, run the following in a JS console:
-             e = require('ethers')
-             (
-                 BigInt(e.utils.solidityKeccak256(['string'], ['Semacaulk'])) %
-                     BigInt('21888242871839275222246405745257275088548364400416034343698204186575808495617')
-             ).toString(16)
-         */
+            To reproduce this value, run the following in a JS console:
+            e = require('ethers')
+            (
+                BigInt(e.utils.solidityKeccak256(['string'], ['Semacaulk'])) %
+                    BigInt('21888242871839275222246405745257275088548364400416034343698204186575808495617')
+            ).toString(16)
+        */
 
-        assert_eq!(hex::encode(z), "251a679ce76f71008e8f811649361985e499a17da6411eef0ba206cd72b3771f");
+        assert_eq!(
+            hex::encode(z),
+            "251a679ce76f71008e8f811649361985e499a17da6411eef0ba206cd72b3771f"
+        );
     }
 
     #[test]
