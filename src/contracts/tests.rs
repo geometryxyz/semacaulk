@@ -364,7 +364,7 @@ pub async fn test_transcript() {
             .unwrap();
 
 
-    let challenge_from_contract = semacaulk_contract.verify_transcript()
+    let (ch_contract_1, ch_contract_2) = semacaulk_contract.verify_transcript()
     .call()
     .await
     .unwrap();
@@ -377,8 +377,14 @@ pub async fn test_transcript() {
     let g1 = G1Affine::prime_subgroup_generator();
     transcript.update_with_g1(g1);
 
-    let challenge = transcript.get_challenge();
+    let challenge_1 = transcript.get_challenge();
 
-    assert_eq!(challenge_from_contract, challenge);
+    let u2 = Fr::from(200);
+    transcript.update_with_u256(u2);
 
+    let challenge_2 = transcript.get_challenge();
+
+
+    assert_eq!(ch_contract_1, challenge_1);
+    assert_eq!(ch_contract_2, challenge_2);
 }

@@ -82,18 +82,23 @@ contract Semacaulk is KeccakMT, BN254 {
         currentIndex += 1;
     }
 
-    function verifyTranscript() public pure returns(uint256) {
+    function verifyTranscript() public pure returns(uint256, uint256) {
         TranscriptLibrary.Transcript memory transcript = TranscriptLibrary.new_transcript();
 
         uint256 u1 = 100; 
-
         TranscriptLibrary.update_with_u256(transcript, u1);
 
         Types.G1Point memory pt = Types.G1Point(1, 2);
-
         TranscriptLibrary.update_with_g1(transcript, pt);
 
-        return TranscriptLibrary.get_challenge(transcript);
+        uint256 challenge_1 =  TranscriptLibrary.get_challenge(transcript);
+
+        uint256 u2 = 200; 
+        TranscriptLibrary.update_with_u256(transcript, u2);
+
+        uint256 challenge_2 =  TranscriptLibrary.get_challenge(transcript);
+
+        return (challenge_1, challenge_2);
     }
 
     /// @dev Temporary function that invokes pairing check
