@@ -19,15 +19,49 @@ use ark_ff::{PrimeField, UniformRand};
 use ark_std::{rand::rngs::StdRng, test_rng};
 use ethers::contract::abigen;
 use ethers::core::types::U256;
-use ethers::core::utils::hex;
-use ethers::core::utils::keccak256;
+use ethers::core::utils::{hex, keccak256};
+use ethers::core::k256::ecdsa::SigningKey;
+use ethers::utils::AnvilInstance;
+use ethers::middleware::SignerMiddleware;
 use ethers::providers::{Http, Provider};
 use ethers::{prelude::*, utils::Anvil};
-use semaphore::protocol::G1;
 use std::{convert::TryFrom, sync::Arc, time::Duration};
 use tokio::test;
 
-//  TODO: create util function for generating semacaulk contract 
+abigen!(KeccackMT, "./src/contracts/out/KeccakMT.sol/KeccakMT.json",);
+abigen!(
+    Semacaulk,
+    "./src/contracts/out/Semacaulk.sol/Semacaulk.json",
+);
+
+type EthersClient = Arc<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>>;
+type SemacaulkContract = semacaulk::Semacaulk<SignerMiddleware<ethers::providers::Provider<Http>, ethers::signers::Wallet<ethers::core::k256::ecdsa::SigningKey>>>;
+
+pub async fn setup_eth_backend() ->
+    (
+        AnvilInstance,
+        EthersClient,
+    )
+        {
+    // Launch anvil
+    let anvil = Anvil::new().spawn();
+
+    // Instantiate the wallet
+    let wallet: LocalWallet = anvil.keys()[0].clone().into();
+
+    // Connect to the network
+    let provider = Provider::<Http>::try_from(anvil.endpoint())
+        .unwrap()
+        .interval(Duration::from_millis(10u64));
+
+    // Instantiate the client with the wallet
+    let client = Arc::new(SignerMiddleware::new(
+        provider,
+        wallet.with_chain_id(anvil.chain_id()),
+    ));
+
+    (anvil, client)
+}
 
 #[test]
 pub async fn test_u256_conversion() {
@@ -65,24 +99,9 @@ pub async fn test_keccak_256() {
 
 #[tokio::test]
 pub async fn test_keccak_mt() {
-    abigen!(KeccackMT, "./src/contracts/out/KeccakMT.sol/KeccakMT.json",);
-
-    // Launch anvil
-    let anvil = Anvil::new().spawn();
-
-    // Instantiate the wallet
-    let wallet: LocalWallet = anvil.keys()[0].clone().into();
-
-    // Connect to the network
-    let provider = Provider::<Http>::try_from(anvil.endpoint())
-        .unwrap()
-        .interval(Duration::from_millis(10u64));
-
-    // Instantiate the client with the wallet
-    let client = Arc::new(SignerMiddleware::new(
-        provider,
-        wallet.with_chain_id(anvil.chain_id()),
-    ));
+    let eth_backend = setup_eth_backend().await;
+    let anvil = eth_backend.0;
+    let client = eth_backend.1;
 
     // Deploy contract
     let keccak_mt_contract = KeccackMT::deploy(client, ()).unwrap().send().await.unwrap();
@@ -114,45 +133,26 @@ pub async fn test_keccak_mt() {
     drop(anvil);
 }
 
-#[tokio::test]
-pub async fn test_semacaulk_insert() {
-    abigen!(
-        Semacaulk,
-        "./src/contracts/out/Semacaulk.sol/Semacaulk.json",
-    );
-
-    // Launch anvil
-    let anvil = Anvil::new().spawn();
-
-    // Instantiate the wallet
-    let wallet: LocalWallet = anvil.keys()[0].clone().into();
-
-    // Connect to the network
-    let provider = Provider::<Http>::try_from(anvil.endpoint())
-        //Provider::<Http>::try_from("http://localhost:8545")
-        .unwrap()
-        .interval(Duration::from_millis(10u64));
-
-    // Instantiate the client with the wallet
-    let client = Arc::new(SignerMiddleware::new(
-        provider,
-        wallet.with_chain_id(anvil.chain_id()),
-    ));
-
-    // Construct the tree of commitments to the Lagrange bases
-    let domain_size = 8;
-    let mut rng = test_rng();
+pub async fn deploy_semacaulk(
+    domain_size: usize,
+    rng: &mut StdRng,
+    client: EthersClient,
+) -> (
+        SemacaulkContract,
+        Accumulator::<Bn254>,
+    ) {
 
     let zero = compute_zero_leaf::<Fr>();
-    let srs_g1 = unsafe_setup_g1::<Bn254, StdRng>(domain_size, &mut rng);
+    let srs_g1 = unsafe_setup_g1::<Bn254, StdRng>(domain_size, rng);
 
     let lagrange_comms = commit_to_lagrange_bases::<Bn254>(domain_size, &srs_g1);
 
-    let mut acc = Accumulator::<Bn254>::new(zero, &lagrange_comms);
+    let acc = Accumulator::<Bn254>::new(zero, &lagrange_comms);
 
     let empty_accumulator_x = f_to_u256::<Fq>(acc.point.x);
     let empty_accumulator_y = f_to_u256::<Fq>(acc.point.y);
 
+    // Construct the tree of commitments to the Lagrange bases
     let tree = compute_lagrange_tree::<Bn254>(&lagrange_comms);
     let root = tree.root();
 
@@ -164,11 +164,29 @@ pub async fn test_semacaulk_insert() {
             .await
             .unwrap();
 
+    (semacaulk_contract, acc)
+}
+
+#[tokio::test]
+pub async fn test_semacaulk_insert() {
+    let eth_backend = setup_eth_backend().await;
+    let anvil = eth_backend.0;
+    let client = eth_backend.1;
+
+    let domain_size = 8;
+    let mut rng = test_rng();
+
+    let semacaulk_contract_and_acc = deploy_semacaulk(domain_size, &mut rng, client).await;
+    let semacaulk_contract = semacaulk_contract_and_acc.0;
+    let mut acc = semacaulk_contract_and_acc.1;
+
+    let tree = compute_lagrange_tree::<Bn254>(&acc.lagrange_comms);
+
     for index in 0..tree.num_leaves() {
         let proof = tree.proof(index).unwrap();
         let flattened_proof = flatten_proof(&proof);
 
-        let l_i = &lagrange_comms[index];
+        let l_i = acc.lagrange_comms[index];
         let l_i_x = f_to_u256(l_i.x);
         let l_i_y = f_to_u256(l_i.y);
 
@@ -212,58 +230,18 @@ pub async fn test_semacaulk_insert() {
 
 #[tokio::test]
 pub async fn test_pairing() {
-    abigen!(
-        Semacaulk,
-        "./src/contracts/out/Semacaulk.sol/Semacaulk.json",
-    );
+    let eth_backend = setup_eth_backend().await;
+    let anvil = eth_backend.0;
+    let client = eth_backend.1;
 
-    // Launch anvil
-    let anvil = Anvil::new().spawn();
-
-    // Instantiate the wallet
-    let wallet: LocalWallet = anvil.keys()[0].clone().into();
-
-    // Connect to the network
-    let provider = Provider::<Http>::try_from(anvil.endpoint())
-        .unwrap()
-        .interval(Duration::from_millis(10u64));
-
-    // Instantiate the client with the wallet
-    let client = Arc::new(SignerMiddleware::new(
-        provider,
-        wallet.with_chain_id(anvil.chain_id()),
-    ));
-
-    // Construct the tree of commitments to the Lagrange bases
     let domain_size = 8;
     let mut rng = test_rng();
 
-    let zero = compute_zero_leaf::<Fr>();
-    let srs_g1 = unsafe_setup_g1::<Bn254, StdRng>(domain_size, &mut rng);
+    let semacaulk_contract_and_acc = deploy_semacaulk(domain_size, &mut rng, client).await;
+    let semacaulk_contract = semacaulk_contract_and_acc.0;
 
-    let lagrange_comms = commit_to_lagrange_bases::<Bn254>(domain_size, &srs_g1);
+    // Pairing tests that: e(-a1, a2) * e(b1, b2) * e(c2, c3) == 1
 
-    let acc = Accumulator::<Bn254>::new(zero, &lagrange_comms);
-
-    let empty_accumulator_x = f_to_u256::<Fq>(acc.point.x);
-    let empty_accumulator_y = f_to_u256::<Fq>(acc.point.y);
-
-    let tree = compute_lagrange_tree::<Bn254>(&lagrange_comms);
-    let root = tree.root();
-
-    // Deploy contract
-    let semacaulk_contract =
-        Semacaulk::deploy(client, (root, empty_accumulator_x, empty_accumulator_y))
-            .unwrap()
-            .send()
-            .await
-            .unwrap();
-
-    /*
-        Pairing tests that: e(-a1, a2).e(b1, b2).e(c2, c3) == 1
-    */
-
-    let mut rng = test_rng();
     let a2 = Fr::rand(&mut rng);
 
     let b1 = Fr::rand(&mut rng);
@@ -316,53 +294,15 @@ pub async fn test_pairing() {
 
 #[tokio::test]
 pub async fn test_transcript() {
-    abigen!(
-        Semacaulk,
-        "./src/contracts/out/Semacaulk.sol/Semacaulk.json",
-    );
+    let eth_backend = setup_eth_backend().await;
+    let anvil = eth_backend.0;
+    let client = eth_backend.1;
 
-    // Launch anvil
-    let anvil = Anvil::new().spawn();
-
-    // Instantiate the wallet
-    let wallet: LocalWallet = anvil.keys()[0].clone().into();
-
-    // Connect to the network
-    let provider = Provider::<Http>::try_from(anvil.endpoint())
-        .unwrap()
-        .interval(Duration::from_millis(10u64));
-
-    // Instantiate the client with the wallet
-    let client = Arc::new(SignerMiddleware::new(
-        provider,
-        wallet.with_chain_id(anvil.chain_id()),
-    ));
-
-    // Construct the tree of commitments to the Lagrange bases
     let domain_size = 8;
     let mut rng = test_rng();
 
-    let zero = compute_zero_leaf::<Fr>();
-    let srs_g1 = unsafe_setup_g1::<Bn254, StdRng>(domain_size, &mut rng);
-
-    let lagrange_comms = commit_to_lagrange_bases::<Bn254>(domain_size, &srs_g1);
-
-    let acc = Accumulator::<Bn254>::new(zero, &lagrange_comms);
-
-    let empty_accumulator_x = f_to_u256::<Fq>(acc.point.x);
-    let empty_accumulator_y = f_to_u256::<Fq>(acc.point.y);
-
-    let tree = compute_lagrange_tree::<Bn254>(&lagrange_comms);
-    let root = tree.root();
-
-    // Deploy contract
-    let semacaulk_contract =
-        Semacaulk::deploy(client, (root, empty_accumulator_x, empty_accumulator_y))
-            .unwrap()
-            .send()
-            .await
-            .unwrap();
-
+    let semacaulk_contract_and_acc = deploy_semacaulk(domain_size, &mut rng, client).await;
+    let semacaulk_contract = semacaulk_contract_and_acc.0;
 
     let (ch_contract_1, ch_contract_2) = semacaulk_contract.verify_transcript()
     .call()
@@ -386,4 +326,6 @@ pub async fn test_transcript() {
 
     assert_eq!(ch_contract_1, challenge_1);
     assert_eq!(ch_contract_2, challenge_2);
+
+    drop(anvil);
 }
