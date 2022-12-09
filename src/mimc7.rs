@@ -8,7 +8,7 @@ pub fn compute_round_digests<F: PrimeField>(
     c_evals: &Vec<F>,
     n_rounds: usize,
 ) -> Vec<F> {
-    // The first
+    // The first constant should be 0
     assert_eq!(c_evals[0], F::zero());
 
     let mut round_digests = vec![];
