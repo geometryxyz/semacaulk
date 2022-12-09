@@ -9,7 +9,7 @@ import { Types } from "./Types.sol";
 contract Semacaulk is KeccakMT, BN254 {
     bytes32 public lagrangeTreeRoot;
     uint256 currentIndex;
-    G1Point accumulator;
+    Types.G1Point accumulator;
 
     /*
      * By setting the value of unset (empty) tree leaves to this
@@ -44,7 +44,7 @@ contract Semacaulk is KeccakMT, BN254 {
         lagrangeTreeRoot = _lagrangeTreeRoot;
 
         // TODO: validate the point
-        accumulator = G1Point(_accumulatorX, _accumulatorY);
+        accumulator = Types.G1Point(_accumulatorX, _accumulatorY);
     }
 
     function insertIdentity(
@@ -71,9 +71,9 @@ contract Semacaulk is KeccakMT, BN254 {
         uint256 negZero = mulmod(NOTHING_UP_MY_SLEEVE_ZERO, n - 1, n);
         uint256 vMinusZero = addmod(_identityCommitment, negZero, n);
 
-        G1Point memory l = G1Point(_lagrangeLeafX, _lagrangeLeafY);
+        Types.G1Point memory l = Types.G1Point(_lagrangeLeafX, _lagrangeLeafY);
 
-        G1Point memory newPoint = mul(l, vMinusZero);
+        Types.G1Point memory newPoint = mul(l, vMinusZero);
 
         // 3. Update the accumulator
         accumulator = plus(accumulator, newPoint);
@@ -110,14 +110,14 @@ contract Semacaulk is KeccakMT, BN254 {
         uint[2] memory c1,
         uint[2][2] memory c2
     ) public view returns (bool) {
-        G1Point memory A1 = G1Point(a1[0], a1[1]);
-        G2Point memory A2 = G2Point(a2[0][0], a2[0][1], a2[1][0], a2[1][1]);
+        Types.G1Point memory A1 = Types.G1Point(a1[0], a1[1]);
+        Types.G2Point memory A2 = Types.G2Point(a2[0][0], a2[0][1], a2[1][0], a2[1][1]);
 
-        G1Point memory B1 = G1Point(b1[0], b1[1]);
-        G2Point memory B2 = G2Point(b2[0][0], b2[0][1], b2[1][0], b2[1][1]);
+        Types.G1Point memory B1 = Types.G1Point(b1[0], b1[1]);
+        Types.G2Point memory B2 = Types.G2Point(b2[0][0], b2[0][1], b2[1][0], b2[1][1]);
 
-        G1Point memory C1 = G1Point(c1[0], c1[1]);
-        G2Point memory C2 = G2Point(c2[0][0], c2[0][1], c2[1][0], c2[1][1]);
+        Types.G1Point memory C1 = Types.G1Point(c1[0], c1[1]);
+        Types.G2Point memory C2 = Types.G2Point(c2[0][0], c2[0][1], c2[1][0], c2[1][1]);
 
         return caulkPlusPairing(A1, A2, B1, B2, C1, C2);
     }
@@ -130,7 +130,7 @@ contract Semacaulk is KeccakMT, BN254 {
         return currentIndex;
     }
 
-    function getAccumulator() public view returns (G1Point memory) {
+    function getAccumulator() public view returns (Types.G1Point memory) {
         return accumulator;
     }
 }
