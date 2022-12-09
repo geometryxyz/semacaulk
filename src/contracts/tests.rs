@@ -384,7 +384,6 @@ pub async fn test_transcript() {
 
     let challenge_2 = transcript.get_challenge();
 
-
     assert_eq!(ch_contract_1, challenge_1);
     assert_eq!(ch_contract_2, challenge_2);
 }

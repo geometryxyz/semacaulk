@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import { KeccakMT } from "./KeccakMT.sol";
 import { BN254 } from "./BN254.sol";
-import { TranscriptLibrary } from "./Transcrip.sol";
+import { TranscriptLibrary } from "./Transcript.sol";
 import { Types } from "./Types.sol";
 
 contract Semacaulk is KeccakMT, BN254 {
@@ -28,9 +28,6 @@ contract Semacaulk is KeccakMT, BN254 {
      */
     uint256 NOTHING_UP_MY_SLEEVE_ZERO = 
         uint256(keccak256(abi.encodePacked('Semacaulk'))) % PRIME_R;
-
-    // TranscriptLibrary.Transcript memory transcript = TranscriptLibrary.new_transcript(
-    // );
 
     // Custom errors
     error RootMismatch(bytes32 _generatedRoot);
@@ -83,20 +80,20 @@ contract Semacaulk is KeccakMT, BN254 {
     }
 
     function verifyTranscript() public pure returns(uint256, uint256) {
-        TranscriptLibrary.Transcript memory transcript = TranscriptLibrary.new_transcript();
+        TranscriptLibrary.Transcript memory transcript = TranscriptLibrary.newTranscript();
 
         uint256 u1 = 100; 
-        TranscriptLibrary.update_with_u256(transcript, u1);
+        TranscriptLibrary.updateWithU256(transcript, u1);
 
         Types.G1Point memory pt = Types.G1Point(1, 2);
-        TranscriptLibrary.update_with_g1(transcript, pt);
+        TranscriptLibrary.updateWithG1(transcript, pt);
 
-        uint256 challenge_1 =  TranscriptLibrary.get_challenge(transcript);
+        uint256 challenge_1 =  TranscriptLibrary.getChallenge(transcript);
 
         uint256 u2 = 200; 
-        TranscriptLibrary.update_with_u256(transcript, u2);
+        TranscriptLibrary.updateWithU256(transcript, u2);
 
-        uint256 challenge_2 =  TranscriptLibrary.get_challenge(transcript);
+        uint256 challenge_2 =  TranscriptLibrary.getChallenge(transcript);
 
         return (challenge_1, challenge_2);
     }
