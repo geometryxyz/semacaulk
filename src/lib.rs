@@ -5,6 +5,7 @@ pub mod contracts;
 pub mod error;
 pub mod gates;
 pub mod keccak_tree;
+pub mod mimc7;
 pub mod kzg;
 pub mod rng;
 pub mod transcript;
