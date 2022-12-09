@@ -6,8 +6,8 @@ use crate::gates::gate_sanity_checks::{
     gate_8_nullifier_hash_col as gate_8_nullifier_hash_col_check, gate_9 as gate_9_check,
     mimc as mimc_check,
 };
-use crate::mimc7::{compute_round_digests, Mimc7};
 use crate::gates::utils::{fill_blinds, fill_dummy, fill_zeroes};
+use crate::mimc7::{compute_round_digests, Mimc7};
 use ark_bn254::Fr as F;
 use ark_ff::{field_new, One, PrimeField, Zero};
 use ark_std::test_rng;

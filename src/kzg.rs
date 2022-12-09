@@ -1,4 +1,4 @@
-use ark_ec::{msm::VariableBaseMSM, AffineCurve, PairingEngine};
+use ark_ec::{bn::G1Affine, msm::VariableBaseMSM, AffineCurve, PairingEngine};
 use ark_ff::{One, PrimeField};
 use ark_poly::{univariate::DensePolynomial, Polynomial, UVPolynomial};
 use ark_std::UniformRand;

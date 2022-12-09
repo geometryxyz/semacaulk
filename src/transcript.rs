@@ -1,11 +1,8 @@
 /*
     Implementation of transcript with keccak256 that is compatible with Transcript.sol
 */
-
-use crate::bn_solidity_utils::f_to_u256;
 use ark_bn254::{Fr, G1Affine};
 use ark_ff::{BigInteger, PrimeField};
-use ethers::types::U256;
 use tiny_keccak::{Hasher, Keccak};
 
 pub struct Transcript {
@@ -29,7 +26,7 @@ impl Transcript {
         self.data.append(&mut x_bytes);
     }
 
-    pub fn update_with_g1(&mut self, pt: G1Affine) {
+    pub fn update_with_g1(&mut self, pt: &G1Affine) {
         let mut x_bytes = pt.x.into_repr().to_bytes_be();
         let mut y_bytes = pt.y.into_repr().to_bytes_be();
 
@@ -37,7 +34,7 @@ impl Transcript {
         self.data.append(&mut y_bytes);
     }
 
-    pub fn get_challenge(&mut self) -> U256 {
+    pub fn get_challenge(&mut self) -> Fr {
         let mut buff = vec![0u8; 32];
         let mut hasher = Keccak::v256();
 
@@ -49,7 +46,8 @@ impl Transcript {
         self.data.clear();
         self.data.append(&mut buff);
 
-        f_to_u256(challenge)
+        // f_to_u256(challenge)
+        challenge
     }
 }
 
@@ -74,6 +72,5 @@ mod test_transcript {
 
         assert_eq!(x_bytes.len(), 32);
         assert_eq!(y_bytes.len(), 32);
-
     }
 }

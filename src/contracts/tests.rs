@@ -18,12 +18,12 @@ use ark_ff::Zero;
 use ark_ff::{PrimeField, UniformRand};
 use ark_std::{rand::rngs::StdRng, test_rng};
 use ethers::contract::abigen;
+use ethers::core::k256::ecdsa::SigningKey;
 use ethers::core::types::U256;
 use ethers::core::utils::{hex, keccak256};
-use ethers::core::k256::ecdsa::SigningKey;
-use ethers::utils::AnvilInstance;
 use ethers::middleware::SignerMiddleware;
 use ethers::providers::{Http, Provider};
+use ethers::utils::AnvilInstance;
 use ethers::{prelude::*, utils::Anvil};
 use std::{convert::TryFrom, sync::Arc, time::Duration};
 use tokio::test;
@@ -35,14 +35,14 @@ abigen!(
 );
 
 type EthersClient = Arc<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>>;
-type SemacaulkContract = semacaulk::Semacaulk<SignerMiddleware<ethers::providers::Provider<Http>, ethers::signers::Wallet<ethers::core::k256::ecdsa::SigningKey>>>;
+type SemacaulkContract = semacaulk::Semacaulk<
+    SignerMiddleware<
+        ethers::providers::Provider<Http>,
+        ethers::signers::Wallet<ethers::core::k256::ecdsa::SigningKey>,
+    >,
+>;
 
-pub async fn setup_eth_backend() ->
-    (
-        AnvilInstance,
-        EthersClient,
-    )
-        {
+pub async fn setup_eth_backend() -> (AnvilInstance, EthersClient) {
     // Launch anvil
     let anvil = Anvil::new().spawn();
 
@@ -137,11 +137,7 @@ pub async fn deploy_semacaulk(
     domain_size: usize,
     rng: &mut StdRng,
     client: EthersClient,
-) -> (
-        SemacaulkContract,
-        Accumulator::<Bn254>,
-    ) {
-
+) -> (SemacaulkContract, Accumulator<Bn254>) {
     let zero = compute_zero_leaf::<Fr>();
     let srs_g1 = unsafe_setup_g1::<Bn254, StdRng>(domain_size, rng);
 
@@ -304,10 +300,8 @@ pub async fn test_transcript() {
     let semacaulk_contract_and_acc = deploy_semacaulk(domain_size, &mut rng, client).await;
     let semacaulk_contract = semacaulk_contract_and_acc.0;
 
-    let (ch_contract_1, ch_contract_2) = semacaulk_contract.verify_transcript()
-    .call()
-    .await
-    .unwrap();
+    let (ch_contract_1, ch_contract_2) =
+        semacaulk_contract.verify_transcript().call().await.unwrap();
 
     let mut transcript = Transcript::new_transcript();
 
@@ -315,7 +309,7 @@ pub async fn test_transcript() {
     transcript.update_with_u256(u1);
 
     let g1 = G1Affine::prime_subgroup_generator();
-    transcript.update_with_g1(g1);
+    transcript.update_with_g1(&g1);
 
     let challenge_1 = transcript.get_challenge();
 
@@ -324,8 +318,8 @@ pub async fn test_transcript() {
 
     let challenge_2 = transcript.get_challenge();
 
-    assert_eq!(ch_contract_1, challenge_1);
-    assert_eq!(ch_contract_2, challenge_2);
+    assert_eq!(ch_contract_1, f_to_u256(challenge_1));
+    assert_eq!(ch_contract_2, f_to_u256(challenge_2));
 
     drop(anvil);
 }

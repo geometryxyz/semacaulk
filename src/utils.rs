@@ -1,5 +1,36 @@
-use ark_ff::{FftField, Field};
-use ark_poly::{univariate::DensePolynomial, UVPolynomial};
+use ark_ff::{FftField, Field, PrimeField};
+use ark_poly::{univariate::DensePolynomial, EvaluationDomain, UVPolynomial};
+
+pub fn positive_rotation_in_coset<F: PrimeField>(
+    coset_evals: &Vec<F>,
+    omega_i: usize,
+    rotation_degree: usize,
+    scaling_ratio: usize,
+) -> F {
+    coset_evals[(omega_i + rotation_degree * scaling_ratio) % coset_evals.len()]
+}
+
+pub fn compute_vanishing_poly_over_coset<F, D>(
+    domain: D,        // domain to evaluate over
+    poly_degree: u64, // degree of the vanishing polynomial
+) -> Vec<F>
+where
+    F: PrimeField,
+    D: EvaluationDomain<F>,
+{
+    assert!(
+        (domain.size() as u64) > poly_degree,
+        "domain_size = {}, poly_degree = {}",
+        domain.size() as u64,
+        poly_degree
+    );
+    let group_gen = domain.element(1);
+    let coset_gen = F::multiplicative_generator().pow(&[poly_degree, 0, 0, 0]);
+    let v_h: Vec<_> = (0..domain.size())
+        .map(|i| (coset_gen * group_gen.pow(&[poly_degree * i as u64, 0, 0, 0])) - F::one())
+        .collect();
+    v_h
+}
 
 pub fn shift_dense_poly<F: Field>(
     p: &DensePolynomial<F>,
