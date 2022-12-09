@@ -6,6 +6,7 @@ use ark_poly::{
     univariate::DensePolynomial, EvaluationDomain, GeneralEvaluationDomain, Polynomial,
     UVPolynomial,
 };
+use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, Read, SerializationError, Write};
 
 use crate::kzg::commit;
 
@@ -15,6 +16,7 @@ use crate::kzg::commit;
    We can precompute all data, but it's very possible that just some indices will be needed,
    so we optimize precomputed data needed to store
 */
+#[derive(CanonicalSerialize, CanonicalDeserialize)]
 pub struct Precomputed<E: PairingEngine> {
     w1_mapping: BTreeMap<usize, E::G2Affine>,
     w2_mapping: BTreeMap<usize, E::G2Affine>,
