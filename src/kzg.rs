@@ -52,6 +52,13 @@ pub fn unsafe_setup<E: PairingEngine, R: RngCore>(
 }
 
 pub fn commit<G: AffineCurve>(srs: &[G], poly: &DensePolynomial<G::ScalarField>) -> G::Projective {
+    if srs.len() - 1 < poly.degree() {
+        panic!(
+            "SRS size to small! Can't commit to polynomial of degree {} with srs of size {}",
+            poly.degree(),
+            srs.len()
+        );
+    }
     let coeff_scalars: Vec<_> = poly.coeffs.iter().map(|c| c.into_repr()).collect();
     VariableBaseMSM::multi_scalar_mul(&srs, &coeff_scalars)
 }

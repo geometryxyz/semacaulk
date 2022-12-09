@@ -8,7 +8,7 @@ use ark_bn254::{Bn254, Fr};
 use ark_ec::{PairingEngine, ProjectiveCurve};
 use ark_ff::{PrimeField, Zero};
 use ark_poly::{
-    univariate::DensePolynomial, EvaluationDomain, GeneralEvaluationDomain, UVPolynomial,
+    univariate::DensePolynomial, EvaluationDomain, GeneralEvaluationDomain, UVPolynomial, Polynomial,
 };
 
 use crate::{
@@ -57,6 +57,8 @@ impl Prover {
             alpha,
             nullifier,
         );
+
+        println!("quotient degree {}", quotient.degree());
 
         let quotient_cm = commit(&pk.srs_g1, &quotient).into_affine();
         transcirpt.update_with_g1(&quotient_cm);
@@ -240,7 +242,7 @@ mod prover_tests {
         let dummy_value = Fr::from(9999u64);
         let index = ProverPrecomputedData::index(&mimc7.cts, dummy_value);
 
-        let (srs_g1, srs_g2) = unsafe_setup::<Bn254, StdRng>(128, 128, &mut rng);
+        let (srs_g1, srs_g2) = unsafe_setup::<Bn254, StdRng>(900, 128, &mut rng);
         let pk = ProverKey {
             srs_g1, 
             srs_g2
