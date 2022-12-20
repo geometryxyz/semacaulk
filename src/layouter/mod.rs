@@ -107,14 +107,15 @@ impl<F: PrimeField> Layouter<F> {
         x: &mut Vec<F>,
         rng: &mut R
     ) {
-        /*
-            We use N_ROUNDS + 1 rows
-        */
+        // The Vec to blind must have length NUMBER_OF_MIMC_ROUNDS + 1
         assert_eq!(x.len(), NUMBER_OF_MIMC_ROUNDS + 1);
+
+        // Generate random elements
         let mut blinders = (0..SUBGROUP_SIZE - x.len())
             .map(|_| F::rand(rng))
             .collect::<Vec<_>>();
 
+        // Append the random elements to the Vec
         x.append(&mut blinders);
     }
 }
@@ -127,6 +128,7 @@ mod layouter_tests {
 
     use super::Layouter;
     use crate::mimc7::Mimc7;
+    use crate::constants::{NUMBER_OF_MIMC_ROUNDS, SUBGROUP_SIZE};
 
     #[test]
     fn test_mimc_correctness() {
@@ -137,7 +139,6 @@ mod layouter_tests {
 
         let identity_nullifier = Fr::from(100u64);
         let identity_trapdoor = Fr::from(200u64);
-
         let external_nullifier = Fr::from(300u64);
 
         let nullifier = mimc7.hash(identity_nullifier, Fr::zero());
@@ -154,12 +155,37 @@ mod layouter_tests {
             &mut rng,
         );
 
-        assert_eq!(nullifier, assignment.nullifier[n_rounds]); // first round of multi_hash is correct
-                                                               // key is copied correctly
+        // Check the lengths of the rows
+        assert_eq!(assignment.nullifier.len(), SUBGROUP_SIZE);
+        assert_eq!(assignment.key.len(), SUBGROUP_SIZE);
+        assert_eq!(assignment.identity_commitment.len(), SUBGROUP_SIZE);
+        assert_eq!(assignment.external_nullifier.len(), SUBGROUP_SIZE);
+
+        // Check that the first round of the MiMC7 multihash is correct
+        assert_eq!(nullifier, assignment.nullifier[n_rounds]);
+
+        // Check that the key is copied correctly
         assert_eq!(
             assignment.nullifier[n_rounds] + identity_nullifier,
             assignment.key[0]
         );
+
+        // Check that the key column is assigned correctly for the first NUMBER_OF_MIMC_ROUNDS rows
+        for i in 0..(NUMBER_OF_MIMC_ROUNDS) {
+            assert_eq!(
+                assignment.key[i],
+                assignment.key[i + 1],
+            );
+        }
+
+        // Check that the blinds for the columns are applied (this test will fail with very small
+        // probability)
+        for i in (NUMBER_OF_MIMC_ROUNDS + 1)..(SUBGROUP_SIZE - 1) {
+            assert_eq!(assignment.nullifier[i] == assignment.nullifier[i + 1], false);
+            assert_eq!(assignment.key[i] == assignment.key[i + 1], false);
+            assert_eq!(assignment.identity_commitment[i] == assignment.identity_commitment[i + 1], false);
+            assert_eq!(assignment.external_nullifier[i] == assignment.external_nullifier[i + 1], false);
+        }
 
         // Check that the identity commitment is calculated correctly
         assert_eq!(
