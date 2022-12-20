@@ -172,10 +172,10 @@ impl Prover {
             DensePolynomial::from_coefficients_slice(&domain.ifft(&state.assignment.nullifier));
         let key = DensePolynomial::from_coefficients_slice(&domain.ifft(&state.assignment.key));
         let w1 = DensePolynomial::from_coefficients_slice(
-            &domain.ifft(&state.assignment.nullifier_trapdoor),
+            &domain.ifft(&state.assignment.identity_commitment),
         );
         let w2 = DensePolynomial::from_coefficients_slice(
-            &domain.ifft(&state.assignment.nullifier_external),
+            &domain.ifft(&state.assignment.external_nullifier),
         );
 
         let omega_pow_rotation = state.domain_h.element(NUMBER_OF_MIMC_ROUNDS);

@@ -1,9 +1,7 @@
 use std::{iter, marker::PhantomData};
-
 use ark_ff::PrimeField;
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, Read, SerializationError, Write};
 use rand::RngCore;
-
 use crate::constants::{NUMBER_OF_MIMC_ROUNDS, SUBGROUP_SIZE};
 
 /*
@@ -14,8 +12,8 @@ use crate::constants::{NUMBER_OF_MIMC_ROUNDS, SUBGROUP_SIZE};
 pub struct Assignment<F: PrimeField> {
     pub(crate) nullifier: Vec<F>,
     pub(crate) key: Vec<F>,
-    pub(crate) nullifier_trapdoor: Vec<F>,
-    pub(crate) nullifier_external: Vec<F>,
+    pub(crate) identity_commitment: Vec<F>,
+    pub(crate) external_nullifier: Vec<F>,
 }
 
 pub struct Layouter<F: PrimeField> {
@@ -23,65 +21,92 @@ pub struct Layouter<F: PrimeField> {
 }
 
 impl<F: PrimeField> Layouter<F> {
+    /*
+     * Construct the circuit assignment table.
+     * @param identity_nullifier: The identity nullifier.
+     * @param identity_trapdoor: The identity trapdoor.
+     * @param external_nullifier: The external nullifier.
+     * @param c: MiMC7 round constants.
+     * @param rng: The random number generator used for blinding.
+     */
     pub fn assign<R: RngCore>(
         identity_nullifier: F,
         identity_trapdoor: F,
         external_nullifier: F,
-        c: &Vec<F>, // round constants in mimc
+        c: &Vec<F>,
         rng: &mut R,
     ) -> Assignment<F> {
+        // Raises a given field element to the power of 7
         let pow_7 = |x: F| x.pow(&[7, 0, 0, 0]);
 
-        /* Begin assign nullifier  */
-        let mut nullifier = Vec::<F>::with_capacity(SUBGROUP_SIZE);
+        //---------------------------------------------------------------------
+        // Assign the nullifier column
+        let mut nullifier_col = Vec::<F>::with_capacity(SUBGROUP_SIZE);
+        nullifier_col.push(identity_nullifier);
 
-        nullifier.push(pow_7(identity_nullifier + c[0]));
+        // The first round constant should be 0, so we don't have to add it to 
+        // identity_nullifier for the first row.
+        assert_eq!(c[0], F::zero());
+        nullifier_col.push(pow_7(identity_nullifier));
+
         for i in 1..NUMBER_OF_MIMC_ROUNDS {
-            nullifier.push(pow_7(nullifier[i - 1] + c[i]));
+            nullifier_col.push(pow_7(nullifier_col[i] + c[i]));
         }
 
-        nullifier.insert(0, identity_nullifier);
-        Self::blind(&mut nullifier, rng);
-        /* End assign nullifier  */
+        // Fill the remaining rows with random values
+        Self::blind(&mut nullifier_col, rng);
 
-        /* Begin assign key */
-        let mut key = iter::repeat(nullifier[NUMBER_OF_MIMC_ROUNDS] + identity_nullifier)
+        //---------------------------------------------------------------------
+        // Assign the key column
+        let mut key_col = iter::repeat(nullifier_col[NUMBER_OF_MIMC_ROUNDS] + identity_nullifier)
             .take(NUMBER_OF_MIMC_ROUNDS + 1)
             .collect();
-        Self::blind(&mut key, rng);
-        /* End assign key */
+        Self::blind(&mut key_col, rng);
 
-        /* Begin assign nullifier_trapdoor */
-        let mut nullifier_trapdoor = Vec::<F>::with_capacity(SUBGROUP_SIZE);
-        nullifier_trapdoor.push(pow_7(identity_trapdoor + key[0] + c[0]));
+        //---------------------------------------------------------------------
+        // Assign the identity_commitment column
+        let mut identity_commitment_col = Vec::<F>::with_capacity(SUBGROUP_SIZE);
+        identity_commitment_col.push(identity_trapdoor);
+
+        // The first round constant should be 0, so we don't have to add it to 
+        // identity_nullifier for the first row.
+        identity_commitment_col.push(pow_7(identity_trapdoor + key_col[0]));
         for i in 1..NUMBER_OF_MIMC_ROUNDS {
-            nullifier_trapdoor.push(pow_7(nullifier_trapdoor[i - 1] + key[i] + c[i]));
+            identity_commitment_col.push(pow_7(identity_commitment_col[i] + key_col[i] + c[i]));
         }
+        Self::blind(&mut identity_commitment_col, rng);
 
-        nullifier_trapdoor.insert(0, identity_trapdoor);
-        Self::blind(&mut nullifier_trapdoor, rng);
-        /* End assign nullifier_trapdoor */
+        //---------------------------------------------------------------------
+        // Assign the nullifier_external column
+        let mut external_nullifier_col = Vec::<F>::with_capacity(SUBGROUP_SIZE);
+        external_nullifier_col.push(external_nullifier);
 
-        /* Begin assign nullifier_external */
-        let mut nullifier_external = Vec::<F>::with_capacity(SUBGROUP_SIZE);
-        nullifier_external.push(pow_7(external_nullifier + key[0] + c[0]));
+        // The first round constant should be 0, so we don't have to add it to 
+        // identity_nullifier for the first row.
+        external_nullifier_col.push(pow_7(external_nullifier + key_col[0]));
         for i in 1..NUMBER_OF_MIMC_ROUNDS {
-            nullifier_external.push(pow_7(nullifier_external[i - 1] + key[i] + c[i]));
+            external_nullifier_col.push(pow_7(external_nullifier_col[i] + key_col[i] + c[i]));
         }
-
-        nullifier_external.insert(0, external_nullifier);
-        Self::blind(&mut nullifier_external, rng);
-        /* End assign nullifier_external */
+        Self::blind(&mut external_nullifier_col, rng);
 
         Assignment {
-            nullifier,
-            key,
-            nullifier_trapdoor,
-            nullifier_external,
+            nullifier: nullifier_col,
+            key: key_col,
+            identity_commitment: identity_commitment_col,
+            external_nullifier: external_nullifier_col,
         }
     }
 
-    fn blind<R: RngCore>(x: &mut Vec<F>, rng: &mut R) {
+    /*
+     * Given a Vec of field elements (which must be NUMBER_OF_MIMC_ROUNDS + 1 in length), extend it
+     * to SUBGROUP_SIZE elements where the remaining values are random field elements.
+     * @param x: The Vec to extend.
+     * @param rng: The random number generator to use.
+     */
+    fn blind<R: RngCore>(
+        x: &mut Vec<F>,
+        rng: &mut R
+    ) {
         /*
             We use N_ROUNDS + 1 rows
         */
@@ -116,7 +141,7 @@ mod layouter_tests {
         let external_nullifier = Fr::from(300u64);
 
         let nullifier = mimc7.hash(identity_nullifier, Fr::zero());
-        let nullifier_trapdoor =
+        let identity_commitment =
             mimc7.multi_hash(&[identity_nullifier, identity_trapdoor], Fr::zero());
         let nullifier_external =
             mimc7.multi_hash(&[identity_nullifier, external_nullifier], Fr::zero());
@@ -136,18 +161,18 @@ mod layouter_tests {
             assignment.key[0]
         );
 
-        // identity commitment is calculated correctly
+        // Check that the identity commitment is calculated correctly
         assert_eq!(
-            nullifier_trapdoor,
-            assignment.nullifier_trapdoor[n_rounds]
+            identity_commitment,
+            assignment.identity_commitment[n_rounds]
                 + identity_trapdoor
                 + Fr::from(2u64) * assignment.key[0]
         );
 
-        // public nullifier is calculated correctly
+        // Check that the public nullifier is calculated correctly
         assert_eq!(
             nullifier_external,
-            assignment.nullifier_external[n_rounds]
+            assignment.external_nullifier[n_rounds]
                 + external_nullifier
                 + Fr::from(2u64) * assignment.key[0]
         );
