@@ -181,10 +181,10 @@ mod layouter_tests {
         // Check that the blinds for the columns are applied (this test will fail with very small
         // probability)
         for i in (NUMBER_OF_MIMC_ROUNDS + 1)..(SUBGROUP_SIZE - 1) {
-            assert_eq!(assignment.nullifier[i] == assignment.nullifier[i + 1], false);
-            assert_eq!(assignment.key[i] == assignment.key[i + 1], false);
-            assert_eq!(assignment.identity_commitment[i] == assignment.identity_commitment[i + 1], false);
-            assert_eq!(assignment.external_nullifier[i] == assignment.external_nullifier[i + 1], false);
+            assert_ne!(assignment.nullifier[i], assignment.nullifier[i + 1]);
+            assert_ne!(assignment.key[i], assignment.key[i + 1]);
+            assert_ne!(assignment.identity_commitment[i], assignment.identity_commitment[i + 1]);
+            assert_ne!(assignment.external_nullifier[i], assignment.external_nullifier[i + 1]);
         }
 
         // Check that the identity commitment is calculated correctly
