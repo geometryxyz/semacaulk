@@ -1,7 +1,6 @@
 use std::{
     cmp::max,
-    iter::{self, successors},
-    marker::PhantomData,
+    iter::self,
     vec,
 };
 
@@ -127,41 +126,41 @@ impl Prover {
         zk_rng: &mut R,
     ) {
         let mut state = Self::init(pk, witness, assignment, public_input, precomputed);
-        let mut transcirpt = Transcript::new_transcript();
+        let mut transcript = Transcript::new_transcript();
 
         // TODO: append public data
 
         let (w0, key, w1, w2) = Self::assignment_round(&mut state);
 
-        transcirpt.update_with_g1(&w0);
-        transcirpt.update_with_g1(&key);
-        transcirpt.update_with_g1(&w1);
-        transcirpt.update_with_g1(&w2);
+        transcript.update_with_g1(&w0);
+        transcript.update_with_g1(&key);
+        transcript.update_with_g1(&w1);
+        transcript.update_with_g1(&w2);
 
-        let v = transcirpt.get_challenge();
+        let v = transcript.get_challenge();
 
         let quotient = Self::quotient_round(&mut state, v);
 
-        transcirpt.update_with_g1(&quotient);
+        transcript.update_with_g1(&quotient);
 
         let (zi_commitment, ci_commitment, u_commitment) =
             Self::caulk_plus_first_round(&mut state, zk_rng);
 
-        transcirpt.update_with_g1(&zi_commitment);
-        transcirpt.update_with_g1(&ci_commitment);
-        transcirpt.update_with_g1(&u_commitment);
+        transcript.update_with_g1(&zi_commitment);
+        transcript.update_with_g1(&ci_commitment);
+        transcript.update_with_g1(&u_commitment);
 
-        let hi_1 = transcirpt.get_challenge();
-        let hi_2 = transcirpt.get_challenge();
+        let hi_1 = transcript.get_challenge();
+        let hi_2 = transcript.get_challenge();
 
-        let (w_commitment, h_commitment) = Self::caulk_plus_second_round(&mut state, hi_1, hi_2);
+        let (_w_commitment, _h_commitment) = Self::caulk_plus_second_round(&mut state, hi_1, hi_2);
+        //let (w_commitment, h_commitment) = Self::caulk_plus_second_round(&mut state, hi_1, hi_2);
+        // transcript.update_with_g1(&w_commitment);
+        // transcript.update_with_g1(&h_commitment);
 
-        // transcirpt.update_with_g1(&w_commitment);
-        // transcirpt.update_with_g1(&h_commitment);
+        let alpha = transcript.get_challenge();
 
-        let alpha = transcirpt.get_challenge();
-
-        let x = Self::caulk_plus_third_round(&state, hi_1, alpha);
+        let _x = Self::caulk_plus_third_round(&state, hi_1, alpha);
     }
 
     fn assignment_round<E: PairingEngine>(
@@ -173,10 +172,10 @@ impl Prover {
             DensePolynomial::from_coefficients_slice(&domain.ifft(&state.assignment.nullifier));
         let key = DensePolynomial::from_coefficients_slice(&domain.ifft(&state.assignment.key));
         let w1 = DensePolynomial::from_coefficients_slice(
-            &domain.ifft(&state.assignment.nullifier_trapdoor),
+            &domain.ifft(&state.assignment.identity_commitment),
         );
         let w2 = DensePolynomial::from_coefficients_slice(
-            &domain.ifft(&state.assignment.nullifier_external),
+            &domain.ifft(&state.assignment.external_nullifier),
         );
 
         let omega_pow_rotation = state.domain_h.element(NUMBER_OF_MIMC_ROUNDS);
@@ -474,9 +473,9 @@ impl Prover {
 
         // TODO: Open rest of the polynomials
         // 3. Open
-        let (u_eval, u_proof) = open(&state.proving_key.srs_g1, u, alpha);
-        let (p1_eval, p1_proof) = open(&state.proving_key.srs_g1, &p1, u_eval);
-        let (p2_eval, p2_proof) = open(&state.proving_key.srs_g1, &p2, alpha);
+        let (u_eval, _u_proof) = open(&state.proving_key.srs_g1, u, alpha);
+        let (_p1_eval, _p1_proof) = open(&state.proving_key.srs_g1, &p1, u_eval);
+        let (p2_eval, _p2_proof) = open(&state.proving_key.srs_g1, &p2, alpha);
 
         // sanity
         assert_eq!(p2_eval, E::Fr::zero());
@@ -493,10 +492,10 @@ mod prover_tests {
     };
     use ark_std::test_rng;
     use rand::rngs::StdRng;
-    use semaphore::identity;
+    //use semaphore::identity;
 
     use crate::{
-        caulk_plus::precomputed,
+        //caulk_plus::precomputed,
         kzg::{commit, unsafe_setup},
         layouter::Layouter,
         mimc7::Mimc7,
