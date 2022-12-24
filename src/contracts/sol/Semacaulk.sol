@@ -119,6 +119,203 @@ contract Semacaulk is KeccakMT, BN254 {
         return caulkPlusPairing(A1, A2, B1, B2, C1, C2);
     }
 
+    function pow7(
+        uint256 val,
+        uint256 p
+    ) public pure returns (uint256) {
+        uint256 result;
+        uint256 x2;
+        uint256 x4;
+        uint256 x6;
+
+        assembly {
+            // Compute val^7
+            x2 := mulmod(val, val, p)
+            x4 := mulmod(x2, x2, p)
+            x6 := mulmod(x4, x2, p)
+            result := mulmod(x6, val, p)
+        }
+        return result;
+    }
+
+    function idNullifierGateEval(
+        uint256 qMimc,
+        uint256 w0,
+        uint256 c,
+        uint256 w0Gamma
+    ) public pure returns (uint256) {
+        uint256 p = PRIME_R;
+
+        require(w0Gamma < p);
+
+        // Let's say we have a gate defined as a + b = c.
+        // In the full protocol, we'll have polynomial commitments [A], [B],
+        // and [C], a random point x, and opening proofs that A(x) = a, B(x) =
+        // b, and C(x) = c. After the verifier checks that these proofs are
+        // valid, it also needs to check that the gate relation a + b = c is
+        // fulfilled.
+
+        // Note that the gate equations are modulo PRIME_R
+        // TODO: is this correct?
+
+        // For now, we skip the opening proofs and just test the gate relations.
+
+        // Gate 1: q_mimc * ((w_0(X) + c(X)) ^ 7 - w_0(gammaX)) = 0
+        // NOTE FROM WJ: I'm not sure where w0Gamma should come from, but for now let's
+        // just take it as it is.
+
+        uint256 w0_plus_c;
+        uint256 negW0Gamma;
+
+        assembly {
+            // Compute -w0Gamma
+            negW0Gamma := sub(p, w0Gamma)
+
+            // Compute (w0 + c)
+            w0_plus_c := addmod(w0, c, p)
+        }
+
+        // Compute (w0 + c)^7
+        uint256 result = pow7(w0_plus_c, p);
+
+        assembly {
+            // Compute (w0 + c)^7 - w0Gamma
+            result := addmod(result, negW0Gamma, p)
+
+            // Compute qMimc * (w0 + c)^7 - w0Gamma
+            result := mulmod(qMimc, result, p)
+        }
+
+        return result;
+    }
+
+    function idCommLrdEval(
+        uint256 qMimc,
+        uint256 w1,
+        uint256 key,
+        uint256 c,
+        uint256 w1Gamma
+    ) public pure returns (uint256) {
+        uint256 p = PRIME_R;
+
+        require(w1Gamma < p);
+
+        uint256 w1_plus_key_plus_c;
+        uint256 negW1Gamma;
+
+        assembly {
+            // Compute -w1Gamma
+            negW1Gamma := sub(p, w1Gamma)
+
+            // Compute (w1 + key + c)
+            w1_plus_key_plus_c := addmod(w1, key, p)
+            w1_plus_key_plus_c := addmod(w1_plus_key_plus_c, c, p)
+        }
+
+        // Compute (w1 + key + c) ^ 7
+        uint256 result = pow7(w1_plus_key_plus_c, p);
+
+        assembly {
+            // Compute (w1 + key + c)^7 - w1Gamma
+            result := addmod(result, negW1Gamma, p)
+
+            // Compute qMimc * (w1 + key + c)^7 - w1Gamma
+            result := mulmod(qMimc, result, p)
+        }
+
+        return result;
+    }
+
+    function keyConstantEval(
+        uint256 qMimc,
+        uint256 key,
+        uint256 keyGamma
+    ) public pure returns (uint256) {
+        uint256 p = PRIME_R;
+
+        uint256 result;
+        uint256 negKeyGamma;
+
+        require(keyGamma < p);
+
+        assembly {
+            // Compute -keyGamma
+            negKeyGamma := sub(p, keyGamma)
+
+            // Compute (key - keyGamma)
+            result := addmod(key, negKeyGamma, p)
+
+            // Compute qMimc * (key - keyGamma)
+            result := mulmod(qMimc, result, p)
+        }
+
+        return result;
+    }
+
+    function keyCopyEval(
+        uint256 l0,
+        uint256 key,
+        uint256 w0,
+        uint256 w0Gamma91
+    ) public pure returns (uint256) {
+        uint256 p = PRIME_R;
+
+        uint256 result;
+        uint256 w0PlusW0Gamma91;
+        uint256 negW0PlusW0Gamma91;
+
+        assembly {
+            // Compute w0 + w0Gamma91
+            w0PlusW0Gamma91 := addmod(w0, w0Gamma91, p)
+
+            // Compute -(w0 + w0Gamma91)
+            negW0PlusW0Gamma91 := sub(p, w0PlusW0Gamma91)
+
+            // Compute (key - w0 - w0Gamma91)
+            result := addmod(key, negW0PlusW0Gamma91, p)
+
+            // Compute l0 * (key - w0 - w0Gamma91)
+            result := mulmod(l0, result, p)
+        }
+
+        return result;
+    }
+
+    function nullifierHashFinalEval(
+        uint256 l0,
+        uint256 nullifierHash,
+        uint256 w2,
+        uint256 w2Gamma91,
+        uint256 key
+    ) public pure returns (uint256) {
+        uint256 p = PRIME_R;
+
+        uint256 result;
+        uint256 w2PlusW2Gamma91Plus2Key;
+        uint256 negW2PlusW2Gamma91Plus2Key;
+        uint256 twoKey;
+
+        assembly {
+            // Compute 2key
+            twoKey := addmod(key, key, p)
+
+            // Compute w2 + w2Gamma91 + 2key
+            w2PlusW2Gamma91Plus2Key := addmod(w2, w2Gamma91, p)
+            w2PlusW2Gamma91Plus2Key := addmod(w2PlusW2Gamma91Plus2Key, twoKey, p)
+
+            // Compute -(w2 + w2Gamma91 + 2key)
+            negW2PlusW2Gamma91Plus2Key := sub(p, w2PlusW2Gamma91Plus2Key)
+
+            // Compute nullifierHash - w2 - w2Gamma91 - 2key
+            result := addmod(nullifierHash, negW2PlusW2Gamma91Plus2Key, p)
+
+            // Compute l0 * (nullifierHash - w2 - w2Gamma91 - 2key)
+            result := mulmod(l0, result, p)
+        }
+
+        return result;
+    }
+
     function broadcastSignal(
     ) public {
     }

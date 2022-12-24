@@ -323,3 +323,161 @@ pub async fn test_transcript() {
 
     drop(anvil);
 }
+
+#[tokio::test]
+pub async fn test_id_nullifier_gate_eval() {
+    let eth_backend = setup_eth_backend().await;
+    let anvil = eth_backend.0;
+    let client = eth_backend.1;
+
+    let domain_size = 8;
+    let mut rng = test_rng();
+
+    let semacaulk_contract_and_acc = deploy_semacaulk(domain_size, &mut rng, client).await;
+    let semacaulk_contract = semacaulk_contract_and_acc.0;
+
+    // Raises a given field element to the power of 7
+    let pow_7 = |x: Fr| x.pow(&[7, 0, 0, 0]);
+
+    let q_mimc = Fr::rand(&mut rng);
+    let w0 = Fr::rand(&mut rng);
+    let c = Fr::rand(&mut rng);
+    let w0gamma = Fr::rand(&mut rng);
+
+    let expected = q_mimc * (pow_7(w0 + c) - w0gamma);
+
+    let result = semacaulk_contract.id_nullifier_gate_eval(
+        f_to_u256(q_mimc),
+        f_to_u256(w0),
+        f_to_u256(c),
+        f_to_u256(w0gamma),
+    ).call().await.unwrap();
+
+    assert_eq!(result, f_to_u256(expected));
+    drop(anvil);
+}
+
+#[tokio::test]
+pub async fn test_id_comm_lrd_gate_eval() {
+    let eth_backend = setup_eth_backend().await;
+    let anvil = eth_backend.0;
+    let client = eth_backend.1;
+
+    let domain_size = 8;
+    let mut rng = test_rng();
+
+    let semacaulk_contract_and_acc = deploy_semacaulk(domain_size, &mut rng, client).await;
+    let semacaulk_contract = semacaulk_contract_and_acc.0;
+
+    // Raises a given field element to the power of 7
+    let pow_7 = |x: Fr| x.pow(&[7, 0, 0, 0]);
+
+    let q_mimc = Fr::rand(&mut rng);
+    let w1 = Fr::rand(&mut rng);
+    let c = Fr::rand(&mut rng);
+    let w1gamma = Fr::rand(&mut rng);
+    let key = Fr::rand(&mut rng);
+
+    let expected = q_mimc * (pow_7(w1 + key + c) - w1gamma);
+
+    let result = semacaulk_contract.id_comm_lrd_eval(
+        f_to_u256(q_mimc),
+        f_to_u256(w1),
+        f_to_u256(key),
+        f_to_u256(c),
+        f_to_u256(w1gamma),
+    ).call().await.unwrap();
+
+    assert_eq!(result, f_to_u256(expected));
+    drop(anvil);
+}
+
+#[tokio::test]
+pub async fn test_key_constant_gate_eval() {
+    let eth_backend = setup_eth_backend().await;
+    let anvil = eth_backend.0;
+    let client = eth_backend.1;
+
+    let domain_size = 8;
+    let mut rng = test_rng();
+
+    let semacaulk_contract_and_acc = deploy_semacaulk(domain_size, &mut rng, client).await;
+    let semacaulk_contract = semacaulk_contract_and_acc.0;
+
+    let q_mimc = Fr::rand(&mut rng);
+    let key = Fr::rand(&mut rng);
+    let key_gamma = Fr::rand(&mut rng);
+
+    let expected = q_mimc * (key - key_gamma);
+
+    let result = semacaulk_contract.key_constant_eval(
+        f_to_u256(q_mimc),
+        f_to_u256(key),
+        f_to_u256(key_gamma),
+    ).call().await.unwrap();
+
+    assert_eq!(result, f_to_u256(expected));
+    drop(anvil);
+}
+
+#[tokio::test]
+pub async fn test_key_copy_gate_eval() {
+    let eth_backend = setup_eth_backend().await;
+    let anvil = eth_backend.0;
+    let client = eth_backend.1;
+
+    let domain_size = 8;
+    let mut rng = test_rng();
+
+    let semacaulk_contract_and_acc = deploy_semacaulk(domain_size, &mut rng, client).await;
+    let semacaulk_contract = semacaulk_contract_and_acc.0;
+
+    let l0 = Fr::rand(&mut rng);
+    let key = Fr::rand(&mut rng);
+    let w0 = Fr::rand(&mut rng);
+    let w0_gamma_91 = Fr::rand(&mut rng);
+
+    let expected = l0 * (key - w0 - w0_gamma_91);
+
+    let result = semacaulk_contract.key_copy_eval(
+        f_to_u256(l0),
+        f_to_u256(key),
+        f_to_u256(w0),
+        f_to_u256(w0_gamma_91),
+    ).call().await.unwrap();
+
+    assert_eq!(result, f_to_u256(expected));
+    drop(anvil);
+}
+
+#[tokio::test]
+pub async fn test_nullifier_hash_final_gate_eval() {
+    let eth_backend = setup_eth_backend().await;
+    let anvil = eth_backend.0;
+    let client = eth_backend.1;
+
+    let domain_size = 8;
+    let mut rng = test_rng();
+
+    let semacaulk_contract_and_acc = deploy_semacaulk(domain_size, &mut rng, client).await;
+    let semacaulk_contract = semacaulk_contract_and_acc.0;
+
+    let l0 = Fr::rand(&mut rng);
+    let nullifier_hash = Fr::rand(&mut rng);
+    let key = Fr::rand(&mut rng);
+    let w2 = Fr::rand(&mut rng);
+    let w2_gamma_91 = Fr::rand(&mut rng);
+
+    let expected = l0 * (nullifier_hash - w2 - w2_gamma_91 - (key * Fr::from(2)));
+
+    let result = semacaulk_contract.nullifier_hash_final_eval(
+        f_to_u256(l0),
+        f_to_u256(nullifier_hash),
+        f_to_u256(w2),
+        f_to_u256(w2_gamma_91),
+        f_to_u256(key),
+    ).call().await.unwrap();
+
+    assert_eq!(result, f_to_u256(expected));
+    drop(anvil);
+}
