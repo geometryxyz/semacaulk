@@ -13,3 +13,4 @@ pub mod prover;
 pub mod rng;
 pub mod transcript;
 pub mod utils;
+pub mod multiopen;
