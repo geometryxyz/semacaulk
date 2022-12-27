@@ -81,6 +81,9 @@ impl Verifier {
             x_g2,
         )
     }
+
+    /// @dev This function is used in dev purposes 
+    /// final check is batched with rest of caulk+ pairings
     pub fn verify_final_poly(
         final_poly: &G1Affine,
         final_poly_opening: Fr,
