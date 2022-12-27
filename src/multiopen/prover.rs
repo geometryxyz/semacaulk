@@ -3,7 +3,10 @@ use std::iter;
 use ark_ff::One;
 use ark_poly::{univariate::DensePolynomial, Polynomial, UVPolynomial};
 
-use crate::{kzg::{commit, open}, transcript::Transcript};
+use crate::{
+    kzg::{commit, open},
+    transcript::Transcript,
+};
 use ark_bn254::{Bn254, Fr, G1Affine};
 
 use super::MultiopenProof;

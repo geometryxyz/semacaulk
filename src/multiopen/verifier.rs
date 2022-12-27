@@ -1,30 +1,102 @@
 use std::{iter, ops::Neg};
 
-use ark_bn254::{Bn254, Fr, G1Affine, G2Affine, Fq12};
-use ark_ec::{AffineCurve, ProjectiveCurve, PairingEngine};
+use ark_bn254::{Bn254, Fq12, Fr, G1Affine, G2Affine};
+use ark_ec::{AffineCurve, PairingEngine, ProjectiveCurve};
 use ark_ff::{Field, One};
 
 use crate::transcript::Transcript;
 
-use super::{fi::evaluate_fs, MultiopenProof};
+use super::MultiopenProof;
 
 pub struct Verifier {}
 
 impl Verifier {
     pub fn verify(
-        final_poly: &G1Affine, 
+        transcript: &mut Transcript,
+        proof: &MultiopenProof<Bn254>,
+        // semaphore related polys
+        w0: &G1Affine,
+        w0_openings: &[Fr; 3],
+        w1: &G1Affine,
+        w1_openings: &[Fr; 3],
+        w2: &G1Affine,
+        w2_openings: &[Fr; 3],
+        key: &G1Affine,
+        key_openings: &[Fr; 2],
+        q_mimc: &G1Affine,
+        q_mimc_opening: Fr,
+        c: &G1Affine,
+        c_opening: Fr,
+        quotient: &G1Affine,
+        quotient_opening: Fr,
+        // caulk+ related polys
+        u_prime: &G1Affine,
+        u_prime_opening: Fr,
+        p1: &G1Affine,
+        p1_opening: Fr,
+        p2: &G1Affine,
+        p2_opening: Fr,
+        // challenge points
+        v: Fr,
+        alpha: Fr,
+        omega_alpha: Fr,
+        omega_n_alpha: Fr,
+        // proof specific information
+        x_g2: G2Affine,
+    ) -> bool {
+        let (final_poly, final_poly_opening, x3) = Self::compute_final_poly(
+            transcript,
+            proof,
+            w0,
+            w0_openings,
+            w1,
+            w1_openings,
+            w2,
+            w2_openings,
+            key,
+            key_openings,
+            q_mimc,
+            q_mimc_opening,
+            c,
+            c_opening,
+            quotient,
+            quotient_opening,
+            u_prime,
+            u_prime_opening,
+            p1,
+            p1_opening,
+            p2,
+            p2_opening,
+            v,
+            alpha,
+            omega_alpha,
+            omega_n_alpha,
+        );
+
+        Self::verify_final_poly(
+            &final_poly, 
+            final_poly_opening, 
+            proof.final_poly_proof,
+            x3, 
+            x_g2
+        )
+    }
+    pub fn verify_final_poly(
+        final_poly: &G1Affine,
         final_poly_opening: Fr,
         final_poly_proof: G1Affine,
         x3: Fr,
-        x_g2: G2Affine
+        x_g2: G2Affine,
     ) -> bool {
         let g1_2 = G2Affine::prime_subgroup_generator();
-        let minus_y = G1Affine::prime_subgroup_generator().mul(final_poly_opening).neg();
+        let minus_y = G1Affine::prime_subgroup_generator()
+            .mul(final_poly_opening)
+            .neg();
         let zq = final_poly_proof.mul(x3);
         let lhs_1 = (zq + minus_y).add_mixed(final_poly);
         let res = Bn254::product_of_pairings(&[
-            (lhs_1.into_affine().into(), g1_2.into()), 
-            (final_poly_proof.into(), x_g2.into())
+            (lhs_1.into_affine().into(), g1_2.into()),
+            (final_poly_proof.into(), x_g2.into()),
         ]);
 
         res == Fq12::one()
@@ -54,7 +126,7 @@ impl Verifier {
         p1_opening: Fr,
         p2: &G1Affine,
         p2_opening: Fr,
-        // proof specific information
+        // challenge points
         v: Fr,
         alpha: Fr,
         omega_alpha: Fr,
