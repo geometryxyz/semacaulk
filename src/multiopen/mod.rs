@@ -14,4 +14,5 @@ pub struct MultiopenProof<E: PairingEngine> {
     pub(crate) q3_opening: E::Fr,
     pub(crate) q4_opening: E::Fr,
     pub(crate) f_cm: E::G1Affine,
+    pub(crate) final_poly_proof: E::G1Affine
 }

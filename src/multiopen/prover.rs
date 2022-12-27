@@ -3,7 +3,7 @@ use std::iter;
 use ark_ff::One;
 use ark_poly::{univariate::DensePolynomial, Polynomial, UVPolynomial};
 
-use crate::{kzg::commit, transcript::Transcript};
+use crate::{kzg::{commit, open}, transcript::Transcript};
 use ark_bn254::{Bn254, Fr, G1Affine};
 
 use super::MultiopenProof;
@@ -71,17 +71,17 @@ impl Prover {
         transcript.update_with_g1(&f_cm);
 
         let x3 = transcript.get_challenge();
-        // let x4 = transcript.get_challenge();
-        // let x4_powers: Vec<Fr> = iter::successors(Some(x4), |x4_pow| Some(*x4_pow * x4))
-        //     .take(4)
-        //     .collect();
+        let x4 = transcript.get_challenge();
+        let x4_powers: Vec<Fr> = iter::successors(Some(x4), |x4_pow| Some(*x4_pow * x4))
+            .take(4)
+            .collect();
 
-        // let final_poly = f
-        //     + (&q1 * x4_powers[0])
-        //     + (&q2 * x4_powers[1])
-        //     + (&q3 * x4_powers[2])
-        //     + (&q4 * x4_powers[3]);
-        // let final_cm: G1Affine = commit(srs_g1, &final_poly).into();
+        let final_poly = f
+            + (&q1 * x4_powers[0])
+            + (&q2 * x4_powers[1])
+            + (&q3 * x4_powers[2])
+            + (&q4 * x4_powers[3]);
+        let (_, final_poly_proof) = open(srs_g1, &final_poly, x3);
 
         MultiopenProof {
             q1_opening: q1.evaluate(&x3),
@@ -89,6 +89,7 @@ impl Prover {
             q3_opening: q3.evaluate(&x3),
             q4_opening: q4.evaluate(&x3),
             f_cm,
+            final_poly_proof,
         }
     }
 }
