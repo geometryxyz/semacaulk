@@ -1,8 +1,5 @@
-use std::{
-    cmp::max,
-    iter::self,
-    vec,
-};
+use std::iter;
+use std::{cmp::max, vec};
 
 use ark_bn254::{Bn254, Fr};
 use ark_ec::{AffineCurve, PairingEngine, ProjectiveCurve};
@@ -560,12 +557,12 @@ mod prover_tests {
         };
 
         Prover::prove(
-            &pk, 
-            &witness, 
-            &assignment, 
-            &public_input, 
-            &precomputed, 
-            &mut rng
+            &pk,
+            &witness,
+            &assignment,
+            &public_input,
+            &precomputed,
+            &mut rng,
         );
 
         // Prover::prove(&pk, &index, &assignment, nullifier_external);

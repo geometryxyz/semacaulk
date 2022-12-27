@@ -1,8 +1,8 @@
-use std::{iter, marker::PhantomData};
+use crate::constants::{NUMBER_OF_MIMC_ROUNDS, SUBGROUP_SIZE};
 use ark_ff::PrimeField;
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, Read, SerializationError, Write};
 use rand::RngCore;
-use crate::constants::{NUMBER_OF_MIMC_ROUNDS, SUBGROUP_SIZE};
+use std::{iter, marker::PhantomData};
 
 /*
    TODO: Add assignment hackmd table
@@ -44,7 +44,7 @@ impl<F: PrimeField> Layouter<F> {
         let mut nullifier_col = Vec::<F>::with_capacity(SUBGROUP_SIZE);
         nullifier_col.push(identity_nullifier);
 
-        // The first round constant should be 0, so we don't have to add it to 
+        // The first round constant should be 0, so we don't have to add it to
         // identity_nullifier for the first row.
         assert_eq!(c[0], F::zero());
         nullifier_col.push(pow_7(identity_nullifier));
@@ -68,7 +68,7 @@ impl<F: PrimeField> Layouter<F> {
         let mut identity_commitment_col = Vec::<F>::with_capacity(SUBGROUP_SIZE);
         identity_commitment_col.push(identity_trapdoor);
 
-        // The first round constant should be 0, so we don't have to add it to 
+        // The first round constant should be 0, so we don't have to add it to
         // identity_nullifier for the first row.
         identity_commitment_col.push(pow_7(identity_trapdoor + key_col[0]));
         for i in 1..NUMBER_OF_MIMC_ROUNDS {
@@ -81,7 +81,7 @@ impl<F: PrimeField> Layouter<F> {
         let mut external_nullifier_col = Vec::<F>::with_capacity(SUBGROUP_SIZE);
         external_nullifier_col.push(external_nullifier);
 
-        // The first round constant should be 0, so we don't have to add it to 
+        // The first round constant should be 0, so we don't have to add it to
         // identity_nullifier for the first row.
         external_nullifier_col.push(pow_7(external_nullifier + key_col[0]));
         for i in 1..NUMBER_OF_MIMC_ROUNDS {
@@ -103,10 +103,7 @@ impl<F: PrimeField> Layouter<F> {
      * @param x: The Vec to extend.
      * @param rng: The random number generator to use.
      */
-    fn blind<R: RngCore>(
-        x: &mut Vec<F>,
-        rng: &mut R
-    ) {
+    fn blind<R: RngCore>(x: &mut Vec<F>, rng: &mut R) {
         // The Vec to blind must have length NUMBER_OF_MIMC_ROUNDS + 1
         assert_eq!(x.len(), NUMBER_OF_MIMC_ROUNDS + 1);
 
@@ -127,8 +124,8 @@ mod layouter_tests {
     use ark_std::test_rng;
 
     use super::Layouter;
-    use crate::mimc7::Mimc7;
     use crate::constants::{NUMBER_OF_MIMC_ROUNDS, SUBGROUP_SIZE};
+    use crate::mimc7::Mimc7;
 
     #[test]
     fn test_mimc_correctness() {
@@ -172,10 +169,7 @@ mod layouter_tests {
 
         // Check that the key column is assigned correctly for the first NUMBER_OF_MIMC_ROUNDS rows
         for i in 0..(NUMBER_OF_MIMC_ROUNDS) {
-            assert_eq!(
-                assignment.key[i],
-                assignment.key[i + 1],
-            );
+            assert_eq!(assignment.key[i], assignment.key[i + 1],);
         }
 
         // Check that the blinds for the columns are applied (this test will fail with very small
@@ -183,8 +177,14 @@ mod layouter_tests {
         for i in (NUMBER_OF_MIMC_ROUNDS + 1)..(SUBGROUP_SIZE - 1) {
             assert_ne!(assignment.nullifier[i], assignment.nullifier[i + 1]);
             assert_ne!(assignment.key[i], assignment.key[i + 1]);
-            assert_ne!(assignment.identity_commitment[i], assignment.identity_commitment[i + 1]);
-            assert_ne!(assignment.external_nullifier[i], assignment.external_nullifier[i + 1]);
+            assert_ne!(
+                assignment.identity_commitment[i],
+                assignment.identity_commitment[i + 1]
+            );
+            assert_ne!(
+                assignment.external_nullifier[i],
+                assignment.external_nullifier[i + 1]
+            );
         }
 
         // Check that the identity commitment is calculated correctly
