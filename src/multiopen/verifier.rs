@@ -74,11 +74,11 @@ impl Verifier {
         );
 
         Self::verify_final_poly(
-            &final_poly, 
-            final_poly_opening, 
+            &final_poly,
+            final_poly_opening,
             proof.final_poly_proof,
-            x3, 
-            x_g2
+            x3,
+            x_g2,
         )
     }
     pub fn verify_final_poly(
@@ -88,15 +88,15 @@ impl Verifier {
         x3: Fr,
         x_g2: G2Affine,
     ) -> bool {
-        let g1_2 = G2Affine::prime_subgroup_generator();
+        let g2_gen = G2Affine::prime_subgroup_generator();
         let minus_y = G1Affine::prime_subgroup_generator()
             .mul(final_poly_opening)
             .neg();
         let zq = final_poly_proof.mul(x3);
         let lhs_1 = (zq + minus_y).add_mixed(final_poly);
         let res = Bn254::product_of_pairings(&[
-            (lhs_1.into_affine().into(), g1_2.into()),
-            (final_poly_proof.into(), x_g2.into()),
+            (lhs_1.into_affine().into(), g2_gen.into()),
+            (final_poly_proof.neg().into(), x_g2.into()),
         ]);
 
         res == Fq12::one()
@@ -185,7 +185,7 @@ impl Verifier {
         let q4_at_omega_alpha =
             w0_openings[1] + x1_powers[0] * w1_openings[1] + x1_powers[1] * w2_openings[1];
         let q4_at_omega_n_alpha =
-            w0_openings[2] + x1_powers[2] * w1_openings[2] + x1_powers[1] * w2_openings[2];
+            w0_openings[2] + x1_powers[0] * w1_openings[2] + x1_powers[1] * w2_openings[2];
         let q4_evals = [q4_at_alpha, q4_at_omega_alpha, q4_at_omega_n_alpha];
 
         /* END: construct qi-s */
