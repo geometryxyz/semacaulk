@@ -32,6 +32,9 @@ contract Semacaulk is KeccakMT, BN254 {
     // Custom errors
     error RootMismatch(bytes32 _generatedRoot);
 
+    // Events
+    event InsertIdentity(uint256 indexed _index, uint256 indexed _identityCommitment);
+
     constructor(
         bytes32 _lagrangeTreeRoot,
         uint256 _accumulatorX,
@@ -50,11 +53,12 @@ contract Semacaulk is KeccakMT, BN254 {
         uint256 _lagrangeLeafY,
         bytes32[] memory _lagrangeMerkleProof
     ) public {
+        uint256 index = currentIndex;
         bytes32 lagrangeLeaf = keccak256(abi.encodePacked(_lagrangeLeafX, _lagrangeLeafY));
 
         // 1. Verify that _lagrangeLeaf exists in the lagrange tree at index currentIndex
         bytes32 generatedRoot = genRootFromPath(
-            currentIndex,
+            index,
             lagrangeLeaf,
             _lagrangeMerkleProof
         );
@@ -76,7 +80,9 @@ contract Semacaulk is KeccakMT, BN254 {
         accumulator = plus(accumulator, newPoint);
 
         // Increment the index
-        currentIndex += 1;
+        currentIndex = index + 1;
+
+        emit InsertIdentity(index, _identityCommitment);
     }
 
     function verifyTranscript() public pure returns(uint256, uint256) {

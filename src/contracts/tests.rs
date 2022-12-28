@@ -201,7 +201,12 @@ pub async fn test_semacaulk_insert() {
             .unwrap()
             .expect("no receipt found");
 
-        //println!("{:?}", result);
+        let event_index = result.logs[0].topics[1];
+        let mut index_slice = [0u8; 32];
+        index_slice[31] = index as u8;
+
+        assert_eq!(index < 256, true);
+        assert_eq!(hex::encode(index_slice), hex::encode(event_index));
         assert_eq!(result.status.unwrap(), ethers::types::U64::from(1));
 
         println!(
