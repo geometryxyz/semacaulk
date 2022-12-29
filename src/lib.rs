@@ -9,6 +9,7 @@ pub mod keccak_tree;
 pub mod kzg;
 pub mod layouter;
 pub mod mimc7;
+pub mod multiopen;
 pub mod prover;
 pub mod rng;
 pub mod transcript;
