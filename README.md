@@ -5,7 +5,7 @@ an on-chain polynomial commitment to enable cheap insertions, and techniques
 which make verification no more expensive than verifying a Groth16 proof.
 
 For a detailed specification, please refer to
-[https://hackmd.io/@akinovak/SyE1Z3fLs](this document.)
+[this document](https://hackmd.io/HqwnGqKXRJGT2f4V-EZFmw).
 
 ## Quick start
 
