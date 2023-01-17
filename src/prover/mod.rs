@@ -17,8 +17,10 @@ pub mod prover;
 
 #[derive(CanonicalSerialize, CanonicalDeserialize)]
 pub struct ProverPrecomputedData<E: PairingEngine> {
+    pub(crate) c: DensePolynomial<E::Fr>, // mimc round constants poly
     pub(crate) c_coset_evals: Vec<E::Fr>, // evaluations of mimc round constants over coset
     pub(crate) zh_inverse_coset_evals: Vec<E::Fr>, // evaluations of vanishing poly over coset
+    pub(crate) q_mimc: DensePolynomial<E::Fr>,
     pub(crate) q_mimc_coset_evals: Vec<E::Fr>,
     pub(crate) l0_coset_evals: Vec<E::Fr>,
     pub(crate) caulk_plus_precomputed: Precomputed<E>,
@@ -78,8 +80,10 @@ impl<E: PairingEngine> ProverPrecomputedData<E> {
         precomputed.precompute_w2(&pk.srs_g2, &[index], &domain_h);
 
         Self {
+            c: c_poly,
             c_coset_evals,
             zh_inverse_coset_evals,
+            q_mimc,
             q_mimc_coset_evals,
             l0_coset_evals,
             caulk_plus_precomputed: precomputed,

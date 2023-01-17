@@ -11,14 +11,16 @@ use ark_poly::{
 use ark_std::{cfg_into_iter, UniformRand};
 use rand::RngCore;
 
+use crate::proof::Proof;
 use crate::{
     constants::{EXTENDED_DOMAIN_FACTOR, NUMBER_OF_MIMC_ROUNDS, SUBGROUP_SIZE},
     gates::{KeyCopyGate, KeyEquality, Mimc7RoundGate, NullifierGate},
-    kzg::{commit, open},
+    kzg::commit,
     layouter::Assignment,
     transcript::Transcript,
     utils::construct_lagrange_basis,
     utils::shift_dense_poly,
+    multiopen::{prover::Prover as MultiopenProver, MultiopenProof}
 };
 
 use super::{ProverPrecomputedData, ProvingKey, PublicData};
@@ -55,6 +57,8 @@ pub struct State<'a, E: PairingEngine> {
     pub(crate) key: Option<DensePolynomial<E::Fr>>,
     pub(crate) w1: Option<DensePolynomial<E::Fr>>,
     pub(crate) w2: Option<DensePolynomial<E::Fr>>,
+
+    pub(crate) quotient: Option<DensePolynomial<E::Fr>>,
 
     pub(crate) a: Option<DensePolynomial<E::Fr>>,
     pub(crate) zi: Option<DensePolynomial<E::Fr>>,
@@ -95,6 +99,8 @@ impl Prover {
             key: None,
             w1: None,
             w2: None,
+
+            quotient: None,
 
             r1: None,
             r2: None,
@@ -157,7 +163,7 @@ impl Prover {
 
         let alpha = transcript.get_challenge();
 
-        let _x = Self::caulk_plus_third_round(&state, hi_1, alpha);
+        let multiopen_proof = Self::opening_round(&state, hi_1, alpha, &mut transcript);
     }
 
     fn assignment_round<E: PairingEngine>(
@@ -308,6 +314,7 @@ impl Prover {
         );
 
         let quotient_commit = commit(&state.proving_key.srs_g1, &quotient);
+        state.quotient = Some(quotient);
         quotient_commit.into()
     }
 
@@ -438,11 +445,27 @@ impl Prover {
         (w_commitment.into(), h_commitment.into())
     }
 
-    fn caulk_plus_third_round<'a, E: PairingEngine>(
-        state: &State<'a, E>,
-        hi_1: E::Fr,
-        alpha: E::Fr, // evaluation challenge
-    ) {
+    fn opening_round<'a>(
+        state: &State<'a, Bn254>,
+        hi_1: Fr,
+        alpha: Fr, // evaluation challenge
+        transcript: &mut Transcript
+    ) -> MultiopenProof<Bn254> {
+        let omega = state.domain_h.element(1); 
+        let omega_n = state.domain_h.element(NUMBER_OF_MIMC_ROUNDS);
+
+        let omega_alpha = omega * alpha;
+        let omega_n_alpha = omega_n * alpha;
+
+        let w0 = state.w0.as_ref().unwrap();
+        let w1 = state.w1.as_ref().unwrap();
+        let w2 = state.w2.as_ref().unwrap();
+        let key = state.key.as_ref().unwrap();
+        let quotient = state.quotient.as_ref().unwrap();
+
+        let c = &state.precomputed.c;
+        let q_mimc = &state.precomputed.q_mimc;
+
         let zi = state.zi.as_ref().unwrap();
         let ci = state.ci.as_ref().unwrap();
         let u = state.u.as_ref().unwrap();
@@ -468,14 +491,115 @@ impl Prover {
             h_zv
         };
 
-        // TODO: Open rest of the polynomials
-        // 3. Open
-        let (u_eval, _u_proof) = open(&state.proving_key.srs_g1, u, alpha);
-        let (_p1_eval, _p1_proof) = open(&state.proving_key.srs_g1, &p1, u_eval);
-        let (p2_eval, _p2_proof) = open(&state.proving_key.srs_g1, &p2, alpha);
+        // compute all evaluations 
+        let v = u.evaluate(&alpha);
 
-        // sanity
-        assert_eq!(p2_eval, E::Fr::zero());
+        // compute all openings
+        let w0_openings = [
+            w0.evaluate(&alpha),
+            w0.evaluate(&omega_alpha),
+            w0.evaluate(&omega_n_alpha),
+        ];
+        
+        let w1_openings = [
+            w1.evaluate(&alpha),
+            w1.evaluate(&omega_alpha),
+            w1.evaluate(&omega_n_alpha),
+        ];
+        
+        let w2_openings = [
+            w2.evaluate(&alpha),
+            w2.evaluate(&omega_alpha),
+            w2.evaluate(&omega_n_alpha),
+        ];
+        
+        let key_openings = [key.evaluate(&alpha), key.evaluate(&omega_alpha)];
+        
+        let q_mimc_opening = q_mimc.evaluate(&alpha);
+        let c_opening = c.evaluate(&alpha);
+        let quotient_opening = quotient.evaluate(&alpha);
+        let u_prime_opening = v;
+        let p1_opening = p1.evaluate(&v);
+        let p2_opening = p2.evaluate(&alpha);
+
+        assert_eq!(p2_opening, Fr::zero());
+
+        // BEGIN: append all openings to transcipt
+        transcript.update_with_u256(w0_openings[0]);
+        transcript.update_with_u256(w0_openings[1]);
+        transcript.update_with_u256(w0_openings[2]);
+
+        transcript.update_with_u256(w1_openings[0]);
+        transcript.update_with_u256(w1_openings[1]);
+        transcript.update_with_u256(w1_openings[2]);
+
+        transcript.update_with_u256(w2_openings[0]);
+        transcript.update_with_u256(w2_openings[1]);
+        transcript.update_with_u256(w2_openings[2]);
+
+        transcript.update_with_u256(key_openings[0]);
+        transcript.update_with_u256(key_openings[1]);
+
+        transcript.update_with_u256(q_mimc_opening);
+        transcript.update_with_u256(c_opening);
+        transcript.update_with_u256(quotient_opening);
+
+        transcript.update_with_u256(u_prime_opening);
+        transcript.update_with_u256(p1_opening);
+        transcript.update_with_u256(p2_opening);
+        // END: append all openings to transcipt
+
+        // compute proof
+        let m = MultiopenProver::prove(
+            &state.proving_key.srs_g1,
+            w0,
+            w1,
+            w2,
+            key,
+            q_mimc,
+            c,
+            quotient,
+            u,
+            &p1,
+            &p2,
+            v,
+            alpha,
+            omega_alpha,
+            omega_n_alpha,
+            transcript,
+        );
+
+        // let x = Proof {
+        //     w0,
+        //     w1,
+        //     w2,
+        //     key,
+        //     quotient,
+        //     w0_alpha: todo!(),
+        //     w0_omega_alpha: todo!(),
+        //     w0_omega_n_alpha: todo!(),
+        //     w1_alpha: todo!(),
+        //     w1_omega_alpha: todo!(),
+        //     w1_omega_n_alpha: todo!(),
+        //     w2_alpha: todo!(),
+        //     w2_omega_alpha: todo!(),
+        //     w2_omega_n_alpha: todo!(),
+        //     key_alpha: todo!(),
+        //     key_omega_alpha: todo!(),
+        //     q_mimc_alpha: todo!(),
+        //     c_alpha: todo!(),
+        //     quotient_alpha: todo!(),
+        //     zi,
+        //     ci,
+        //     u,
+        //     h,
+        //     u_alpha: todo!(),
+        //     p1_v: todo!(),
+        //     p2_alpha: todo!(),
+        //     multiopen_proof: todo!(),
+        // };
+
+        m
     }
 }
 
