@@ -6,10 +6,12 @@
 */
 
 use ark_ec::PairingEngine;
+use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, Read, SerializationError, Write};
 
 pub mod prover;
 pub mod verifier;
 
+#[derive(CanonicalSerialize, CanonicalDeserialize, Clone, Debug)]
 pub struct MultiopenProof<E: PairingEngine> {
     pub(crate) q1_opening: E::Fr,
     pub(crate) q2_opening: E::Fr,
@@ -35,12 +37,13 @@ mod multiopen_tests {
     };
 
     use super::{prover::Prover, verifier::Verifier};
+    use crate::constants::{SUBGROUP_SIZE, NUMBER_OF_MIMC_ROUNDS};
 
     #[test]
     fn test_full_multiopen_roundtrip() {
         let mut rng = test_rng();
-        let n = 128usize;
-        let pow = 91;
+        let n = SUBGROUP_SIZE;
+        let pow = NUMBER_OF_MIMC_ROUNDS;
 
         let domain = GeneralEvaluationDomain::new(n).unwrap();
         let omega: Fr = domain.element(1);

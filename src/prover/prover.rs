@@ -11,25 +11,30 @@ use ark_poly::{
 use ark_std::{cfg_into_iter, UniformRand};
 use rand::RngCore;
 
-use crate::proof::Proof;
 use crate::{
     constants::{EXTENDED_DOMAIN_FACTOR, NUMBER_OF_MIMC_ROUNDS, SUBGROUP_SIZE},
-    gates::{KeyCopyGate, KeyEquality, Mimc7RoundGate, NullifierGate},
+    gates::{KeyCopyGate, KeyEquality, Mimc7RoundGate, NullifierGate, ExternalNullifierGate},
     kzg::commit,
     layouter::Assignment,
     transcript::Transcript,
     utils::construct_lagrange_basis,
     utils::shift_dense_poly,
-    multiopen::{prover::Prover as MultiopenProver, MultiopenProof}
+    multiopen::{
+        prover::Prover as MultiopenProver,
+        MultiopenProof,
+        verifier::Verifier as MultiopenVerifier,
+    }
 };
 
-use super::{ProverPrecomputedData, ProvingKey, PublicData};
+use super::{Proof, Commitments, Openings, ProverPrecomputedData, ProvingKey, PublicData};
+use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, Read, SerializationError, Write};
 
+#[derive(CanonicalSerialize, CanonicalDeserialize, Clone, Debug)]
 pub struct WitnessInput<F: PrimeField> {
-    identity_nullifier: F,
-    identity_trapdoor: F,
-    identity_commitment: F,
-    index: usize,
+    pub(crate) identity_nullifier: F,
+    pub(crate) identity_trapdoor: F,
+    pub(crate) identity_commitment: F,
+    pub(crate) index: usize,
 }
 
 pub struct State<'a, E: PairingEngine> {
@@ -63,7 +68,7 @@ pub struct State<'a, E: PairingEngine> {
     pub(crate) a: Option<DensePolynomial<E::Fr>>,
     pub(crate) zi: Option<DensePolynomial<E::Fr>>,
     pub(crate) ci: Option<DensePolynomial<E::Fr>>,
-    pub(crate) u: Option<DensePolynomial<E::Fr>>,
+    pub(crate) u_prime: Option<DensePolynomial<E::Fr>>,
 
     // data after second round
     pub(crate) zi_of_ui: Option<DensePolynomial<E::Fr>>,
@@ -112,7 +117,7 @@ impl Prover {
             a: None,
             zi: None,
             ci: None,
-            u: None,
+            u_prime: None,
 
             zi_of_ui: None,
             ci_of_ui: None,
@@ -127,7 +132,7 @@ impl Prover {
         public_input: &PublicData<Bn254>,
         precomputed: &ProverPrecomputedData<Bn254>,
         zk_rng: &mut R,
-    ) {
+    ) -> Proof<Bn254> {
         let mut state = Self::init(pk, witness, assignment, public_input, precomputed);
         let mut transcript = Transcript::new_transcript();
 
@@ -146,12 +151,12 @@ impl Prover {
 
         transcript.update_with_g1(&quotient);
 
-        let (zi_commitment, ci_commitment, u_commitment) =
+        let (zi, ci, u_prime) =
             Self::caulk_plus_first_round(&mut state, zk_rng);
 
-        transcript.update_with_g1(&zi_commitment);
-        transcript.update_with_g1(&ci_commitment);
-        transcript.update_with_g1(&u_commitment);
+        transcript.update_with_g1(&zi);
+        transcript.update_with_g1(&ci);
+        transcript.update_with_g1(&u_prime);
 
         let hi_1 = transcript.get_challenge();
         let hi_2 = transcript.get_challenge();
@@ -163,7 +168,150 @@ impl Prover {
 
         let alpha = transcript.get_challenge();
 
-        let multiopen_proof = Self::opening_round(&state, hi_1, alpha, &mut transcript);
+        let (
+            multiopen_proof,
+            w0_openings_0,
+            w0_openings_1,
+            w0_openings_2,
+            w1_openings_0,
+            w1_openings_1,
+            w1_openings_2,
+            w2_openings_0,
+            w2_openings_1,
+            w2_openings_2,
+            key_openings_0,
+            key_openings_1,
+            q_mimc_opening,
+            c_opening,
+            quotient_opening,
+            u_prime_opening,
+            p1_opening,
+            p2_opening,
+            p1,
+            p2,
+        ) = Self::opening_round(&state, hi_1, alpha, &mut transcript);
+
+        // Sanity check multiopen_proof
+        let mut transcript = Transcript::new_transcript();
+        transcript.update_with_g1(&w0);
+        transcript.update_with_g1(&key);
+        transcript.update_with_g1(&w1);
+        transcript.update_with_g1(&w2);
+        let _v = transcript.get_challenge();
+        transcript.update_with_g1(&quotient);
+        transcript.update_with_g1(&zi);
+        transcript.update_with_g1(&ci);
+        transcript.update_with_g1(&u_prime);
+        let _hi_1 = transcript.get_challenge();
+        let _hi_2 = transcript.get_challenge();
+        let alpha = transcript.get_challenge();
+        transcript.update_with_u256(w0_openings_0);
+        transcript.update_with_u256(w0_openings_1);
+        transcript.update_with_u256(w0_openings_2);
+
+        transcript.update_with_u256(w1_openings_0);
+        transcript.update_with_u256(w1_openings_1);
+        transcript.update_with_u256(w1_openings_2);
+
+        transcript.update_with_u256(w2_openings_0);
+        transcript.update_with_u256(w2_openings_1);
+        transcript.update_with_u256(w2_openings_2);
+
+        transcript.update_with_u256(key_openings_0);
+        transcript.update_with_u256(key_openings_1);
+
+        transcript.update_with_u256(q_mimc_opening);
+        transcript.update_with_u256(c_opening);
+        transcript.update_with_u256(quotient_opening);
+
+        transcript.update_with_u256(u_prime_opening);
+        transcript.update_with_u256(p1_opening);
+        transcript.update_with_u256(p2_opening);
+
+        let n = SUBGROUP_SIZE;
+        let domain = GeneralEvaluationDomain::new(n).unwrap();
+
+        let omega: Fr = domain.element(1);
+        let omega_n = domain.element(NUMBER_OF_MIMC_ROUNDS);
+        let omega_alpha = omega * alpha;
+        let omega_n_alpha = omega_n * alpha;
+
+        let q_mimc = commit(&state.proving_key.srs_g1, &state.precomputed.q_mimc).into_affine();
+        let c = commit(&state.proving_key.srs_g1, &state.precomputed.c).into_affine();
+        let p1 = commit(&state.proving_key.srs_g1, &p1).into_affine();
+        let p2 = commit(&state.proving_key.srs_g1, &p2).into_affine();
+
+        let is_multiopen_proof_valid = MultiopenVerifier::verify(
+            &mut transcript,
+            &multiopen_proof,
+            &w0,
+            &[w0_openings_0, w0_openings_1, w0_openings_2],
+            &w1,
+            &[w1_openings_0, w1_openings_1, w1_openings_2],
+            &w2,
+            &[w2_openings_0, w2_openings_1, w2_openings_2],
+            &key,
+            &[key_openings_0, key_openings_1],
+            &q_mimc,
+            q_mimc_opening,
+            &c,
+            c_opening,
+            &quotient,
+            quotient_opening,
+            &u_prime,
+            u_prime_opening,
+            &p1,
+            p1_opening,
+            &p2,
+            p2_opening,
+            u_prime_opening, //v,
+            alpha,
+            omega_alpha,
+            omega_n_alpha,
+            pk.srs_g2[1],
+        );
+        assert_eq!(is_multiopen_proof_valid, true);
+
+        let commitments = Commitments {
+            w0,
+            w1,
+            w2,
+            key,
+            c,
+            quotient,
+            u_prime,
+            zi,
+            ci,
+            p1,
+            p2,
+            q_mimc,
+        };
+
+        let openings = Openings {
+            q_mimc_opening,
+            c_opening,
+            quotient_opening,
+            u_prime_opening,
+            p1_opening,
+            p2_opening,
+            w0_openings_0,
+            w0_openings_1,
+            w0_openings_2,
+            w1_openings_0,
+            w1_openings_1,
+            w1_openings_2,
+            w2_openings_0,
+            w2_openings_1,
+            w2_openings_2,
+            key_openings_0,
+            key_openings_1,
+        };
+
+        Proof {
+            multiopen_proof,
+            openings,
+            commitments,
+        }
     }
 
     fn assignment_round<E: PairingEngine>(
@@ -221,7 +369,7 @@ impl Prover {
             .take(extended_coset_domain.size())
             .collect();
 
-        let num_of_gates = 6;
+        let num_of_gates = 7;
         let v_powers: Vec<E::Fr> =
             iter::successors(Some(E::Fr::one()), |v_i: &E::Fr| Some(v_i.clone() * v))
                 .take(num_of_gates)
@@ -229,7 +377,7 @@ impl Prover {
 
         let mut numerator_coset_evals = vec![E::Fr::zero(); extended_coset_domain.size()];
         for i in 0..extended_coset_domain.size() {
-            // Gate0:
+            // Gate 0:
             numerator_coset_evals[i] += v_powers[0]
                 * Mimc7RoundGate::compute_in_coset(
                     i,
@@ -239,7 +387,7 @@ impl Prover {
                     &state.precomputed.q_mimc_coset_evals,
                 );
 
-            // Gate1:
+            // Gate 1:
             numerator_coset_evals[i] += v_powers[1]
                 * Mimc7RoundGate::compute_in_coset(
                     i,
@@ -249,7 +397,7 @@ impl Prover {
                     &state.precomputed.q_mimc_coset_evals,
                 );
 
-            // Gate2:
+            // Gate 2:
             numerator_coset_evals[i] += v_powers[2]
                 * Mimc7RoundGate::compute_in_coset(
                     i,
@@ -259,7 +407,7 @@ impl Prover {
                     &state.precomputed.q_mimc_coset_evals,
                 );
 
-            // Gate3:
+            // Gate 3:
             numerator_coset_evals[i] += v_powers[3]
                 * KeyEquality::compute_in_coset(
                     i,
@@ -267,7 +415,7 @@ impl Prover {
                     &state.precomputed.q_mimc_coset_evals,
                 );
 
-            // Gate4:
+            // Gate 4:
             numerator_coset_evals[i] += v_powers[4]
                 * KeyCopyGate::compute_in_coset(
                     i,
@@ -276,7 +424,7 @@ impl Prover {
                     &state.precomputed.l0_coset_evals,
                 );
 
-            // Gate5:
+            // Gate 5:
             numerator_coset_evals[i] += v_powers[5]
                 * NullifierGate::compute_in_coset(
                     i,
@@ -284,6 +432,15 @@ impl Prover {
                     &key_coset_evals,
                     &state.precomputed.l0_coset_evals,
                     state.public_input.nullifier_hash,
+                );
+
+            // Gate 6:
+            numerator_coset_evals[i] += v_powers[6]
+                * ExternalNullifierGate::compute_in_coset(
+                    i,
+                    &w2_coset_evals,
+                    &state.precomputed.l0_coset_evals,
+                    state.public_input.external_nullifier,
                 );
         }
 
@@ -353,29 +510,29 @@ impl Prover {
         let ci_blind = &DensePolynomial::from_coefficients_slice(&[r2, r3, r4]) * &zi;
         ci += &ci_blind;
 
-        // 6. define U
+        // 6. define u_prime
         let u_eval = state.domain_h.element(state.witness.index);
-        let mut u = DensePolynomial::from_coefficients_slice(&state.domain_v.ifft(&[u_eval]));
+        let mut u_prime = DensePolynomial::from_coefficients_slice(&state.domain_v.ifft(&[u_eval]));
 
-        // 7. blind U
+        // 7. blind u_prime
         let zv: DensePolynomial<_> = state.domain_v.vanishing_polynomial().into();
         let u_blind = &DensePolynomial::from_coefficients_slice(&[r5, r6]) * &zv;
-        u += &u_blind;
+        u_prime += &u_blind;
 
         // 8. Commit
         let zi_commitment = commit(&state.proving_key.srs_g1, &zi);
         let ci_commitment = commit(&state.proving_key.srs_g1, &ci);
-        let u_commitment = commit(&state.proving_key.srs_g1, &u);
+        let u_prime_commitment = commit(&state.proving_key.srs_g1, &u_prime);
 
         // store data in the state
         state.zi = Some(zi);
         state.ci = Some(ci);
-        state.u = Some(u);
+        state.u_prime = Some(u_prime);
 
         (
             zi_commitment.into(),
             ci_commitment.into(),
-            u_commitment.into(),
+            u_prime_commitment.into(),
         )
     }
 
@@ -399,14 +556,14 @@ impl Prover {
         // 2. Compute H
         let zi = state.zi.as_ref().unwrap();
         let ci = state.ci.as_ref().unwrap();
-        let u = state.u.as_ref().unwrap();
+        let u_prime = state.u_prime.as_ref().unwrap();
         let a = state.a.as_ref().unwrap();
 
-        let composed_degree = max(zi.degree() * u.degree(), ci.degree() * u.degree());
+        let composed_degree = max(zi.degree() * u_prime.degree(), ci.degree() * u_prime.degree());
         let extended_domain = GeneralEvaluationDomain::<E::Fr>::new(composed_degree).unwrap();
 
         let u_evals_on_extended_domain =
-            cfg_into_iter!(extended_domain.elements()).map(|omega_i| u.evaluate(&omega_i));
+            cfg_into_iter!(extended_domain.elements()).map(|omega_i| u_prime.evaluate(&omega_i));
         let mut zi_of_u_evals = vec![E::Fr::zero(); extended_domain.size()];
         let mut ci_of_u_evals = vec![E::Fr::zero(); extended_domain.size()];
         for (i, ui) in u_evals_on_extended_domain.enumerate() {
@@ -450,7 +607,15 @@ impl Prover {
         hi_1: Fr,
         alpha: Fr, // evaluation challenge
         transcript: &mut Transcript
-    ) -> MultiopenProof<Bn254> {
+    ) -> (
+        MultiopenProof<Bn254>,
+        Fr, Fr, Fr, Fr,
+        Fr, Fr, Fr, Fr,
+        Fr, Fr, Fr, Fr,
+        Fr, Fr, Fr, Fr,
+        Fr,
+        DensePolynomial<Fr>, DensePolynomial<Fr>,
+    ) {
         let omega = state.domain_h.element(1); 
         let omega_n = state.domain_h.element(NUMBER_OF_MIMC_ROUNDS);
 
@@ -468,7 +633,7 @@ impl Prover {
 
         let zi = state.zi.as_ref().unwrap();
         let ci = state.ci.as_ref().unwrap();
-        let u = state.u.as_ref().unwrap();
+        let u_prime = state.u_prime.as_ref().unwrap();
         let h = state.h.as_ref().unwrap();
         let a = state.a.as_ref().unwrap();
 
@@ -477,7 +642,7 @@ impl Prover {
 
         // 2. Compute P2
         let p2 = {
-            let u_at_alpha = u.evaluate(&alpha);
+            let u_at_alpha = u_prime.evaluate(&alpha);
             let zi_at_u_alpha = zi.evaluate(&u_at_alpha);
             let ci_at_u_alpha = ci.evaluate(&u_at_alpha);
             let a_at_alpha = a.evaluate(&alpha);
@@ -492,7 +657,7 @@ impl Prover {
         };
 
         // compute all evaluations 
-        let v = u.evaluate(&alpha);
+        let v = u_prime.evaluate(&alpha);
 
         // compute all openings
         let w0_openings = [
@@ -559,7 +724,7 @@ impl Prover {
             q_mimc,
             c,
             quotient,
-            u,
+            u_prime,
             &p1,
             &p2,
             v,
@@ -569,126 +734,27 @@ impl Prover {
             transcript,
         );
 
-        // let x = Proof {
-        //     w0,
-        //     w1,
-        //     w2,
-        //     key,
-        //     quotient,
-        //     w0_alpha: todo!(),
-        //     w0_omega_alpha: todo!(),
-        //     w0_omega_n_alpha: todo!(),
-        //     w1_alpha: todo!(),
-        //     w1_omega_alpha: todo!(),
-        //     w1_omega_n_alpha: todo!(),
-        //     w2_alpha: todo!(),
-        //     w2_omega_alpha: todo!(),
-        //     w2_omega_n_alpha: todo!(),
-        //     key_alpha: todo!(),
-        //     key_omega_alpha: todo!(),
-        //     q_mimc_alpha: todo!(),
-        //     c_alpha: todo!(),
-        //     quotient_alpha: todo!(),
-        //     zi,
-        //     ci,
-        //     u,
-        //     h,
-        //     u_alpha: todo!(),
-        //     p1_v: todo!(),
-        //     p2_alpha: todo!(),
-        //     multiopen_proof: todo!(),
-        // };
-
-        m
-    }
-}
-
-#[cfg(test)]
-mod prover_tests {
-    use ark_bn254::{Bn254, Fr};
-    use ark_ec::ProjectiveCurve;
-    use ark_ff::{UniformRand, Zero};
-    use ark_poly::{
-        univariate::DensePolynomial, EvaluationDomain, GeneralEvaluationDomain, UVPolynomial,
-    };
-    use ark_std::test_rng;
-    use rand::rngs::StdRng;
-    //use semaphore::identity;
-
-    use crate::{
-        //caulk_plus::precomputed,
-        kzg::{commit, unsafe_setup},
-        layouter::Layouter,
-        mimc7::Mimc7,
-        prover::{ProverPrecomputedData, ProvingKey, PublicData},
-    };
-
-    use super::{Prover, WitnessInput};
-
-    #[test]
-    fn test_prover() {
-        let n_rounds = 91;
-        let mut rng = test_rng();
-
-        let domain_size = 1024;
-        let domain = GeneralEvaluationDomain::<Fr>::new(domain_size).unwrap();
-
-        let mimc7 = Mimc7::<Fr>::new("mimc".into(), n_rounds);
-
-        let identity_nullifier = Fr::from(100u64);
-        let identity_trapdoor = Fr::from(200u64);
-
-        let external_nullifier = Fr::from(300u64);
-
-        let nullifier_hash =
-            mimc7.multi_hash(&[identity_nullifier, external_nullifier], Fr::zero());
-
-        let identity_commitment =
-            mimc7.multi_hash(&[identity_nullifier, identity_trapdoor], Fr::zero());
-
-        let assignment = Layouter::assign(
-            identity_nullifier,
-            identity_trapdoor,
-            external_nullifier,
-            &mimc7.cts,
-            &mut rng,
-        );
-
-        let dummy_value = Fr::from(9999u64);
-
-        let mut identity_commitments: Vec<_> = (0..1024).map(|_| Fr::rand(&mut rng)).collect();
-        let index = 10;
-        identity_commitments[index] = identity_commitment;
-        let c = DensePolynomial::from_coefficients_slice(&domain.ifft(&identity_commitments));
-
-        let (srs_g1, srs_g2) = unsafe_setup::<Bn254, StdRng>(1024, 1024, &mut rng);
-        let pk = ProvingKey::<Bn254> { srs_g1, srs_g2 };
-
-        let precomputed = ProverPrecomputedData::index(&pk, &mimc7.cts, dummy_value, index, &c);
-
-        let witness = WitnessInput {
-            identity_nullifier,
-            identity_trapdoor,
-            identity_commitment,
-            index,
-        };
-
-        let c_commitment = commit(&pk.srs_g1, &c).into_affine();
-        let public_input = PublicData::<Bn254> {
-            c_commitment: c_commitment,
-            external_nullifier,
-            nullifier_hash,
-        };
-
-        Prover::prove(
-            &pk,
-            &witness,
-            &assignment,
-            &public_input,
-            &precomputed,
-            &mut rng,
-        );
-
-        // Prover::prove(&pk, &index, &assignment, nullifier_external);
+        (
+            m,
+            w0_openings[0],
+            w0_openings[1],
+            w0_openings[2],
+            w1_openings[0],
+            w1_openings[1],
+            w1_openings[2],
+            w2_openings[0],
+            w2_openings[1],
+            w2_openings[2],
+            key_openings[0],
+            key_openings[1],
+            q_mimc_opening,
+            c_opening,
+            quotient_opening,
+            u_prime_opening,
+            p1_opening,
+            p2_opening,
+            p1,
+            p2,
+        )
     }
 }

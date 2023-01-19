@@ -65,7 +65,7 @@ pub struct NullifierGate<F: PrimeField> {
 impl<F: PrimeField> NullifierGate<F> {
     pub fn compute_in_coset(
         omega_i: usize,
-        nullifier_external: &Vec<F>,
+        nullifier_external: &Vec<F>, // rename to w2?
         key: &Vec<F>,
         l0: &Vec<F>,
         nullifier: F, // public input
@@ -81,6 +81,21 @@ impl<F: PrimeField> NullifierGate<F> {
                 - nullifier_external_pow_n
                 - F::from(2u64) * key[omega_i]
                 - nullifier_external[omega_i])
+    }
+}
+
+pub struct ExternalNullifierGate<F: PrimeField> {
+    _f: PhantomData<F>,
+}
+
+impl<F: PrimeField> ExternalNullifierGate<F> {
+    pub fn compute_in_coset(
+        omega_i: usize,
+        nullifier: &Vec<F>,
+        l0: &Vec<F>,
+        external_nullifier: F, // public input
+    ) -> F {
+        l0[omega_i] * (nullifier[omega_i] - external_nullifier)
     }
 }
 

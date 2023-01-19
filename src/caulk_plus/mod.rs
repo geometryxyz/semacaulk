@@ -1,5 +1,6 @@
 use ark_ec::PairingEngine;
 use ark_poly::{EvaluationDomain, GeneralEvaluationDomain};
+use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, Read, SerializationError, Write};
 
 pub mod precomputed;
 pub mod proof;
@@ -17,6 +18,7 @@ pub struct PublicInput<E: PairingEngine> {
     pub(crate) srs_g2: Vec<E::G2Affine>,
 }
 
+#[derive(CanonicalSerialize, CanonicalDeserialize, Clone, Debug)]
 pub struct CommonInput<E: PairingEngine> {
     pub(crate) domain_h: GeneralEvaluationDomain<E::Fr>,
     pub(crate) domain_v: GeneralEvaluationDomain<E::Fr>,
