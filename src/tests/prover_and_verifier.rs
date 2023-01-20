@@ -19,7 +19,8 @@ use crate::constants::{SUBGROUP_SIZE, DUMMY_VALUE};
 #[test]
 pub fn test_prover_and_verifier() {
     let mut rng = test_rng();
-    let domain = GeneralEvaluationDomain::<Fr>::new(1024).unwrap();
+    let table_size: usize = 1024;
+    let domain = GeneralEvaluationDomain::<Fr>::new(table_size).unwrap();
 
     let mimc7 = init_mimc7::<Fr>();
 
@@ -43,8 +44,6 @@ pub fn test_prover_and_verifier() {
 
     let dummy_value = Fr::from(DUMMY_VALUE);
 
-    let table_size: usize = 1024;
-
     let mut identity_commitments: Vec<_> = (0..table_size).map(|_| Fr::rand(&mut rng)).collect();
     let index = 10;
     identity_commitments[index] = identity_commitment;
@@ -53,7 +52,7 @@ pub fn test_prover_and_verifier() {
     let (srs_g1, srs_g2) = unsafe_setup::<Bn254, StdRng>(table_size, table_size, &mut rng);
     let pk = ProvingKey::<Bn254> { srs_g1, srs_g2: srs_g2.clone() };
 
-    let precomputed = ProverPrecomputedData::index(&pk, &mimc7.cts, dummy_value, index, &c);
+    let precomputed = ProverPrecomputedData::index(&pk, &mimc7.cts, dummy_value, index, &c, table_size);
 
     let witness = WitnessInput {
         identity_nullifier,

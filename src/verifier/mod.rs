@@ -33,7 +33,7 @@ impl Verifier {
         transcript.update_with_g1(&proof.commitments.zi);
         transcript.update_with_g1(&proof.commitments.ci);
         transcript.update_with_g1(&proof.commitments.u_prime);
-        let _hi_1 = transcript.get_challenge();
+        let hi_1 = transcript.get_challenge();
         let hi_2 = transcript.get_challenge();
         let alpha = transcript.get_challenge();
 
@@ -247,7 +247,6 @@ impl Verifier {
         let a3 = (zq + minus_y).add_mixed(&final_poly).into_affine();
 
         let a_lhs = a1 + a2 + a3;
-        //let a_lhs = a3;
         let a_rhs = g2_gen;
 
         let b_lhs = proof.commitments.zi.neg();
@@ -262,33 +261,34 @@ impl Verifier {
              (c_lhs.into(), c_rhs.into()),
         ]);
 
-        if res == Fq12::one() {
-            return true;
-        } else {
-            //e((ci - c) + hi(x^n -1), [1]) * e(-zi, w) == 1
+        res == Fq12::one()
+        //if res == Fq12::one() {
+            //return true;
+        //} else {
+            ////e((ci - c) + hi(x^n -1), [1]) * e(-zi, w) == 1
             
-            let a1 = accumulator + proof.commitments.ci.neg();
-            let a2 = (a2_srs_g1 + g1_gen.neg()).mul(hi_2).into_affine();
+            //let a1 = accumulator + proof.commitments.ci.neg();
+            //let a2 = (a2_srs_g1 + -g1_gen).mul(hi_1).into_affine();
 
-            let a_lhs = a1 + a2;
-            let a_rhs = g2_gen;
+            //let a_lhs = a1 + a2;
+            //let a_rhs = g2_gen;
 
-            let b_lhs = proof.commitments.zi.neg();
-            let b_rhs = proof.commitments.w;
+            //let b_lhs = proof.commitments.zi.neg();
+            //let b_rhs = proof.commitments.w;
 
-            let res = Bn254::product_of_pairings(&[
-                 (a_lhs.into(), a_rhs.into()),
-                 (b_lhs.into(), b_rhs.into()),
-            ]);
+            //let res = Bn254::product_of_pairings(&[
+                 //(a_lhs.into(), a_rhs.into()),
+                 //(b_lhs.into(), b_rhs.into()),
+            //]);
 
-            println!("{}", res == Fq12::one());
-            if res != Fq12::one() {
-                println!("a1 + a2 pairing failed");
-                return false;
-            }
-        }
+            //println!("{}", res == Fq12::one());
+            //if res != Fq12::one() {
+                //println!("second pairing failed");
+                //return false;
+            //}
+        //}
 
-        return false;
+        //return false;
     }
 }
 

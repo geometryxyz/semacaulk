@@ -79,6 +79,7 @@ impl<E: PairingEngine> ProverPrecomputedData<E> {
         dummy_value: E::Fr,
         index: usize,
         c: &DensePolynomial<E::Fr>,
+        table_size: usize,
     ) -> Self {
         let domain = GeneralEvaluationDomain::<E::Fr>::new(SUBGROUP_SIZE).unwrap();
         let extended_coset_domain =
@@ -120,10 +121,10 @@ impl<E: PairingEngine> ProverPrecomputedData<E> {
         let l0_coset_evals = extended_coset_domain.coset_fft(&l0);
 
         // precompute w1&w2 for caulk+ part of the proof
-        let domain_h = GeneralEvaluationDomain::new(SUBGROUP_SIZE).unwrap();
+        let domain_t = GeneralEvaluationDomain::new(table_size).unwrap();
         let mut precomputed = Precomputed::<E>::empty();
-        precomputed.precompute_w1(&pk.srs_g2, &[index], &c, &domain_h);
-        precomputed.precompute_w2(&pk.srs_g2, &[index], &domain_h);
+        precomputed.precompute_w1(&pk.srs_g2, &[index], &c, &domain_t);
+        precomputed.precompute_w2(&pk.srs_g2, &[index], &domain_t);
 
         Self {
             c: c_poly,

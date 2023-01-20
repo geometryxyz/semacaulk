@@ -507,6 +507,14 @@ impl Prover {
         let mut zi = DensePolynomial::<E::Fr>::from_coefficients_slice(&[r1]);
         zi = &zi * &DensePolynomial::from_coefficients_slice(&[-omega, E::Fr::one()]);
 
+        {
+            // Sanity check on zi
+            let domain = state.domain_t;
+            let zh: DensePolynomial<_> = domain.vanishing_polynomial().into();
+            let q = &zh / &zi;
+            assert_eq!(&q * &zi, zh);
+        }
+
         // 4. define CI
         let mut ci = DensePolynomial::<E::Fr>::zero();
         ci += &(&ts[0] * state.witness.identity_commitment);
