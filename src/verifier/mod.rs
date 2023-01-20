@@ -33,7 +33,7 @@ impl Verifier {
         transcript.update_with_g1(&proof.commitments.zi);
         transcript.update_with_g1(&proof.commitments.ci);
         transcript.update_with_g1(&proof.commitments.u_prime);
-        let hi_1 = transcript.get_challenge();
+        let _hi_1 = transcript.get_challenge();
         let hi_2 = transcript.get_challenge();
         let alpha = transcript.get_challenge();
 
@@ -208,12 +208,12 @@ impl Verifier {
         // A: e(
         //   A1:  (C - ci) +
         //   A2:  (xi(x^n - 1)) +
-        //   A3:  (zq - y + p), 
+        //   A3:  s * (zq - y + p), 
         // [1])
         //
         // B: e(-zi,  w)
         //
-        // C: e(-q, [x])
+        // C: e(-q * s, [x])
         //
         // A: [1] is E::G2Affine::prime_subgroup_generator()
         //   A1:
@@ -223,6 +223,7 @@ impl Verifier {
         //     xi is hi_2
         //     (x^n - 1) is (public_input.srs_g1[common_input.domain_h.size()] + -E::G1Affine::prime_subgroup_generator())
         //   A3:
+        //   s is the separator challenge
         //     zq is final_poly_proof.mul(x3)
         //     -y is g1.mul(final_poly_opening).neg()
         //     p is final_poly
@@ -232,8 +233,11 @@ impl Verifier {
         //   w is w_commitment from caulk_second_round
         //
         // C:
+        //   s is the separator challenge
         //   -q is final_poly_proof.neg()
         //   [x] is x_g2
+        //
+        let s = transcript.get_challenge();
 
         let g1_gen = G1Affine::prime_subgroup_generator();
         let g2_gen = G2Affine::prime_subgroup_generator();
@@ -244,7 +248,7 @@ impl Verifier {
 
         let a1 = accumulator + proof.commitments.ci.neg();
         let a2 = (a2_srs_g1 + g1_gen.neg()).mul(hi_2).into_affine();
-        let a3 = (zq + minus_y).add_mixed(&final_poly).into_affine();
+        let a3 = (zq + minus_y).add_mixed(&final_poly).into_affine().mul(s).into_affine();
 
         let a_lhs = a1 + a2 + a3;
         let a_rhs = g2_gen;
@@ -252,7 +256,7 @@ impl Verifier {
         let b_lhs = proof.commitments.zi.neg();
         let b_rhs = proof.commitments.w;
 
-        let c_lhs = final_poly_proof.neg();
+        let c_lhs = final_poly_proof.neg().mul(s).into_affine();
         let c_rhs = x_g2;
 
         let res = Bn254::product_of_pairings(&[
@@ -262,33 +266,6 @@ impl Verifier {
         ]);
 
         res == Fq12::one()
-        //if res == Fq12::one() {
-            //return true;
-        //} else {
-            ////e((ci - c) + hi(x^n -1), [1]) * e(-zi, w) == 1
-            
-            //let a1 = accumulator + proof.commitments.ci.neg();
-            //let a2 = (a2_srs_g1 + -g1_gen).mul(hi_1).into_affine();
-
-            //let a_lhs = a1 + a2;
-            //let a_rhs = g2_gen;
-
-            //let b_lhs = proof.commitments.zi.neg();
-            //let b_rhs = proof.commitments.w;
-
-            //let res = Bn254::product_of_pairings(&[
-                 //(a_lhs.into(), a_rhs.into()),
-                 //(b_lhs.into(), b_rhs.into()),
-            //]);
-
-            //println!("{}", res == Fq12::one());
-            //if res != Fq12::one() {
-                //println!("second pairing failed");
-                //return false;
-            //}
-        //}
-
-        //return false;
     }
 }
 

@@ -14,7 +14,7 @@ use crate::{
 };
 use crate::prover::prover::{Prover, WitnessInput};
 use crate::verifier::Verifier;
-use crate::constants::{SUBGROUP_SIZE, DUMMY_VALUE};
+use crate::constants::DUMMY_VALUE;
 
 #[test]
 pub fn test_prover_and_verifier() {
