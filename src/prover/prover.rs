@@ -49,6 +49,7 @@ pub struct State<'a, E: PairingEngine> {
     // domains
     pub(crate) domain_h: GeneralEvaluationDomain<E::Fr>,
     pub(crate) domain_v: GeneralEvaluationDomain<E::Fr>,
+    pub(crate) domain_t: GeneralEvaluationDomain<E::Fr>,
 
     // data after first round
     pub(crate) r1: Option<E::Fr>,
@@ -85,9 +86,11 @@ impl Prover {
         assignment: &'a Assignment<E::Fr>,
         public_input: &'a PublicData<E>,
         precomputed: &'a ProverPrecomputedData<E>,
+        table_size: usize,
     ) -> State<'a, E> {
         let domain_h = GeneralEvaluationDomain::new(SUBGROUP_SIZE).unwrap();
         let domain_v = GeneralEvaluationDomain::new(1).unwrap();
+        let domain_t = GeneralEvaluationDomain::new(table_size).unwrap();
         // let omega_pow_rotation = domain_h.element(NUMBER_OF_MIMC_ROUNDS);
         // let shifted_a = shift_dense_poly(&witness.a, &omega_pow_rotation);
         State {
@@ -99,6 +102,7 @@ impl Prover {
             // shifted_a,
             domain_h,
             domain_v,
+            domain_t,
 
             w0: None,
             key: None,
@@ -132,8 +136,9 @@ impl Prover {
         public_input: &PublicData<Bn254>,
         precomputed: &ProverPrecomputedData<Bn254>,
         zk_rng: &mut R,
+        table_size: usize,
     ) -> Proof<Bn254> {
-        let mut state = Self::init(pk, witness, assignment, public_input, precomputed);
+        let mut state = Self::init(pk, witness, assignment, public_input, precomputed, table_size);
         let mut transcript = Transcript::new_transcript();
 
         // TODO: append public data
@@ -161,10 +166,9 @@ impl Prover {
         let hi_1 = transcript.get_challenge();
         let hi_2 = transcript.get_challenge();
 
-        let (_w_commitment, _h_commitment) = Self::caulk_plus_second_round(&mut state, hi_1, hi_2);
-        //let (w_commitment, h_commitment) = Self::caulk_plus_second_round(&mut state, hi_1, hi_2);
-        // transcript.update_with_g1(&w_commitment);
-        // transcript.update_with_g1(&h_commitment);
+        let (w, _h) = Self::caulk_plus_second_round(&mut state, hi_1, hi_2);
+        // transcript.update_with_g1(&w);
+        // transcript.update_with_g1(&h);
 
         let alpha = transcript.get_challenge();
 
@@ -285,6 +289,7 @@ impl Prover {
             p1,
             p2,
             q_mimc,
+            w,
         };
 
         let openings = Openings {
@@ -495,7 +500,7 @@ impl Prover {
         state.r6 = Some(r6);
 
         // 2. compute lagrange basis polynomial t_i over w^j for j = index
-        let omega = state.domain_h.element(state.witness.index);
+        let omega = state.domain_t.element(state.witness.index);
         let ts = construct_lagrange_basis(&[omega]);
 
         // 3. define and mask zI`
@@ -511,7 +516,7 @@ impl Prover {
         ci += &ci_blind;
 
         // 6. define u_prime
-        let u_eval = state.domain_h.element(state.witness.index);
+        let u_eval = state.domain_t.element(state.witness.index);
         let mut u_prime = DensePolynomial::from_coefficients_slice(&state.domain_v.ifft(&[u_eval]));
 
         // 7. blind u_prime

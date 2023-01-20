@@ -1,5 +1,6 @@
-use std::iter;
-use ark_bn254::{Bn254, Fr, G1Affine, G2Affine};
+use std::{iter, ops::Neg};
+use ark_bn254::{Bn254, Fr, Fq12, G1Affine, G2Affine};
+use ark_ec::{AffineCurve, PairingEngine, ProjectiveCurve};
 use crate::prover::Proof;
 use crate::transcript::Transcript;
 use crate::constants::{ NUMBER_OF_MIMC_ROUNDS, SUBGROUP_SIZE};
@@ -13,6 +14,7 @@ pub struct Verifier {}
 impl Verifier {
     pub fn verify(
         proof: &Proof<Bn254>,
+        a2_srs_g1: G1Affine,
         x_g2: G2Affine,
         accumulator: G1Affine,
         external_nullifier: Fr,
@@ -32,7 +34,7 @@ impl Verifier {
         transcript.update_with_g1(&proof.commitments.ci);
         transcript.update_with_g1(&proof.commitments.u_prime);
         let _hi_1 = transcript.get_challenge();
-        let _hi_2 = transcript.get_challenge();
+        let hi_2 = transcript.get_challenge();
         let alpha = transcript.get_challenge();
 
         let domain_h = GeneralEvaluationDomain::new(SUBGROUP_SIZE).unwrap();
@@ -127,7 +129,7 @@ impl Verifier {
         let zh_eval = alpha.pow(&[SUBGROUP_SIZE as u64, 0, 0, 0]) - Fr::one();
         let quotient_opening = proof.openings.quotient_opening;
         let rhs = zh_eval * quotient_opening;
-        //println!("verifier rhs: {}", rhs);
+        //iprintln!("verifier rhs: {}", rhs);
 
         if lhs != rhs {
             return false;
@@ -156,8 +158,7 @@ impl Verifier {
         transcript.update_with_u256(proof.openings.p1_opening);
         transcript.update_with_u256(proof.openings.p2_opening);
 
-        // Verify multiopen proof
-        let is_multiopen_valid = MultiopenVerifier::verify(
+        let multiopen_final_poly = MultiopenVerifier::compute_final_poly(
             &mut transcript,
             &proof.multiopen_proof,
             &proof.commitments.w0,
@@ -199,36 +200,95 @@ impl Verifier {
             alpha,
             omega_alpha,
             omega_n_alpha,
-            x_g2,
         );
 
-        // What the caulk+ verifier needs:
-        // public_input: &PublicInput<E>,
-        //   - srs_g1[domain_h.size()], srs_g2[1] (x_g2)
+        // Perform this using product_of_pairings(): A * B * C and check that 
+        // the result equals Fq12::one().
         //
-        // common_input: &CommonInput<E>,
-        //   - domain_h
-        //   - domain_v
-        //   - c_commitment (?) - the poly representing the lookup table
-        //   - a_commitment (?) - the values at which only some indices match the values in the
-        //                        lookup table
-        //   - rotation         - the 
+        // A: e(
+        //   A1:  (C - ci) +
+        //   A2:  (xi(x^n - 1)) +
+        //   A3:  (zq - y + p), 
+        // [1])
         //
-        // proof: &Proof<E>,
-        //   - zi_commitment - (proof.commitments.zi)
-        //   - ci_commitment - (proof.commitments.ci)
-        //   - u_commitment  - (proof.commitments.u_prime)
-        //   - w_commitment: - (can be taken from the prover)
-        //   - h_commitment: - (can be taken from the prover)
-        //   - u_eval: E::Fr, (proof.openings.u_prime_opening)
-        //   - u_proof: E::G1Affine (KZG proof of u_prime evaluated at alpha)
-        //   - p1_eval: - p1 evaluated at u_prime_opening
-        //   - p1_proof: - (KZG proof of p1 evaluated at u_prime_opening)
-        //   - p2_proof: - (KZG proof of p2 evaluated at alpha)
-        // a_opening_at_rotation - (?)
-        // fs_rng: &mut impl FiatShamirRng,
+        // B: e(-zi,  w)
+        //
+        // C: e(-q, [x])
+        //
+        // A: [1] is E::G2Affine::prime_subgroup_generator()
+        //   A1:
+        //     C is accumulator
+        //     ci is proof.commitments.ci
+        //   A2:
+        //     xi is hi_2
+        //     (x^n - 1) is (public_input.srs_g1[common_input.domain_h.size()] + -E::G1Affine::prime_subgroup_generator())
+        //   A3:
+        //     zq is final_poly_proof.mul(x3)
+        //     -y is g1.mul(final_poly_opening).neg()
+        //     p is final_poly
+        //
+        // B:
+        //   -zi is proof.commitments.zi.neg()
+        //   w is w_commitment from caulk_second_round
+        //
+        // C:
+        //   -q is final_poly_proof.neg()
+        //   [x] is x_g2
 
-        is_multiopen_valid
+        let g1_gen = G1Affine::prime_subgroup_generator();
+        let g2_gen = G2Affine::prime_subgroup_generator();
+        let (final_poly, final_poly_opening, x3) = multiopen_final_poly;
+        let final_poly_proof = proof.multiopen_proof.final_poly_proof;
+        let minus_y = g1_gen.mul(final_poly_opening).neg();
+        let zq = final_poly_proof.mul(x3);
+
+        let a1 = accumulator + proof.commitments.ci.neg();
+        let a2 = (a2_srs_g1 + g1_gen.neg()).mul(hi_2).into_affine();
+        let a3 = (zq + minus_y).add_mixed(&final_poly).into_affine();
+
+        let a_lhs = a1 + a2 + a3;
+        //let a_lhs = a3;
+        let a_rhs = g2_gen;
+
+        let b_lhs = proof.commitments.zi.neg();
+        let b_rhs = proof.commitments.w;
+
+        let c_lhs = final_poly_proof.neg();
+        let c_rhs = x_g2;
+
+        let res = Bn254::product_of_pairings(&[
+             (a_lhs.into(), a_rhs.into()),
+             (b_lhs.into(), b_rhs.into()),
+             (c_lhs.into(), c_rhs.into()),
+        ]);
+
+        if res == Fq12::one() {
+            return true;
+        } else {
+            //e((ci - c) + hi(x^n -1), [1]) * e(-zi, w) == 1
+            
+            let a1 = accumulator + proof.commitments.ci.neg();
+            let a2 = (a2_srs_g1 + g1_gen.neg()).mul(hi_2).into_affine();
+
+            let a_lhs = a1 + a2;
+            let a_rhs = g2_gen;
+
+            let b_lhs = proof.commitments.zi.neg();
+            let b_rhs = proof.commitments.w;
+
+            let res = Bn254::product_of_pairings(&[
+                 (a_lhs.into(), a_rhs.into()),
+                 (b_lhs.into(), b_rhs.into()),
+            ]);
+
+            println!("{}", res == Fq12::one());
+            if res != Fq12::one() {
+                println!("a1 + a2 pairing failed");
+                return false;
+            }
+        }
+
+        return false;
     }
 }
 

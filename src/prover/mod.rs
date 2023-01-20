@@ -58,8 +58,8 @@ pub struct Commitments<E: PairingEngine> {
     pub(crate) p1: E::G1Affine,
     pub(crate) p2: E::G1Affine,
     pub(crate) q_mimc: E::G1Affine,
+    pub(crate) w: E::G2Affine,
 }
-
 
 #[derive(CanonicalSerialize, CanonicalDeserialize, Clone, Debug)]
 pub struct ProverPrecomputedData<E: PairingEngine> {

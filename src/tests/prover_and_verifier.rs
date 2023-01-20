@@ -14,7 +14,7 @@ use crate::{
 };
 use crate::prover::prover::{Prover, WitnessInput};
 use crate::verifier::Verifier;
-use crate::constants::DUMMY_VALUE;
+use crate::constants::{SUBGROUP_SIZE, DUMMY_VALUE};
 
 #[test]
 pub fn test_prover_and_verifier() {
@@ -43,12 +43,14 @@ pub fn test_prover_and_verifier() {
 
     let dummy_value = Fr::from(DUMMY_VALUE);
 
-    let mut identity_commitments: Vec<_> = (0..1024).map(|_| Fr::rand(&mut rng)).collect();
+    let table_size: usize = 1024;
+
+    let mut identity_commitments: Vec<_> = (0..table_size).map(|_| Fr::rand(&mut rng)).collect();
     let index = 10;
     identity_commitments[index] = identity_commitment;
     let c = DensePolynomial::from_coefficients_slice(&domain.ifft(&identity_commitments));
 
-    let (srs_g1, srs_g2) = unsafe_setup::<Bn254, StdRng>(1024, 1024, &mut rng);
+    let (srs_g1, srs_g2) = unsafe_setup::<Bn254, StdRng>(table_size, table_size, &mut rng);
     let pk = ProvingKey::<Bn254> { srs_g1, srs_g2: srs_g2.clone() };
 
     let precomputed = ProverPrecomputedData::index(&pk, &mimc7.cts, dummy_value, index, &c);
@@ -74,10 +76,12 @@ pub fn test_prover_and_verifier() {
         &public_input,
         &precomputed,
         &mut rng,
+        table_size,
     );
 
     let is_valid = Verifier::verify(
         &proof,
+        pk.srs_g1[table_size].clone(),
         srs_g2[1].clone(),
         accumulator,
         external_nullifier,
