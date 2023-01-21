@@ -1,16 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
+
 import { Types } from "./Types.sol";
+import { Constants } from "./Constants.sol";
 
 contract BN254 {
-    // The base field
-    uint256 constant PRIME_Q =
-        21888242871839275222246405745257275088696311157297823662689037894645226208583;
-
-    // The scalar field
-    uint256 constant PRIME_R =
-        21888242871839275222246405745257275088548364400416034343698204186575808495617;
-
     /// @return the generator of G1
     // solhint-disable-next-line func-name-mixedcase
     function P1() internal pure returns (Types.G1Point memory) {
@@ -40,7 +34,9 @@ contract BN254 {
         // The prime q in the base field F_q for G1
         if (_p.x == 0 && _p.y == 0) {
             return Types.G1Point(0, 0);
-        } else { return Types.G1Point(_p.x, PRIME_Q - (_p.y % PRIME_Q));
+        } else {
+            uint256 q = Constants.PRIME_Q;
+            return Types.G1Point(_p.x, q - (_p.y % q));
         }
     }
     

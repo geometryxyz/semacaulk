@@ -5,6 +5,7 @@ import { KeccakMT } from "./KeccakMT.sol";
 import { BN254 } from "./BN254.sol";
 import { TranscriptLibrary } from "./Transcript.sol";
 import { Types } from "./Types.sol";
+import { Constants } from "./Constants.sol";
 
 contract Semacaulk is KeccakMT, BN254 {
     bytes32 public lagrangeTreeRoot;
@@ -27,7 +28,7 @@ contract Semacaulk is KeccakMT, BN254 {
      *  ).toString(16)
      */
     uint256 NOTHING_UP_MY_SLEEVE_ZERO = 
-        uint256(keccak256(abi.encodePacked('Semacaulk'))) % PRIME_R;
+        uint256(keccak256(abi.encodePacked('Semacaulk'))) % Constants.PRIME_R;
 
     // Custom errors
     error RootMismatch(bytes32 _generatedRoot);
@@ -68,7 +69,7 @@ contract Semacaulk is KeccakMT, BN254 {
         }
 
         // 2. Compute (v - zero) * Li_comm
-        uint256 n = PRIME_R;
+        uint256 n = Constants.PRIME_R;
         uint256 negZero = mulmod(NOTHING_UP_MY_SLEEVE_ZERO, n - 1, n);
         uint256 vMinusZero = addmod(_identityCommitment, negZero, n);
 

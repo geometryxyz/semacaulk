@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
+import { Constants } from "./Constants.sol";
+
 library Lagrange {
     function computeL0Eval(
         uint256 alpha
     ) internal view returns (uint256 result) {
-        uint256 p = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
+        uint256 p = Constants.PRIME_R;
         //uint256 domainSize = 1024;
-        uint256 log2DomainSize = 10;
-        // Compute this value with Fr::from(domainSize).inverse().unwrap()
-        uint256 domainSizeInv = 0x3058355F447953C1ADE231A513E0F80710E9DB4E679B02351F90FD168B040001;
+        uint256 log2DomainSize = Constants.log2DomainSize;
+        uint256 domainSizeInv = Constants.domainSizeInv;
 
         // Step 1: Compute the evaluation of the vanishing polynomial of the domain with domain_size at
         // alpha
@@ -44,15 +45,17 @@ library Lagrange {
 
             // Compute the inverse and store the result to the stack variable
             // oneDivAlphaMinusOne
-            success := staticcall(gas(), 5, mPtr, 0xc0, oneDivAlphaMinusOne, 0x20)
-        }
+            success := staticcall(gas(), 5, mPtr, 0xc0, 0x0, 0x20)
+            oneDivAlphaMinusOne := mload(oneDivAlphaMinusOne)
 
-        require(success, "Lagrange: could not invert divisor");
+            // Just revert
+            switch success case 0 { revert(0, 0) }
+        }
 
         // Step 3: Compute the evaluation of the Lagrange polynomial at point alpha
         assembly {
             result := mulmod(
-                mulmod(vanishingPolyEval , domainSizeInv, p),
+                mulmod(vanishingPolyEval, domainSizeInv, p),
                 oneDivAlphaMinusOne,
                 p
             )
