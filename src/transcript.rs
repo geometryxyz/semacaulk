@@ -1,7 +1,7 @@
 /*
     Implementation of transcript with keccak256 that is compatible with Transcript.sol
 */
-use ark_bn254::{Fr, G1Affine};
+use ark_bn254::{Fr, G1Affine, G2Affine};
 use ark_ff::{BigInteger, PrimeField};
 use tiny_keccak::{Hasher, Keccak};
 
@@ -32,6 +32,17 @@ impl Transcript {
 
         self.data.append(&mut x_bytes);
         self.data.append(&mut y_bytes);
+    }
+
+    pub fn update_with_g2(&mut self, pt: &G2Affine) {
+        let mut x_0_bytes = pt.x.c0.into_repr().to_bytes_be();
+        let mut x_1_bytes = pt.x.c1.into_repr().to_bytes_be();
+        let mut y_0_bytes = pt.y.c0.into_repr().to_bytes_be();
+        let mut y_1_bytes = pt.y.c1.into_repr().to_bytes_be();
+        self.data.append(&mut x_0_bytes);
+        self.data.append(&mut x_1_bytes);
+        self.data.append(&mut y_0_bytes);
+        self.data.append(&mut y_1_bytes);
     }
 
     pub fn get_challenge(&mut self) -> Fr {

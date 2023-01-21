@@ -1,4 +1,4 @@
-use std::{iter, ops::Neg};
+use std::ops::Neg;
 use ark_bn254::{Bn254, Fr, Fq12, G1Affine, G2Affine};
 use ark_ec::{AffineCurve, PairingEngine, ProjectiveCurve};
 use crate::prover::Proof;
@@ -6,7 +6,7 @@ use crate::transcript::Transcript;
 use crate::constants::{ NUMBER_OF_MIMC_ROUNDS, SUBGROUP_SIZE};
 use crate::multiopen::verifier::Verifier as MultiopenVerifier;
 use ark_poly::{EvaluationDomain, GeneralEvaluationDomain};
-use ark_std::{Zero, One};
+use ark_std::One;
 use ark_ff::Field;
 
 pub struct Verifier {}
@@ -35,6 +35,10 @@ impl Verifier {
         transcript.update_with_g1(&proof.commitments.u_prime);
         let _hi_1 = transcript.get_challenge();
         let hi_2 = transcript.get_challenge();
+
+        transcript.update_with_g2(&proof.commitments.w);
+        transcript.update_with_g1(&proof.commitments.h);
+
         let alpha = transcript.get_challenge();
 
         let domain_h = GeneralEvaluationDomain::new(SUBGROUP_SIZE).unwrap();
@@ -45,15 +49,6 @@ impl Verifier {
         let omega_alpha = omega * alpha;
         let omega_n_alpha = omega_n * alpha;
 
-        let mut q_mimc_evals: Vec<Fr> = iter::repeat(Fr::one())
-            .take(NUMBER_OF_MIMC_ROUNDS)
-            .collect();
-        let mut zeroes: Vec<Fr> = iter::repeat(Fr::zero())
-            .take(SUBGROUP_SIZE - NUMBER_OF_MIMC_ROUNDS)
-            .collect();
-        q_mimc_evals.append(&mut zeroes);
-
-        // Compute key
         let key_openings = [
             proof.openings.key_openings_0,
             proof.openings.key_openings_1,
@@ -129,7 +124,6 @@ impl Verifier {
         let zh_eval = alpha.pow(&[SUBGROUP_SIZE as u64, 0, 0, 0]) - Fr::one();
         let quotient_opening = proof.openings.quotient_opening;
         let rhs = zh_eval * quotient_opening;
-        //iprintln!("verifier rhs: {}", rhs);
 
         if lhs != rhs {
             return false;
@@ -236,7 +230,6 @@ impl Verifier {
         //   s is the separator challenge
         //   -q is final_poly_proof.neg()
         //   [x] is x_g2
-        //
         let s = transcript.get_challenge();
 
         let g1_gen = G1Affine::prime_subgroup_generator();

@@ -166,9 +166,9 @@ impl Prover {
         let hi_1 = transcript.get_challenge();
         let hi_2 = transcript.get_challenge();
 
-        let (w, _h) = Self::caulk_plus_second_round(&mut state, hi_1, hi_2);
-        // transcript.update_with_g1(&w);
-        // transcript.update_with_g1(&h);
+        let (w, h) = Self::caulk_plus_second_round(&mut state, hi_1, hi_2);
+        transcript.update_with_g2(&w);
+        transcript.update_with_g1(&h);
 
         let alpha = transcript.get_challenge();
 
@@ -208,6 +208,8 @@ impl Prover {
         transcript.update_with_g1(&u_prime);
         let _hi_1 = transcript.get_challenge();
         let _hi_2 = transcript.get_challenge();
+        transcript.update_with_g2(&w);
+        transcript.update_with_g1(&h);
         let alpha = transcript.get_challenge();
         transcript.update_with_u256(w0_openings_0);
         transcript.update_with_u256(w0_openings_1);
@@ -289,6 +291,7 @@ impl Prover {
             p1,
             p2,
             q_mimc,
+            h,
             w,
         };
 

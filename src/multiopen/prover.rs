@@ -78,7 +78,6 @@ impl Prover {
         let x4_powers: Vec<Fr> = iter::successors(Some(x4), |x4_pow| Some(*x4_pow * x4))
             .take(4)
             .collect();
-        let s = transcript.get_challenge();
 
         let final_poly = f
             + (&q1 * x4_powers[0])

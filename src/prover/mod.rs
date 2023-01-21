@@ -58,6 +58,7 @@ pub struct Commitments<E: PairingEngine> {
     pub(crate) p1: E::G1Affine,
     pub(crate) p2: E::G1Affine,
     pub(crate) q_mimc: E::G1Affine,
+    pub(crate) h: E::G1Affine,
     pub(crate) w: E::G2Affine,
 }
 
