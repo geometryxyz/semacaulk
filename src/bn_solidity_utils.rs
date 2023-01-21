@@ -9,11 +9,11 @@ pub fn f_to_u256<F: PrimeField>(val: F) -> U256 {
     U256::from_little_endian(&b_as_arr)
 }
 
-pub fn formate_g1(pt: G1Affine) -> [U256; 2] {
+pub fn format_g1(pt: G1Affine) -> [U256; 2] {
     [f_to_u256(pt.x), f_to_u256(pt.y)]
 }
 
-pub fn formate_g2(pt: G2Affine) -> [[U256; 2]; 2] {
+pub fn format_g2(pt: G2Affine) -> [[U256; 2]; 2] {
     [
         [f_to_u256(pt.x.c1), f_to_u256(pt.x.c0)],
         [f_to_u256(pt.y.c1), f_to_u256(pt.y.c0)],

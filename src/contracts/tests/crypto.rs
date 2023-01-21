@@ -15,7 +15,7 @@ use tokio::test;
 use super::setup_eth_backend;
 use crate::transcript::Transcript;
 use crate::{
-    bn_solidity_utils::{f_to_u256, formate_g1, formate_g2},
+    bn_solidity_utils::{f_to_u256, format_g1, format_g2},
 };
 
 abigen!(
@@ -107,12 +107,12 @@ pub async fn test_pairing() {
 
     let result: bool = bn254_contract
         .verify_pairing_three(
-            formate_g1(a1),
-            formate_g2(a2),
-            formate_g1(b1),
-            formate_g2(b2),
-            formate_g1(c1),
-            formate_g2(c2),
+            format_g1(a1),
+            format_g2(a2),
+            format_g1(b1),
+            format_g2(b2),
+            format_g1(c1),
+            format_g2(c2),
         )
         .call()
         .await
