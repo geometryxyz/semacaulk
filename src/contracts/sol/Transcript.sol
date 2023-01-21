@@ -3,7 +3,6 @@ pragma solidity ^0.8.13;
 
 import { Types } from "./Types.sol";
 
-
 library TranscriptLibrary {
     // The scalar field
     uint256 constant PRIME_R =
@@ -15,12 +14,11 @@ library TranscriptLibrary {
         bytes data;
         bytes32 currentChallenge;
         uint32 challengeCounter;
-        // uint256 numPublicInputs;
     } 
 
     /**
-     * Instantiate a transcript and calculate the initial challenge, from which other challenges are derived.
-     *
+     * Instantiate a transcript and calculate the initial challenge, from which
+     * other challenges are derived.
      * Resembles the preamble round in the Plonk prover
      */
     function newTranscript()
@@ -30,21 +28,18 @@ library TranscriptLibrary {
     {
         transcript.currentChallenge = computeInitialChallenge();
         transcript.challengeCounter = 0;
-        // manually format the transcript.data bytes array
-        // This is because we want to reserve memory that is greatly in excess of the array's initial size
         bytes memory transcriptDataPointer;
         bytes32 transcriptData = transcript.currentChallenge;
         uint256 totalTranscriptBytes = NUM_TRANSCRIPT_BYTES;
         assembly {
             transcriptDataPointer := mload(0x40)
             mstore(0x40, add(transcriptDataPointer, totalTranscriptBytes))
-            // update length of transcript.data
+            // Update the length of transcript.data
             mstore(transcriptDataPointer, 0x20)
-            // insert current challenge
+            // Insert current challenge
             mstore(add(transcriptDataPointer, 0x20), transcriptData)
         }
         transcript.data = transcriptDataPointer;
-        // transcript.numPublicInputs = numPublicInputs;
     }
 
     function computeInitialChallenge() internal pure returns (bytes32 challenge) {
@@ -71,7 +66,7 @@ library TranscriptLibrary {
             mstore(dataPtr, add(0x40, array_length))
 
             // insert new values to the end of the array
-            mstore(add(dataPtr, add(array_length, 0x20)), mload(p)) // x cord
+            mstore(add(dataPtr, add(array_length, 0x20)), mload(p))            // x cord
             mstore(add(dataPtr, add(array_length, 0x40)), mload(add(p, 0x20))) // y cord
         }
     }
@@ -85,7 +80,7 @@ library TranscriptLibrary {
 
             // insert new values to the end of the array
             mstore(add(dataPtr, add(array_length, 0x20)), mload(add(p, 0x20))) // x1 cord
-            mstore(add(dataPtr, add(array_length, 0x40)), mload(add(p, 0x00))) // x0 cord
+            mstore(add(dataPtr, add(array_length, 0x40)), mload(p))            // x0 cord
             mstore(add(dataPtr, add(array_length, 0x60)), mload(add(p, 0x60))) // y1 cord
             mstore(add(dataPtr, add(array_length, 0x80)), mload(add(p, 0x40))) // y0 cord
         }
@@ -109,17 +104,16 @@ library TranscriptLibrary {
             challenge := keccak256(add(dataPtr, 0x20), length)
         }
         self.currentChallenge = challenge;
-        // reset self.data by setting length to 0x20 and update first element
+        // Reset self.data by setting length to 0x20 and updating the first element
         {
             assembly {
                 mstore(dataPtr, 0x20)
                 mstore(add(dataPtr, 0x20), challenge)
             }
         }
-        // uint256 p = Bn254Crypto.r_mod;
         assembly {
             challenge := mod(challenge, PRIME_R)
         }
-        return (uint256)(challenge);
+        return uint256(challenge);
     }
 }

@@ -20,5 +20,4 @@ library Types {
         uint256 y0;
         uint256 y1;
     }
-
 }

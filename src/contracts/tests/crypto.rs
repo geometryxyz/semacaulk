@@ -1,7 +1,5 @@
-use crate::transcript::Transcript;
-use crate::{
-    bn_solidity_utils::{f_to_u256, formate_g1, formate_g2},
-};
+use std::ops::Neg;
+use ark_poly::{EvaluationDomain, GeneralEvaluationDomain};
 use ark_bn254::{Bn254, Fq12, Fr, G1Affine, G2Affine};
 use ark_ec::AffineCurve;
 use ark_ec::PairingEngine;
@@ -15,6 +13,10 @@ use ark_std::test_rng;
 use ethers::contract::abigen;
 use tokio::test;
 use super::setup_eth_backend;
+use crate::transcript::Transcript;
+use crate::{
+    bn_solidity_utils::{f_to_u256, formate_g1, formate_g2},
+};
 
 abigen!(
     BN254,
@@ -23,6 +25,10 @@ abigen!(
 abigen!(
     TestTranscript,
     "./src/contracts/out/TestTranscript.sol/TestTranscript.json",
+);
+abigen!(
+    TestLagrange,
+    "./src/contracts/out/TestLagrange.sol/TestLagrange.json",
 );
 
 pub fn g1_affine_to_g1point(pt: &G1Affine) -> G1Point {
@@ -151,5 +157,70 @@ pub async fn test_transcript() {
     assert_eq!(ch_contract_1, f_to_u256(challenge_1));
     assert_eq!(ch_contract_2, f_to_u256(challenge_2));
 
+    drop(anvil);
+}
+
+#[tokio::test]
+pub async fn test_compute_l0_eval() {
+    // Test computeL0Eval with 0 and 123
+    test_compute_l0_eval_case(Fr::zero()).await;
+    test_compute_l0_eval_case(Fr::from(123u64)).await;
+}
+
+pub async fn test_compute_l0_eval_case(alpha: Fr) {
+    let eth_backend = setup_eth_backend().await;
+    let anvil = eth_backend.0;
+    let client = eth_backend.1;
+
+    let domain_size = 1024;
+    let log2_domain_size = 10;
+    let domain_size_inv = Fr::from(domain_size as u64).inverse().unwrap();
+    //println!("{}", domain_size_inv);
+ 
+    let domain = GeneralEvaluationDomain::<Fr>::new(domain_size).unwrap();
+
+    // Sanity check
+    let l0_eval = domain.evaluate_all_lagrange_coefficients(alpha)[0];
+    let expected = (alpha.pow(&[domain_size as u64, 0, 0, 0]) - Fr::one()) /
+        Fr::from(domain_size as u64) /
+        (alpha - Fr::one());
+    assert_eq!(expected, l0_eval);
+    
+    // The above computation is represented in the Solidity verifier using the following steps:
+
+    // Step 1: Compute the evaluation of the vanishing polynomial of the domain with domain_size at
+    // alpha
+    let mut vanishing_poly_eval;
+    if alpha == Fr::zero() {
+        vanishing_poly_eval = Fr::one().neg();
+    } else {
+        vanishing_poly_eval = alpha;
+        for _ in 0..log2_domain_size {
+            vanishing_poly_eval = vanishing_poly_eval * vanishing_poly_eval;
+        }
+        vanishing_poly_eval = vanishing_poly_eval - Fr::one();
+    }
+
+    // Step 2: Compute the value 1 / (alpha - 1)
+    let mut one_div_alpha_minus_one;
+    if alpha == Fr::zero() {
+        one_div_alpha_minus_one = Fr::one().neg();
+    } else {
+        one_div_alpha_minus_one = alpha - Fr::one();
+    }
+    one_div_alpha_minus_one = one_div_alpha_minus_one.inverse().unwrap();
+
+    // Step 3: Compute the evaluation of the Lagrange polynomial at point alpha
+    let result = (vanishing_poly_eval * domain_size_inv) * one_div_alpha_minus_one;
+    
+    assert_eq!(result, l0_eval);
+
+    let contract = TestLagrange::deploy(client, ()).unwrap().send().await.unwrap();
+    let onchain_result = contract.test_compute_l0_eval(
+        f_to_u256(alpha),
+    ).call().await.unwrap();
+    assert_eq!(onchain_result, f_to_u256(l0_eval));
+
+    // TODO: test the case where alpha = 0
     drop(anvil);
 }

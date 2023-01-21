@@ -264,4 +264,3 @@ impl Verifier {
         res == Fq12::one()
     }
 }
-
