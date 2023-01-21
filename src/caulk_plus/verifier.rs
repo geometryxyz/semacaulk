@@ -100,8 +100,8 @@ impl<E: PairingEngine> Verifier<E> {
 
         fs_rng.absorb(
             &to_bytes![
-                &proof.u_eval,
-                &proof.u_proof,
+                &proof.u_prime_eval,
+                &proof.u_prime_proof,
                 proof.p1_eval,
                 proof.p1_proof,
                 proof.p2_proof
@@ -115,11 +115,11 @@ impl<E: PairingEngine> Verifier<E> {
         let alpha = verifier_msgs.alpha.as_ref().unwrap();
 
         //0. compute u opening proof
-        let u_proof = EvaluationProof::<E> {
+        let u_prime_proof = EvaluationProof::<E> {
             p: proof.u_commitment,
-            q: proof.u_proof,
+            q: proof.u_prime_proof,
             opening_challenge: *alpha,
-            opening: proof.u_eval,
+            opening: proof.u_prime_eval,
         };
 
         // 1. compute p1 & opening proof
@@ -127,7 +127,7 @@ impl<E: PairingEngine> Verifier<E> {
         let p1_proof = EvaluationProof::<E> {
             p: p1,
             q: proof.p1_proof,
-            opening_challenge: proof.u_eval,
+            opening_challenge: proof.u_prime_eval,
             opening: proof.p1_eval,
         };
 
@@ -160,7 +160,7 @@ impl<E: PairingEngine> Verifier<E> {
         let x_g2: E::G2Prepared = public_input.srs_g2[1].into();
 
         let u = E::Fr::rand(fs_rng);
-        let evaluation_proofs = &[u_proof, p1_proof, p2_proof];
+        let evaluation_proofs = &[u_prime_proof, p1_proof, p2_proof];
         let (lhs_kzg_batched, rhs_kzg_batched) =
             batch_evaluation_proof_pairings(evaluation_proofs, u, u);
 

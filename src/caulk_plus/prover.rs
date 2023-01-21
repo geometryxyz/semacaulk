@@ -79,9 +79,9 @@ impl<E: PairingEngine> Prover<E> {
         verifier_msgs.second_msg(fs_rng);
 
         // third round
-        let (u_eval, u_proof, p1_eval, p1_proof, p2_proof) =
+        let (u_prime_eval, u_prime_proof, p1_eval, p1_proof, p2_proof) =
             Self::third_round(&state, &verifier_msgs);
-        fs_rng.absorb(&to_bytes![&u_eval, &u_proof, p1_eval, p1_proof, p2_proof].unwrap());
+        fs_rng.absorb(&to_bytes![&u_prime_eval, &u_prime_proof, p1_eval, p1_proof, p2_proof].unwrap());
 
         let proof = Proof {
             zi_commitment,
@@ -89,8 +89,8 @@ impl<E: PairingEngine> Prover<E> {
             u_commitment,
             w_commitment,
             h_commitment,
-            u_eval,
-            u_proof,
+            u_prime_eval,
+            u_prime_proof,
             p1_eval,
             p1_proof,
             p2_proof,
@@ -179,7 +179,7 @@ impl<E: PairingEngine> Prover<E> {
         ci += &ci_blind;
 
         // 6. define U
-        let u_evals = (0..state.common_input.domain_v.size())
+        let u_prime_evals = (0..state.common_input.domain_v.size())
             .map(|i| {
                 state
                     .common_input
@@ -188,7 +188,7 @@ impl<E: PairingEngine> Prover<E> {
             })
             .collect::<Vec<_>>();
         let mut u =
-            DensePolynomial::from_coefficients_slice(&state.common_input.domain_v.ifft(&u_evals));
+            DensePolynomial::from_coefficients_slice(&state.common_input.domain_v.ifft(&u_prime_evals));
 
         // 7. blind U
         let zv: DensePolynomial<_> = state.common_input.domain_v.vanishing_polynomial().into();
@@ -245,19 +245,19 @@ impl<E: PairingEngine> Prover<E> {
         let composed_degree = max(zi.degree() * u.degree(), ci.degree() * u.degree());
         let extended_domain = GeneralEvaluationDomain::<E::Fr>::new(composed_degree).unwrap();
 
-        let u_evals_on_extended_domain =
+        let u_prime_evals_on_extended_domain =
             cfg_into_iter!(extended_domain.elements()).map(|omega_i| u.evaluate(&omega_i));
-        let mut zi_of_u_evals = vec![E::Fr::zero(); extended_domain.size()];
-        let mut ci_of_u_evals = vec![E::Fr::zero(); extended_domain.size()];
-        for (i, ui) in u_evals_on_extended_domain.enumerate() {
-            zi_of_u_evals[i] = zi.evaluate(&ui);
-            ci_of_u_evals[i] = ci.evaluate(&ui);
+        let mut zi_of_u_prime_evals = vec![E::Fr::zero(); extended_domain.size()];
+        let mut ci_of_u_prime_evals = vec![E::Fr::zero(); extended_domain.size()];
+        for (i, ui) in u_prime_evals_on_extended_domain.enumerate() {
+            zi_of_u_prime_evals[i] = zi.evaluate(&ui);
+            ci_of_u_prime_evals[i] = ci.evaluate(&ui);
         }
 
         let zi_of_ui =
-            DensePolynomial::from_coefficients_slice(&extended_domain.ifft(&zi_of_u_evals));
+            DensePolynomial::from_coefficients_slice(&extended_domain.ifft(&zi_of_u_prime_evals));
         let ci_of_ui =
-            DensePolynomial::from_coefficients_slice(&extended_domain.ifft(&ci_of_u_evals));
+            DensePolynomial::from_coefficients_slice(&extended_domain.ifft(&ci_of_u_prime_evals));
 
         let num = &zi_of_ui + &(&(&ci_of_ui - &state.shifted_a) * xi_1);
         let (h, r) = num
@@ -323,13 +323,13 @@ impl<E: PairingEngine> Prover<E> {
         };
 
         // 3. Open
-        let (u_eval, u_proof) = open(&state.public_input.srs_g1, u, alpha);
-        let (p1_eval, p1_proof) = open(&state.public_input.srs_g1, &p1, u_eval);
+        let (u_prime_eval, u_prime_proof) = open(&state.public_input.srs_g1, u, alpha);
+        let (p1_eval, p1_proof) = open(&state.public_input.srs_g1, &p1, u_prime_eval);
         let (p2_eval, p2_proof) = open(&state.public_input.srs_g1, &p2, alpha);
 
         // sanity
         assert_eq!(p2_eval, E::Fr::zero());
 
-        (u_eval, u_proof, p1_eval, p1_proof, p2_proof)
+        (u_prime_eval, u_prime_proof, p1_eval, p1_proof, p2_proof)
     }
 }

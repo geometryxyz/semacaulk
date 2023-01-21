@@ -527,8 +527,8 @@ impl Prover {
         ci += &ci_blind;
 
         // 6. define u_prime
-        let u_eval = state.domain_t.element(state.witness.index);
-        let mut u_prime = DensePolynomial::from_coefficients_slice(&state.domain_v.ifft(&[u_eval]));
+        let u_prime_eval = state.domain_t.element(state.witness.index);
+        let mut u_prime = DensePolynomial::from_coefficients_slice(&state.domain_v.ifft(&[u_prime_eval]));
 
         // 7. blind u_prime
         let zv: DensePolynomial<_> = state.domain_v.vanishing_polynomial().into();
@@ -578,19 +578,19 @@ impl Prover {
         let composed_degree = max(zi.degree() * u_prime.degree(), ci.degree() * u_prime.degree());
         let extended_domain = GeneralEvaluationDomain::<E::Fr>::new(composed_degree).unwrap();
 
-        let u_evals_on_extended_domain =
+        let u_prime_evals_on_extended_domain =
             cfg_into_iter!(extended_domain.elements()).map(|omega_i| u_prime.evaluate(&omega_i));
-        let mut zi_of_u_evals = vec![E::Fr::zero(); extended_domain.size()];
-        let mut ci_of_u_evals = vec![E::Fr::zero(); extended_domain.size()];
-        for (i, ui) in u_evals_on_extended_domain.enumerate() {
-            zi_of_u_evals[i] = zi.evaluate(&ui);
-            ci_of_u_evals[i] = ci.evaluate(&ui);
+        let mut zi_of_u_prime_evals = vec![E::Fr::zero(); extended_domain.size()];
+        let mut ci_of_u_prime_evals = vec![E::Fr::zero(); extended_domain.size()];
+        for (i, ui) in u_prime_evals_on_extended_domain.enumerate() {
+            zi_of_u_prime_evals[i] = zi.evaluate(&ui);
+            ci_of_u_prime_evals[i] = ci.evaluate(&ui);
         }
 
         let zi_of_ui =
-            DensePolynomial::from_coefficients_slice(&extended_domain.ifft(&zi_of_u_evals));
+            DensePolynomial::from_coefficients_slice(&extended_domain.ifft(&zi_of_u_prime_evals));
         let ci_of_ui =
-            DensePolynomial::from_coefficients_slice(&extended_domain.ifft(&ci_of_u_evals));
+            DensePolynomial::from_coefficients_slice(&extended_domain.ifft(&ci_of_u_prime_evals));
 
         let num = &zi_of_ui + &(&(&ci_of_ui - a) * hi_1);
         let (h, r) = num.divide_by_vanishing_poly(state.domain_v).unwrap();
