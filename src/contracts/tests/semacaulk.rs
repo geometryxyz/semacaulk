@@ -2,27 +2,18 @@ use crate::accumulator::{
     commit_to_lagrange_bases, compute_lagrange_tree, compute_zero_leaf, Accumulator,
 };
 use crate::kzg::unsafe_setup_g1;
-use crate::transcript::Transcript;
 use crate::{
-    bn_solidity_utils::{f_to_u256, formate_g1, formate_g2},
+    bn_solidity_utils::f_to_u256,
     keccak_tree::flatten_proof,
 };
-use ark_bn254::{Bn254, Fq, Fq12, Fr, G1Affine, G2Affine};
-use ark_ec::AffineCurve;
-use ark_ec::PairingEngine;
-use ark_ec::ProjectiveCurve;
-use ark_ff::BigInteger256;
-use ark_ff::Field;
-use ark_ff::One;
-use ark_ff::Zero;
-use ark_ff::{PrimeField, UniformRand};
+use ark_bn254::{Bn254, Fq, Fr};
+use ark_ff::UniformRand;
 use ark_std::{rand::rngs::StdRng, test_rng};
 use ethers::contract::abigen;
 use ethers::core::types::U256;
 use ethers::core::utils::hex;
 use ethers::middleware::SignerMiddleware;
 use ethers::providers::Http;
-use tokio::test;
 use super::{
     setup_eth_backend,
     EthersClient,

@@ -85,25 +85,6 @@ contract Semacaulk is KeccakMT, BN254 {
         emit InsertIdentity(index, _identityCommitment);
     }
 
-    function verifyTranscript() public pure returns(uint256, uint256) {
-        TranscriptLibrary.Transcript memory transcript = TranscriptLibrary.newTranscript();
-
-        uint256 u1 = 100; 
-        TranscriptLibrary.updateWithU256(transcript, u1);
-
-        Types.G1Point memory pt = Types.G1Point(1, 2);
-        TranscriptLibrary.updateWithG1(transcript, pt);
-
-        uint256 challenge_1 =  TranscriptLibrary.getChallenge(transcript);
-
-        uint256 u2 = 200; 
-        TranscriptLibrary.updateWithU256(transcript, u2);
-
-        uint256 challenge_2 =  TranscriptLibrary.getChallenge(transcript);
-
-        return (challenge_1, challenge_2);
-    }
-
     function broadcastSignal(
     ) public {
     }

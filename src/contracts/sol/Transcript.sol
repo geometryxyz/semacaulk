@@ -66,12 +66,28 @@ library TranscriptLibrary {
     function updateWithG1(Transcript memory self, Types.G1Point memory p) internal pure {
         bytes memory dataPtr = self.data;
         assembly {
-            // update length of transcript data
+            // update length of self.data
             let array_length := mload(dataPtr)
             mstore(dataPtr, add(0x40, array_length))
-            // insert new 64-byte value at the end of the array
+
+            // insert new values to the end of the array
             mstore(add(dataPtr, add(array_length, 0x20)), mload(p)) // x cord
             mstore(add(dataPtr, add(array_length, 0x40)), mload(add(p, 0x20))) // y cord
+        }
+    }
+
+    function updateWithG2(Transcript memory self, Types.G2Point memory p) internal pure {
+        bytes memory dataPtr = self.data;
+        assembly {
+            // update length of self.data
+            let array_length := mload(dataPtr)
+            mstore(dataPtr, add(0x80, array_length))
+
+            // insert new values to the end of the array
+            mstore(add(dataPtr, add(array_length, 0x20)), mload(add(p, 0x20))) // x1 cord
+            mstore(add(dataPtr, add(array_length, 0x40)), mload(add(p, 0x00))) // x0 cord
+            mstore(add(dataPtr, add(array_length, 0x60)), mload(add(p, 0x60))) // y1 cord
+            mstore(add(dataPtr, add(array_length, 0x80)), mload(add(p, 0x40))) // y0 cord
         }
     }
 
