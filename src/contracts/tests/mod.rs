@@ -6,6 +6,18 @@ use ethers::utils::AnvilInstance;
 use ethers::signers::Signer;
 use ethers::{prelude::{Wallet, LocalWallet}, utils::Anvil};
 
+#[cfg(test)]
+mod semacaulk;
+
+#[cfg(test)]
+mod keccak_mt;
+
+#[cfg(test)]
+mod crypto;
+
+#[cfg(test)]
+mod verifier;
+
 pub type EthersClient = Arc<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>>;
 
 pub async fn setup_eth_backend() -> (AnvilInstance, EthersClient) {
@@ -28,15 +40,3 @@ pub async fn setup_eth_backend() -> (AnvilInstance, EthersClient) {
 
     (anvil, client)
 }
-
-#[cfg(test)]
-mod semacaulk;
-
-#[cfg(test)]
-mod keccak_mt;
-
-#[cfg(test)]
-mod crypto;
-
-#[cfg(test)]
-mod verifier;

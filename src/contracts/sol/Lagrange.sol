@@ -31,7 +31,7 @@ library Lagrange {
         }
         vanishingPolyEval = vanishingPolyEval - 1;
 
-        // Step 2: Compute the value 1 / (alpha - 1)
+        // Step 2: Compute the value 1 / (d - 1)
         uint256 oneDivAlphaMinusOne;
         bool success;
         assembly {

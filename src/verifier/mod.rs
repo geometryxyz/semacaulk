@@ -50,27 +50,27 @@ impl Verifier {
         let omega_n_alpha = omega_n * alpha;
 
         let key_openings = [
-            proof.openings.key_openings_0,
-            proof.openings.key_openings_1,
+            proof.openings.key_0,
+            proof.openings.key_1,
         ];
 
-        let q_mimc_opening = proof.openings.q_mimc_opening;
-        let c_opening = proof.openings.c_opening;
+        let q_mimc_opening = proof.openings.q_mimc;
+        let c_opening = proof.openings.c;
         let w0_openings = [
-            proof.openings.w0_openings_0,
-            proof.openings.w0_openings_1,
-            proof.openings.w0_openings_2,
+            proof.openings.w0_0,
+            proof.openings.w0_1,
+            proof.openings.w0_2,
         ];
         let w1_openings = [
-            proof.openings.w1_openings_0,
-            proof.openings.w1_openings_1,
-            proof.openings.w1_openings_2,
+            proof.openings.w1_0,
+            proof.openings.w1_1,
+            proof.openings.w1_2,
         ];
 
         let w2_openings = [
-            proof.openings.w2_openings_0,
-            proof.openings.w2_openings_1,
-            proof.openings.w2_openings_2,
+            proof.openings.w2_0,
+            proof.openings.w2_1,
+            proof.openings.w2_2,
         ];
 
         // Check if the gate equations are valid
@@ -125,61 +125,61 @@ impl Verifier {
             (v_pow_6 * gate_6_eval);
 
         let zh_eval = alpha.pow(&[SUBGROUP_SIZE as u64, 0, 0, 0]) - Fr::one();
-        let quotient_opening = proof.openings.quotient_opening;
+        let quotient_opening = proof.openings.quotient;
         let rhs = zh_eval * quotient_opening;
 
         if lhs != rhs {
             return false;
         }
 
-        transcript.update_with_u256(proof.openings.w0_openings_0);
-        transcript.update_with_u256(proof.openings.w0_openings_1);
-        transcript.update_with_u256(proof.openings.w0_openings_2);
+        transcript.update_with_u256(proof.openings.w0_0);
+        transcript.update_with_u256(proof.openings.w0_1);
+        transcript.update_with_u256(proof.openings.w0_2);
 
-        transcript.update_with_u256(proof.openings.w1_openings_0);
-        transcript.update_with_u256(proof.openings.w1_openings_1);
-        transcript.update_with_u256(proof.openings.w1_openings_2);
+        transcript.update_with_u256(proof.openings.w1_0);
+        transcript.update_with_u256(proof.openings.w1_1);
+        transcript.update_with_u256(proof.openings.w1_2);
 
-        transcript.update_with_u256(proof.openings.w2_openings_0);
-        transcript.update_with_u256(proof.openings.w2_openings_1);
-        transcript.update_with_u256(proof.openings.w2_openings_2);
+        transcript.update_with_u256(proof.openings.w2_0);
+        transcript.update_with_u256(proof.openings.w2_1);
+        transcript.update_with_u256(proof.openings.w2_2);
 
-        transcript.update_with_u256(proof.openings.key_openings_0);
-        transcript.update_with_u256(proof.openings.key_openings_1);
+        transcript.update_with_u256(proof.openings.key_0);
+        transcript.update_with_u256(proof.openings.key_1);
 
         transcript.update_with_u256(q_mimc_opening);
         transcript.update_with_u256(c_opening);
-        transcript.update_with_u256(proof.openings.quotient_opening);
+        transcript.update_with_u256(proof.openings.quotient);
 
-        transcript.update_with_u256(proof.openings.u_prime_opening);
-        transcript.update_with_u256(proof.openings.p1_opening);
-        transcript.update_with_u256(proof.openings.p2_opening);
+        transcript.update_with_u256(proof.openings.u_prime);
+        transcript.update_with_u256(proof.openings.p1);
+        transcript.update_with_u256(proof.openings.p2);
 
         let multiopen_final_poly = MultiopenVerifier::compute_final_poly(
             &mut transcript,
             &proof.multiopen_proof,
             &proof.commitments.w0,
             &[
-                proof.openings.w0_openings_0,
-                proof.openings.w0_openings_1,
-                proof.openings.w0_openings_2,
+                proof.openings.w0_0,
+                proof.openings.w0_1,
+                proof.openings.w0_2,
             ],
             &proof.commitments.w1,
             &[
-                proof.openings.w1_openings_0,
-                proof.openings.w1_openings_1,
-                proof.openings.w1_openings_2,
+                proof.openings.w1_0,
+                proof.openings.w1_1,
+                proof.openings.w1_2,
             ],
             &proof.commitments.w2,
             &[
-                proof.openings.w2_openings_0,
-                proof.openings.w2_openings_1,
-                proof.openings.w2_openings_2,
+                proof.openings.w2_0,
+                proof.openings.w2_1,
+                proof.openings.w2_2,
             ],
             &proof.commitments.key,
             &[
-                proof.openings.key_openings_0,
-                proof.openings.key_openings_1,
+                proof.openings.key_0,
+                proof.openings.key_1,
             ],
             &proof.commitments.q_mimc,
             q_mimc_opening,
@@ -188,12 +188,12 @@ impl Verifier {
             &proof.commitments.quotient,
             quotient_opening,
             &proof.commitments.u_prime,
-            proof.openings.u_prime_opening,
+            proof.openings.u_prime,
             &proof.commitments.p1,
-            proof.openings.p1_opening,
+            proof.openings.p1,
             &proof.commitments.p2,
-            proof.openings.p2_opening,
-            proof.openings.u_prime_opening, //v,
+            proof.openings.p2,
+            proof.openings.u_prime, //v,
             alpha,
             omega_alpha,
             omega_n_alpha,

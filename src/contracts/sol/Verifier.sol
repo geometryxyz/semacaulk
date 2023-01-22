@@ -3,9 +3,36 @@ pragma solidity ^0.8.13;
 
 import { Types } from "./Types.sol";
 import { Constants } from "./Constants.sol";
+import { TranscriptLibrary } from "./Transcript.sol";
 
 contract Verifier {
-    function verify() public view {
+    function verify(
+        Types.Proof memory proof
+    ) public view returns (uint256 debug) {
+        TranscriptLibrary.Transcript memory transcript = TranscriptLibrary.newTranscript();
+        Types.ChallengeTranscript memory challengeTranscript;
+
+        TranscriptLibrary.updateWithG1(transcript, proof.commitments.w0);
+        TranscriptLibrary.updateWithG1(transcript, proof.commitments.key);
+        TranscriptLibrary.updateWithG1(transcript, proof.commitments.w1);
+        TranscriptLibrary.updateWithG1(transcript, proof.commitments.w2);
+
+        challengeTranscript.v = TranscriptLibrary.getChallenge(transcript);
+
+        TranscriptLibrary.updateWithG1(transcript, proof.commitments.quotient);
+        TranscriptLibrary.updateWithG1(transcript, proof.commitments.zi);
+        TranscriptLibrary.updateWithG1(transcript, proof.commitments.ci);
+        TranscriptLibrary.updateWithG1(transcript, proof.commitments.u_prime);
+
+        TranscriptLibrary.getChallenge(transcript);
+        challengeTranscript.hi_2 = TranscriptLibrary.getChallenge(transcript);
+
+        TranscriptLibrary.updateWithG2(transcript, proof.commitments.w);
+        TranscriptLibrary.updateWithG1(transcript, proof.commitments.h);
+
+        challengeTranscript.alpha = TranscriptLibrary.getChallenge(transcript);
+
+        debug = challengeTranscript.alpha;
     }
 
     function batchInvert(

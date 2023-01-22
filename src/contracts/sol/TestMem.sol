@@ -2,6 +2,20 @@
 pragma solidity ^0.8.13;
 
 contract TestMem {
+    function testMstore() public pure {
+        uint256[7] memory inputs;
+        inputs[0] = 0;
+        inputs[1] = 1;
+        inputs[2] = 2;
+        inputs[3] = 3;
+
+        assembly {
+            mstore(inputs, 9)
+            mstore(add(inputs, 0x20), 8)
+            mstore(add(inputs, 0x40), 7)
+        }
+    }
+
     function new_transcript()
         public
         pure
