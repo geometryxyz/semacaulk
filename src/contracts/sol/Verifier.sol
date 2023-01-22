@@ -11,6 +11,7 @@ contract Verifier {
     ) public view returns (uint256 debug) {
         TranscriptLibrary.Transcript memory transcript = TranscriptLibrary.newTranscript();
         Types.ChallengeTranscript memory challengeTranscript;
+        Types.VerifierTranscript memory verifierTranscript;
 
         TranscriptLibrary.updateWithG1(transcript, proof.commitments.w0);
         TranscriptLibrary.updateWithG1(transcript, proof.commitments.key);
@@ -32,7 +33,46 @@ contract Verifier {
 
         challengeTranscript.alpha = TranscriptLibrary.getChallenge(transcript);
 
-        debug = challengeTranscript.alpha;
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.w0_0);
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.w0_1);
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.w0_2);
+
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.w1_0);
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.w1_1);
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.w1_2);
+
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.w2_0);
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.w2_1);
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.w2_2);
+
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.key_0);
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.key_1);
+
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.q_mimc);
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.c);
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.quotient);
+
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.u_prime);
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.p1);
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.p2);
+
+        challengeTranscript.x1 = TranscriptLibrary.getChallenge(transcript);
+        challengeTranscript.x2 = TranscriptLibrary.getChallenge(transcript);
+
+        TranscriptLibrary.updateWithG1(transcript, proof.multiopenProof.f_cm);
+
+        challengeTranscript.x3 = TranscriptLibrary.getChallenge(transcript);
+        challengeTranscript.x4 = TranscriptLibrary.getChallenge(transcript);
+
+         // Values needed before batch inversion:
+         // - d (so we can invert d - 1)
+         // - x3_challenge
+         // - proof.openings.u_prime_opening
+         // - alpha_challenge
+         // - omega_alpha
+         // - omega_n_alpha
+
+        debug = challengeTranscript.x4;
     }
 
     function batchInvert(

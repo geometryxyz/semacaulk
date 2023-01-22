@@ -149,6 +149,7 @@ impl Verifier {
 
         let x3 = transcript.get_challenge();
         let x4 = transcript.get_challenge();
+        println!("{}", x4);
 
         let x4_powers: Vec<Fr> = iter::successors(Some(x4), |x4_pow| Some(*x4_pow * x4))
             .take(4)

@@ -23,13 +23,19 @@ library Types {
     }
 
     struct ChallengeTranscript {
-        uint256 v;     // 0x00
-        uint256 hi_2;  // 0x20
-        uint256 alpha; // 0x40
-        uint256 x1;    // 0x60
-        uint256 x2;    // 0x80
-        uint256 x3;    // 0xa0
-        uint256 x4;    // 0xc0
+        /* 0x00 */ uint256 v;
+        /* 0x20 */ uint256 hi_2;
+        /* 0x40 */ uint256 alpha;
+        /* 0x60 */ uint256 x1; 
+        /* 0x80 */ uint256 x2; 
+        /* 0xa0 */ uint256 x3; 
+        /* 0xc0 */ uint256 x4; 
+    }
+
+    struct VerifierTranscript {
+        uint256 d;
+        uint256 omega_alpha;
+        uint256 omega_n_alpha;
     }
 
     struct Commitments {
