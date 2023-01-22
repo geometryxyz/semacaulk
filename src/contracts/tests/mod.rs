@@ -37,3 +37,6 @@ mod keccak_mt;
 
 #[cfg(test)]
 mod crypto;
+
+#[cfg(test)]
+mod verifier;
