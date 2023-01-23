@@ -12,8 +12,7 @@ contract Verifier {
         uint256 externalNullifier,
         uint256 nullifierHash
     ) public view returns (
-        uint256 debug0,
-        uint256 debug1
+        uint256 debug0
     ) {
         uint256 p = Constants.PRIME_R;
         TranscriptLibrary.Transcript memory transcript = TranscriptLibrary.newTranscript();
@@ -73,63 +72,63 @@ contract Verifier {
         uint256[8] memory inverted;
         
         {
-             // Values needed before batch inversion:
-             // - d (so we can invert d - 1)
-             // - x3_challenge
-             // - proof.openings.u_prime_opening
-             // - alpha_challenge
-             // - omega_alpha
-             // - omega_n_alpha
+         // Values needed before batch inversion:
+         // - d (so we can invert d - 1)
+         // - x3_challenge
+         // - proof.openings.u_prime_opening
+         // - alpha_challenge
+         // - omega_alpha
+         // - omega_n_alpha
 
-             // Values to invert:
-             // - (d - 1) for the l0_eval computation
-             // - xi_minus_v = x3_challenge - proof.openings.u_prime_opening
-             // - xi_minus_alpha = x3_challenge - alpha_challenge
-             // - xi_minus_omega_alpha = x3_challenge - omega_alpha;
-             // - xi_minus_omega_n_alpha = x3_challenge - omega_n_alpha
-             // - alpha_minus_omega_alpha = alpha - omega_alpha;
-             // - alpha_minus_omega_n_alpha = alpha - omega_n_alpha;
-             // - omega_alpha_minus_omega_n_alpha = omega_alpha - omega_n_alpha;
+         // Values to invert:
+         // - (d - 1) for the l0_eval computation
+         // - xi_minus_v = x3_challenge - proof.openings.u_prime_opening
+         // - xi_minus_alpha = x3_challenge - alpha_challenge
+         // - xi_minus_omega_alpha = x3_challenge - omega_alpha;
+         // - xi_minus_omega_n_alpha = x3_challenge - omega_n_alpha
+         // - alpha_minus_omega_alpha = alpha - omega_alpha;
+         // - alpha_minus_omega_n_alpha = alpha - omega_n_alpha;
+         // - omega_alpha_minus_omega_n_alpha = omega_alpha - omega_n_alpha;
 
-            // Compute and store omega_alpha, omega_n_alpha
-            uint256 omega_alpha = Constants.omega;
-            uint256 omega_n_alpha = Constants.omega_n;
-            assembly {
-                let alpha := mload(add(challengeTranscript, 0x40))
-                omega_alpha := mulmod(omega_alpha, alpha, p)
-                omega_n_alpha := mulmod(omega_n_alpha, alpha, p)
-            }
+        // Compute and store omega_alpha, omega_n_alpha
+        uint256 omega_alpha = Constants.omega;
+        uint256 omega_n_alpha = Constants.omega_n;
+        assembly {
+            let alpha := mload(add(challengeTranscript, 0x40))
+            omega_alpha := mulmod(omega_alpha, alpha, p)
+            omega_n_alpha := mulmod(omega_n_alpha, alpha, p)
+        }
 
-            // Compute d - 1
-            if (challengeTranscript.alpha == 0) {
-                inverted[0] = p - 1;
-            } else {
-                inverted[0] = challengeTranscript.alpha - 1;
-            }
+        // Compute and store d - 1
+        if (challengeTranscript.alpha == 0) {
+            inverted[0] = p - 1;
+        } else {
+            inverted[0] = challengeTranscript.alpha - 1;
+        }
 
-            // Compute inputs to the batch inversion function
-            assembly {
-                let alpha := mload(add(challengeTranscript, 0x40))
-                let x3 := mload(add(challengeTranscript, 0xa0))
-                let v := mload(add(proof, 0xa0))
-                let u_prime_opening := mload(add(mload(add(proof, 0x20)), 0x60))
-                let xi_minus_v := addmod(x3, sub(p, u_prime_opening), p)
-                let xi_minus_alpha := addmod(x3, sub(p, alpha), p)
-                let xi_minus_omega_alpha := addmod(x3, sub(p, omega_alpha), p)
-                let xi_minus_omega_n_alpha := addmod(x3, sub(p, omega_n_alpha), p)
-                let alpha_minus_omega_alpha := addmod(alpha, sub(p, omega_alpha), p)
-                let alpha_minus_omega_n_alpha := addmod(alpha, sub(p, omega_n_alpha), p)
-                let omega_alpha_minus_omega_n_alpha := addmod(omega_alpha, sub(p, omega_n_alpha), p)
+        // Compute inputs to the batch inversion function
+        assembly {
+            let alpha := mload(add(challengeTranscript, 0x40))
+            let x3 := mload(add(challengeTranscript, 0xa0))
+            let v := mload(add(proof, 0xa0))
+            let u_prime_opening := mload(add(mload(add(proof, 0x20)), 0x60))
+            let xi_minus_v := addmod(x3, sub(p, u_prime_opening), p)
+            let xi_minus_alpha := addmod(x3, sub(p, alpha), p)
+            let xi_minus_omega_alpha := addmod(x3, sub(p, omega_alpha), p)
+            let xi_minus_omega_n_alpha := addmod(x3, sub(p, omega_n_alpha), p)
+            let alpha_minus_omega_alpha := addmod(alpha, sub(p, omega_alpha), p)
+            let alpha_minus_omega_n_alpha := addmod(alpha, sub(p, omega_n_alpha), p)
+            let omega_alpha_minus_omega_n_alpha := addmod(omega_alpha, sub(p, omega_n_alpha), p)
 
-                /* 0    (d - 1) is already stored */
-                /* 1 */ mstore(add(inverted, 0x20), xi_minus_v)
-                /* 2 */ mstore(add(inverted, 0x40), xi_minus_alpha)
-                /* 3 */ mstore(add(inverted, 0x60), xi_minus_omega_alpha)
-                /* 4 */ mstore(add(inverted, 0x80), xi_minus_omega_n_alpha)
-                /* 5 */ mstore(add(inverted, 0xa0), alpha_minus_omega_alpha)
-                /* 6 */ mstore(add(inverted, 0xc0), alpha_minus_omega_n_alpha)
-                /* 7 */ mstore(add(inverted, 0xe0), omega_alpha_minus_omega_n_alpha)
-            }
+            /* 0    (d - 1) is already stored */
+            /* 1 */ mstore(add(inverted, 0x20), xi_minus_v)
+            /* 2 */ mstore(add(inverted, 0x40), xi_minus_alpha)
+            /* 3 */ mstore(add(inverted, 0x60), xi_minus_omega_alpha)
+            /* 4 */ mstore(add(inverted, 0x80), xi_minus_omega_n_alpha)
+            /* 5 */ mstore(add(inverted, 0xa0), alpha_minus_omega_alpha)
+            /* 6 */ mstore(add(inverted, 0xc0), alpha_minus_omega_n_alpha)
+            /* 7 */ mstore(add(inverted, 0xe0), omega_alpha_minus_omega_n_alpha)
+        }
         }
 
         {
@@ -169,6 +168,215 @@ contract Verifier {
             "Verifier: gate check failed"
         );
         }
+
+        // Multiopen proof verification
+        debug0 = verifyMultiopen(
+            proof,
+            verifierTranscript,
+            challengeTranscript
+        );
+    }
+
+    function verifyMultiopen(
+        Types.Proof memory proof,
+        Types.VerifierTranscript memory verifierTranscript,
+        Types.ChallengeTranscript memory challengeTranscript
+    ) public view returns (uint256 debug) {
+        uint256 p = Constants.PRIME_R;
+        assembly {
+            let success
+            let x1 := mload(add(challengeTranscript, 0x60))
+            let x2 := mload(add(challengeTranscript, 0x80))
+            let x4 := mload(add(challengeTranscript, 0xc0))
+
+            // Compute and store x1 powers
+            let x1_pow_2 := mulmod(x1, x1, p)
+            let x1_pow_3 := mulmod(x1_pow_2, x1, p)
+            let x1_pow_4 := mulmod(x1_pow_3, x1, p)
+            mstore(add(verifierTranscript, 0x1a0), x1_pow_2)
+            mstore(add(verifierTranscript, 0x1c0), x1_pow_3)
+            mstore(add(verifierTranscript, 0x1e0), x1_pow_4)
+
+            // Compute and store x2 powers
+            let x2_pow_2 := mulmod(x2, x2, p)
+            let x2_pow_3 := mulmod(x2_pow_2, x2, p)
+            mstore(add(verifierTranscript, 0x200), x2_pow_2)
+            mstore(add(verifierTranscript, 0x220), x2_pow_3)
+
+            // Compute and store x4 powers
+            let x4_pow_2 := mulmod(x4, x4, p)
+            let x4_pow_3 := mulmod(x4_pow_2, x4, p)
+            let x4_pow_4 := mulmod(x4_pow_3, x4, p)
+            mstore(add(verifierTranscript, 0x240), x4_pow_2)
+            mstore(add(verifierTranscript, 0x260), x4_pow_3)
+            mstore(add(verifierTranscript, 0x280), x4_pow_4)
+
+            let q2_x
+            let q2_y
+            let commitmentsPtr := mload(add(proof, 0x40))
+            {
+            // Compute q2 = q_mimc + (x1 * c) + (x1_pow_2 * quotient) + (x1_pow_3 + u_prime) + (x1_pow_4 + p2)
+            let mPtr := mload(0x40)
+
+            // Compute x1 * c and store the result in the stack
+            mstore(    mPtr,        mload(add(mload(commitmentsPtr), 0x100)))
+            mstore(add(mPtr, 0x20), mload(add(mload(commitmentsPtr), 0x120)))
+            mstore(add(mPtr, 0x40), x1)
+            success := staticcall(sub(gas(), 2000), 7, mPtr, 0x60, 0x00, 0x40)
+
+            let x1_mul_c_x := mload(0x00)
+            let x1_mul_c_y := mload(0x20)
+
+            // Compute x1_pow_2 * quotient
+            // and store the result in scratch space
+            mPtr := mload(0x40)
+            mstore(    mPtr,        mload(add(mload(commitmentsPtr), 0x140)))
+            mstore(add(mPtr, 0x20), mload(add(mload(commitmentsPtr), 0x160)))
+            mstore(add(mPtr, 0x40), x1_pow_2)
+            success := and(success, staticcall(sub(gas(), 2000), 7, mPtr, 0x60, 0x00, 0x40))
+
+            // Compute (x1 * c) + (x1_pow_2 * quotient)
+            // and store the result in the stack
+            mPtr := mload(0x40)
+            mstore(mPtr, x1_mul_c_x)
+            mstore(add(mPtr, 0x20), x1_mul_c_y)
+            mstore(add(mPtr, 0x40), mload(0x00))
+            mstore(add(mPtr, 0x60), mload(0x20))
+            success := and(success, staticcall(sub(gas(), 2000), 6, mPtr, 0x80, 0x00, 0x40))
+            q2_x := mload(0x00)
+            q2_y := mload(0x20)
+
+            // Compute x1_pow_3 * u_prime
+            // and store the result in scratch space
+            mPtr := mload(0x40)
+            mstore(    mPtr,        mload(add(mload(commitmentsPtr), 0x180)))
+            mstore(add(mPtr, 0x20), mload(add(mload(commitmentsPtr), 0x1a0)))
+            mstore(add(mPtr, 0x40), x1_pow_3)
+            success := and(success, staticcall(sub(gas(), 2000), 7, mPtr, 0x60, 0x00, 0x40))
+
+            // Compute (x1 * c) + (x1_pow_2 * quotient) + (x1_pow_3 * u_prime)
+            // and store the result in the stack
+            mPtr := mload(0x40)
+            mstore(mPtr, q2_x)
+            mstore(add(mPtr, 0x20), q2_y)
+            mstore(add(mPtr, 0x40), mload(0x00))
+            mstore(add(mPtr, 0x60), mload(0x20))
+            success := and(success, staticcall(sub(gas(), 2000), 6, mPtr, 0x80, 0x00, 0x40))
+            q2_x := mload(0x00)
+            q2_y := mload(0x20)
+
+            // Compute x1_pow_4 * p2 and store the result in scratch space
+            mPtr := mload(0x40)
+            mstore(    mPtr,        mload(add(mload(commitmentsPtr), 0x280)))
+            mstore(add(mPtr, 0x20), mload(add(mload(commitmentsPtr), 0x2a0)))
+            mstore(add(mPtr, 0x40), x1_pow_4)
+            success := and(success, staticcall(sub(gas(), 2000), 7, mPtr, 0x60, 0x00, 0x40))
+
+            // Compute (x1 * c) + (x1_pow_2 * quotient) + (x1_pow_3 * u_prime) + (x1_pow_4 * p2)
+            // and store the result in the stack
+            mPtr := mload(0x40)
+            mstore(mPtr, q2_x)
+            mstore(add(mPtr, 0x20), q2_y)
+            mstore(add(mPtr, 0x40), mload(0x00))
+            mstore(add(mPtr, 0x60), mload(0x20))
+            success := and(success, staticcall(sub(gas(), 2000), 6, mPtr, 0x80, 0x00, 0x40))
+            q2_x := mload(0x00)
+            q2_y := mload(0x20)
+
+            // Compute q_mimc + (x1 * c) + (x1_pow_2 * quotient) + (x1_pow_3 * u_prime) + (x1_pow_4 * p2)
+            // and store the result in verifierTranscript
+            mPtr := mload(0x40)
+            mstore(mPtr, q2_x)
+            mstore(add(mPtr, 0x20), q2_y)
+            mstore(add(mPtr, 0x40), mload(add(mload(commitmentsPtr), 0x2c0)))
+            mstore(add(mPtr, 0x60), mload(add(mload(commitmentsPtr), 0x2e0)))
+            success := and(success, staticcall(sub(gas(), 2000), 6, mPtr, 0x80, 0x00, 0x40))
+
+            mstore(mload(add(verifierTranscript, 0x2a0)), mload(0x00))
+            mstore(add(mload(add(verifierTranscript, 0x2a0)), 0x20), mload(0x20))
+            }
+
+            {
+            // Compute q4 = (x1 * w1) + (x1_pow_2 * w2) + w0
+
+            // Compute x1 * w1
+            // and store the result in scratch space
+            let mPtr := mload(0x40)
+            mstore(    mPtr,        mload(add(mload(commitmentsPtr), 0x40)))
+            mstore(add(mPtr, 0x20), mload(add(mload(commitmentsPtr), 0x60)))
+            mstore(add(mPtr, 0x40), x1)
+            success := and(success, staticcall(sub(gas(), 2000), 7, mPtr, 0x60, 0x00, 0x40))
+            q2_x := mload(0x00)
+            q2_y := mload(0x20)
+
+            // Compute (x1 * w1) + (x1_pow_2 * w2)
+            // and store the result in scratch space
+            mPtr := mload(0x40)
+            mstore(    mPtr,        mload(add(mload(commitmentsPtr), 0x80)))
+            mstore(add(mPtr, 0x20), mload(add(mload(commitmentsPtr), 0xa0)))
+            mstore(add(mPtr, 0x40), x1_pow_2)
+            success := and(success, staticcall(sub(gas(), 2000), 7, mPtr, 0x60, 0x00, 0x40))
+
+            mPtr := mload(0x40)
+            mstore(mPtr, q2_x)
+            mstore(add(mPtr, 0x20), q2_y)
+            mstore(add(mPtr, 0x40), mload(0x00))
+            mstore(add(mPtr, 0x60), mload(0x20))
+            success := and(success, staticcall(sub(gas(), 2000), 6, mPtr, 0x80, 0x00, 0x40))
+
+            // Compute (x1 * w1) + (x1_pow_2 * w2) + w0
+            mPtr := mload(0x40)
+            mstore(mPtr, mload(0x00))
+            mstore(add(mPtr, 0x20), mload(0x20))
+            mstore(add(mPtr, 0x40), mload(    mload(commitmentsPtr)       ))
+            mstore(add(mPtr, 0x60), mload(add(mload(commitmentsPtr), 0x20)))
+            success := and(success, staticcall(sub(gas(), 2000), 6, mPtr, 0x80, 0x00, 0x40))
+
+            mstore(mload(add(verifierTranscript, 0x2c0)), mload(0x00))
+            mstore(add(mload(add(verifierTranscript, 0x2c0)), 0x20), mload(0x20))
+
+            switch success case 0 { revert(0, 0) }
+            }
+
+            {
+            // Compute q4 evals
+            //let q4_at_alpha = compute_q4_eval(w0_openings[0], w1_openings[0], w2_openings[0], &x1_powers);
+            //let q4_at_omega_alpha = compute_q4_eval(w0_openings[1], w1_openings[1], w2_openings[1], &x1_powers);
+            //let q4_at_omega_n_alpha = compute_q4_eval(w0_openings[2], w1_openings[2], w2_openings[2], &x1_powers);
+
+            function compute_q4_eval(w0, w1, w2, x1_f, x1_pow_2_f, prime) -> result {
+                // w0_opening + (x1_powers[0] * w1_opening) + (x1_powers[1] * w2_opening)
+                // x1_f and x1_pow_2_f are named as such to avoid a name collision
+                let a := mulmod(w1, x1_f, prime)
+                let b := mulmod(w2, x1_pow_2_f, prime)
+                let ab := addmod(a, b, prime)
+                result := addmod(w0, ab, prime)
+            }
+
+            let openingsPtr := mload(add(proof, 0x20))
+
+            let w0_0 := mload(add(openingsPtr, 0xc0))
+            let w1_0 := mload(add(openingsPtr, 0x120))
+            let w2_0 := mload(add(openingsPtr, 0x180))
+            let q4_at_alpha := compute_q4_eval(w0_0, w1_0, w2_0, x1, x1_pow_2, p)
+            mstore(add(verifierTranscript, 0x2e0), q4_at_alpha)
+
+            let w0_1 := mload(add(openingsPtr, 0xe0))
+            let w1_1 := mload(add(openingsPtr, 0x140))
+            let w2_1 := mload(add(openingsPtr, 0x1a0))
+            let q4_at_omega_alpha := compute_q4_eval(w0_1, w1_1, w2_1, x1, x1_pow_2, p)
+            mstore(add(verifierTranscript, 0x300), q4_at_omega_alpha)
+
+            let w0_2 := mload(add(openingsPtr, 0x100))
+            let w1_2 := mload(add(openingsPtr, 0x160))
+            let w2_2 := mload(add(openingsPtr, 0x1c0))
+            let q4_at_omega_n_alpha := compute_q4_eval(w0_2, w1_2, w2_2, x1, x1_pow_2, p)
+            mstore(add(verifierTranscript, 0x320), q4_at_omega_n_alpha)
+            }
+        }
+
+        debug = verifierTranscript.q4_at_omega_n_alpha;
+        return debug;
     }
 
     function verifyGateEvals(

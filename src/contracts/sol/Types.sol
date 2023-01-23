@@ -39,23 +39,36 @@ library Types {
         /* 0x140 */ uint256 omega_alpha_minus_omega_n_alpha_inv;
         /* 0x160 */ uint256 l0Eval;
         /* 0x180 */ uint256 zhEval;
+        /* 0x1a0 */ uint256 x1_pow_2;
+        /* 0x1c0 */ uint256 x1_pow_3;
+        /* 0x1e0 */ uint256 x1_pow_4;
+        /* 0x200 */ uint256 x2_pow_2;
+        /* 0x220 */ uint256 x2_pow_3;
+        /* 0x240 */ uint256 x4_pow_2;
+        /* 0x260 */ uint256 x4_pow_3;
+        /* 0x280 */ uint256 x4_pow_4;
+        /* 0x2a0 */ Types.G1Point q2;
+        /* 0x2c0 */ Types.G1Point q4;
+        /* 0x2e0 */ uint256 q4_at_alpha;
+        /* 0x300 */ uint256 q4_at_omega_alpha;
+        /* 0x320 */ uint256 q4_at_omega_n_alpha;
     }
 
     struct Commitments {
         /* 0x00  */ Types.G1Point w0;
-        /* 0x20  */ Types.G1Point w1;
-        /* 0x40  */ Types.G1Point w2;
-        /* 0x60  */ Types.G1Point key;
-        /* 0x80  */ Types.G1Point c;
-        /* 0xa0  */ Types.G1Point quotient;
-        /* 0xc0  */ Types.G1Point u_prime;
-        /* 0xe0  */ Types.G1Point zi;
-        /* 0x100 */ Types.G1Point ci;
-        /* 0x120 */ Types.G1Point p1;
-        /* 0x140 */ Types.G1Point p2;
-        /* 0x160 */ Types.G1Point q_mimc;
-        /* 0x180 */ Types.G1Point h;
-        /* 0x1a0 */ Types.G2Point w;
+        /* 0x40  */ Types.G1Point w1;
+        /* 0x80  */ Types.G1Point w2;
+        /* 0xc0  */ Types.G1Point key;
+        /* 0x100 */ Types.G1Point c;
+        /* 0x140 */ Types.G1Point quotient;
+        /* 0x180 */ Types.G1Point u_prime;
+        /* 0x1c0 */ Types.G1Point zi;
+        /* 0x200 */ Types.G1Point ci;
+        /* 0x240 */ Types.G1Point p1;
+        /* 0x280 */ Types.G1Point p2;
+        /* 0x2c0 */ Types.G1Point q_mimc;
+        /* 0x300 */ Types.G1Point h;
+        /* 0x340 */ Types.G2Point w;
     }
 
     struct Openings {

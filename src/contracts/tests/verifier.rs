@@ -112,8 +112,7 @@ pub async fn test_semacaulk_verifier() {
     ).call().await.unwrap();
 
     //println!("u_prime_opening: {}", proof.openings.u_prime);
-    println!("\nresult0: {}", u256_to_hex(result.0));
-    println!("result1: {}", u256_to_hex(result.1));
+    println!("\nresult: {}", u256_to_hex(result));
     drop(anvil);
 }
 
