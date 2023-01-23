@@ -76,6 +76,7 @@ impl Verifier {
         // Check if the gate equations are valid
 
         let l0_eval = domain_h.evaluate_all_lagrange_coefficients(alpha)[0];
+
         let n = domain_h.size();
         let test = (alpha.pow(&[n as u64, 0, 0, 0]) - Fr::one()) / Fr::from(n as u64) / (alpha - Fr::one());
         assert_eq!(test, l0_eval);

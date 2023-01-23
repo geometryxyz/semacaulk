@@ -104,30 +104,16 @@ pub async fn test_semacaulk_verifier() {
     let anvil = eth_backend.0;
     let client = eth_backend.1;
     
-    /*
-     * Values to invert:
-     * - (d - 1) for the l0_eval computation
-     * - xi_minus_v = x3_challenge - proof.openings.u_prime_opening
-     * - xi_minus_alpha = x3_challenge - alpha_challenge
-     * - xi_minus_omega_alpha_inv = x3_challenge - omega_alpha
-     * - xi_minus_omega_n_alpha = x3_challenge - omega_n_alpha
-     * - alpha_minus_omega_alpha = alpha - omega_alpha;
-     * - alpha_minus_omega_n_alpha = alpha - omega_n_alpha;
-     * - omega_alpha_minus_omega_n_alpha = omega_alpha - omega_n_alpha;
-     *
-     * Values needed before batch inversion:
-     * - d
-     * - x3_challenge
-     * - proof.openings.u_prime_opening
-     * - alpha_challenge
-     * - omega_alpha
-     * - omega_n_alpha
-     */
-
     let contract = Verifier::deploy(client, ()).unwrap().send().await.unwrap();
-    let result = contract.verify(p_to_p(&format_proof(&proof))).call().await.unwrap();
+    let result = contract.verify(
+        p_to_p(&format_proof(&proof)),
+        f_to_u256(external_nullifier),
+        f_to_u256(nullifier_hash),
+    ).call().await.unwrap();
 
-    println!("result: {}", u256_to_hex(result));
+    //println!("u_prime_opening: {}", proof.openings.u_prime);
+    println!("\nresult0: {}", u256_to_hex(result.0));
+    println!("result1: {}", u256_to_hex(result.1));
     drop(anvil);
 }
 
@@ -239,7 +225,6 @@ fn p_to_p(p: &crate::contracts::verifier::Proof) -> Proof {
 
 #[tokio::test]
 pub async fn test_offchain_batch_invert() {
-    let mut rng = test_rng();
     let num_vals = 8;
     let mut a_vals = Vec::<Fr>::with_capacity(num_vals);
     for i in 0..num_vals {

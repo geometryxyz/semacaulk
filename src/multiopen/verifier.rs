@@ -149,7 +149,6 @@ impl Verifier {
 
         let x3 = transcript.get_challenge();
         let x4 = transcript.get_challenge();
-        println!("{}", x4);
 
         let x4_powers: Vec<Fr> = iter::successors(Some(x4), |x4_pow| Some(*x4_pow * x4))
             .take(4)
@@ -245,7 +244,7 @@ impl Verifier {
         omega_n_alpha: F,
         xi: F,
     ) -> (F, F, F, F) {
-        // r1&r2
+        // r1 & r2
         let r1_xi = q1_eval;
         let r2_xi = q2_eval;
 
@@ -257,6 +256,7 @@ impl Verifier {
 
         let xi_minus_v_inv = xi_minus_v.inverse().unwrap();
         let xi_minus_alpha_inv = xi_minus_alpha.inverse().unwrap();
+
         let xi_minus_omega_alpha_inv = xi_minus_omega_alpha.inverse().unwrap();
         let xi_minus_omega_n_alpha_inv = xi_minus_omega_n_alpha.inverse().unwrap();
 

@@ -163,7 +163,7 @@ pub async fn test_transcript() {
 #[tokio::test]
 pub async fn test_compute_l0_eval() {
     // Test computeL0Eval with 0 and 123
-    //test_compute_l0_eval_case(Fr::zero()).await;
+    test_compute_l0_eval_case(Fr::zero()).await;
     test_compute_l0_eval_case(Fr::from(123u64)).await;
 }
 
@@ -212,13 +212,15 @@ pub async fn test_compute_l0_eval_case(alpha: Fr) {
 
     // Step 3: Compute the evaluation of the Lagrange polynomial at point alpha
     let result = (vanishing_poly_eval * domain_size_inv) * one_div_alpha_minus_one;
-    
+
     assert_eq!(result, l0_eval);
 
     let contract = TestLagrange::deploy(client, ()).unwrap().send().await.unwrap();
     let onchain_result = contract.test_compute_l0_eval(
         f_to_u256(alpha),
+        f_to_u256(one_div_alpha_minus_one),
     ).call().await.unwrap();
+
     assert_eq!(onchain_result, f_to_u256(l0_eval));
 
     drop(anvil);

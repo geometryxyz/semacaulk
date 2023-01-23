@@ -2,14 +2,6 @@
 pragma solidity ^0.8.13;
 
 library Types {
-    uint256 constant PROGRAM_WIDTH = 4;
-    uint256 constant NUM_NU_CHALLENGES = 11;
-    uint256 constant coset_generator0 = 0x0000000000000000000000000000000000000000000000000000000000000005;
-    uint256 constant coset_generator1 = 0x0000000000000000000000000000000000000000000000000000000000000006;
-    uint256 constant coset_generator2 = 0x0000000000000000000000000000000000000000000000000000000000000007;
-    // TODO: add external_coset_generator() method to compute this
-    uint256 constant coset_generator7 = 0x000000000000000000000000000000000000000000000000000000000000000c;
-
     struct G1Point {
         uint256 x;
         uint256 y;
@@ -30,63 +22,74 @@ library Types {
         /* 0x80 */ uint256 x2; 
         /* 0xa0 */ uint256 x3; 
         /* 0xc0 */ uint256 x4; 
+        /* 0xe0 */ uint256 s; 
     }
 
     struct VerifierTranscript {
-        uint256 d;
-        uint256 omega_alpha;
-        uint256 omega_n_alpha;
+        /* 0x00  */ uint256 d;
+        /* 0x20  */ uint256 omega_alpha;
+        /* 0x40  */ uint256 omega_n_alpha;
+        /* 0x60  */ uint256 dMinusOneInv;
+        /* 0x80  */ uint256 xi_minus_v_inv;
+        /* 0xa0  */ uint256 xi_minus_alpha_inv;
+        /* 0xc0  */ uint256 xi_minus_omega_alpha_inv;
+        /* 0xe0  */ uint256 xi_minus_omega_n_alpha_inv;
+        /* 0x100 */ uint256 alpha_minus_omega_alpha_inv;
+        /* 0x120 */ uint256 alpha_minus_omega_n_alpha_inv;
+        /* 0x140 */ uint256 omega_alpha_minus_omega_n_alpha_inv;
+        /* 0x160 */ uint256 l0Eval;
+        /* 0x180 */ uint256 zhEval;
     }
 
     struct Commitments {
-        Types.G1Point w0;
-        Types.G1Point w1;
-        Types.G1Point w2;
-        Types.G1Point key;
-        Types.G1Point c;
-        Types.G1Point quotient;
-        Types.G1Point u_prime;
-        Types.G1Point zi;
-        Types.G1Point ci;
-        Types.G1Point p1;
-        Types.G1Point p2;
-        Types.G1Point q_mimc;
-        Types.G1Point h;
-        Types.G2Point w;
+        /* 0x00  */ Types.G1Point w0;
+        /* 0x20  */ Types.G1Point w1;
+        /* 0x40  */ Types.G1Point w2;
+        /* 0x60  */ Types.G1Point key;
+        /* 0x80  */ Types.G1Point c;
+        /* 0xa0  */ Types.G1Point quotient;
+        /* 0xc0  */ Types.G1Point u_prime;
+        /* 0xe0  */ Types.G1Point zi;
+        /* 0x100 */ Types.G1Point ci;
+        /* 0x120 */ Types.G1Point p1;
+        /* 0x140 */ Types.G1Point p2;
+        /* 0x160 */ Types.G1Point q_mimc;
+        /* 0x180 */ Types.G1Point h;
+        /* 0x1a0 */ Types.G2Point w;
     }
 
     struct Openings {
-        uint256 q_mimc;
-        uint256 c;
-        uint256 quotient;
-        uint256 u_prime;
-        uint256 p1;
-        uint256 p2;
-        uint256 w0_0;
-        uint256 w0_1;
-        uint256 w0_2;
-        uint256 w1_0;
-        uint256 w1_1;
-        uint256 w1_2;
-        uint256 w2_0;
-        uint256 w2_1;
-        uint256 w2_2;
-        uint256 key_0;
-        uint256 key_1;
+        /* 0x00  */ uint256 q_mimc;
+        /* 0x20  */ uint256 c;
+        /* 0x40  */ uint256 quotient;
+        /* 0x60  */ uint256 u_prime;
+        /* 0x80  */ uint256 p1;
+        /* 0xa0  */ uint256 p2;
+        /* 0xc0  */ uint256 w0_0;
+        /* 0xe0  */ uint256 w0_1;
+        /* 0x100 */ uint256 w0_2;
+        /* 0x120 */ uint256 w1_0;
+        /* 0x140 */ uint256 w1_1;
+        /* 0x160 */ uint256 w1_2;
+        /* 0x180 */ uint256 w2_0;
+        /* 0x1a0 */ uint256 w2_1;
+        /* 0x1c0 */ uint256 w2_2;
+        /* 0x1e0 */ uint256 key_0;
+        /* 0x200 */ uint256 key_1;
     }
 
     struct MultiopenProof {
-        uint256 q1_opening;
-        uint256 q2_opening;
-        uint256 q3_opening;
-        uint256 q4_opening;
-        Types.G1Point f_cm;
-        Types.G1Point final_poly_proof;
+        /* 0x00  */ uint256 q1_opening;
+        /* 0x20  */ uint256 q2_opening;
+        /* 0x40  */ uint256 q3_opening;
+        /* 0x60  */ uint256 q4_opening;
+        /* 0x80  */ Types.G1Point f_cm;
+        /* 0xa0  */ Types.G1Point final_poly_proof;
     }
 
     struct Proof {
-        MultiopenProof multiopenProof;
-        Openings openings;
-        Commitments commitments;
+        /* 0x00 */ MultiopenProof multiopenProof;
+        /* 0x20 */ Openings openings;
+        /* 0x40 */ Commitments commitments;
     }
 }

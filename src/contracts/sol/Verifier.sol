@@ -4,11 +4,18 @@ pragma solidity ^0.8.13;
 import { Types } from "./Types.sol";
 import { Constants } from "./Constants.sol";
 import { TranscriptLibrary } from "./Transcript.sol";
+import { Lagrange } from "./Lagrange.sol";
 
 contract Verifier {
     function verify(
-        Types.Proof memory proof
-    ) public view returns (uint256 debug) {
+        Types.Proof memory proof,
+        uint256 externalNullifier,
+        uint256 nullifierHash
+    ) public view returns (
+        uint256 debug0,
+        uint256 debug1
+    ) {
+        uint256 p = Constants.PRIME_R;
         TranscriptLibrary.Transcript memory transcript = TranscriptLibrary.newTranscript();
         Types.ChallengeTranscript memory challengeTranscript;
         Types.VerifierTranscript memory verifierTranscript;
@@ -63,21 +70,228 @@ contract Verifier {
 
         challengeTranscript.x3 = TranscriptLibrary.getChallenge(transcript);
         challengeTranscript.x4 = TranscriptLibrary.getChallenge(transcript);
+        uint256[8] memory inverted;
+        
+        {
+             // Values needed before batch inversion:
+             // - d (so we can invert d - 1)
+             // - x3_challenge
+             // - proof.openings.u_prime_opening
+             // - alpha_challenge
+             // - omega_alpha
+             // - omega_n_alpha
 
-         // Values needed before batch inversion:
-         // - d (so we can invert d - 1)
-         // - x3_challenge
-         // - proof.openings.u_prime_opening
-         // - alpha_challenge
-         // - omega_alpha
-         // - omega_n_alpha
+             // Values to invert:
+             // - (d - 1) for the l0_eval computation
+             // - xi_minus_v = x3_challenge - proof.openings.u_prime_opening
+             // - xi_minus_alpha = x3_challenge - alpha_challenge
+             // - xi_minus_omega_alpha = x3_challenge - omega_alpha;
+             // - xi_minus_omega_n_alpha = x3_challenge - omega_n_alpha
+             // - alpha_minus_omega_alpha = alpha - omega_alpha;
+             // - alpha_minus_omega_n_alpha = alpha - omega_n_alpha;
+             // - omega_alpha_minus_omega_n_alpha = omega_alpha - omega_n_alpha;
 
-        debug = challengeTranscript.x4;
+            // Compute and store omega_alpha, omega_n_alpha
+            uint256 omega_alpha = Constants.omega;
+            uint256 omega_n_alpha = Constants.omega_n;
+            assembly {
+                let alpha := mload(add(challengeTranscript, 0x40))
+                omega_alpha := mulmod(omega_alpha, alpha, p)
+                omega_n_alpha := mulmod(omega_n_alpha, alpha, p)
+            }
+
+            // Compute d - 1
+            if (challengeTranscript.alpha == 0) {
+                inverted[0] = p - 1;
+            } else {
+                inverted[0] = challengeTranscript.alpha - 1;
+            }
+
+            // Compute inputs to the batch inversion function
+            assembly {
+                let alpha := mload(add(challengeTranscript, 0x40))
+                let x3 := mload(add(challengeTranscript, 0xa0))
+                let v := mload(add(proof, 0xa0))
+                let u_prime_opening := mload(add(mload(add(proof, 0x20)), 0x60))
+                let xi_minus_v := addmod(x3, sub(p, u_prime_opening), p)
+                let xi_minus_alpha := addmod(x3, sub(p, alpha), p)
+                let xi_minus_omega_alpha := addmod(x3, sub(p, omega_alpha), p)
+                let xi_minus_omega_n_alpha := addmod(x3, sub(p, omega_n_alpha), p)
+                let alpha_minus_omega_alpha := addmod(alpha, sub(p, omega_alpha), p)
+                let alpha_minus_omega_n_alpha := addmod(alpha, sub(p, omega_n_alpha), p)
+                let omega_alpha_minus_omega_n_alpha := addmod(omega_alpha, sub(p, omega_n_alpha), p)
+
+                /* 0    (d - 1) is already stored */
+                /* 1 */ mstore(add(inverted, 0x20), xi_minus_v)
+                /* 2 */ mstore(add(inverted, 0x40), xi_minus_alpha)
+                /* 3 */ mstore(add(inverted, 0x60), xi_minus_omega_alpha)
+                /* 4 */ mstore(add(inverted, 0x80), xi_minus_omega_n_alpha)
+                /* 5 */ mstore(add(inverted, 0xa0), alpha_minus_omega_alpha)
+                /* 6 */ mstore(add(inverted, 0xc0), alpha_minus_omega_n_alpha)
+                /* 7 */ mstore(add(inverted, 0xe0), omega_alpha_minus_omega_n_alpha)
+            }
+        }
+
+        {
+        inverted = batchInvert(inverted);
+
+        (uint256 l0Eval, uint256 zhEval) = Lagrange.computeL0AndVanishingEval(
+            challengeTranscript.alpha,
+            inverted[0]
+        );
+
+        assembly {
+            // Store the inverted values to verifierTranscript. They will be
+            // used in the multiopen veriifer step
+            mstore(add(verifierTranscript, 0x60), mload(inverted))
+            mstore(add(verifierTranscript, 0x80), mload(add(inverted, 0x20)))
+            mstore(add(verifierTranscript, 0xa0), mload(add(inverted, 0x40)))
+            mstore(add(verifierTranscript, 0xc0), mload(add(inverted, 0x60)))
+            mstore(add(verifierTranscript, 0xe0), mload(add(inverted, 0x80)))
+            mstore(add(verifierTranscript, 0x100), mload(add(inverted, 0xa0)))
+            mstore(add(verifierTranscript, 0x120), mload(add(inverted, 0xc0)))
+            mstore(add(verifierTranscript, 0x140), mload(add(inverted, 0xe0)))
+
+            // Store l0Eval, zhEval in verifierTranscript. They will be used in
+            // verifyGateEvals()
+            mstore(add(verifierTranscript, 0x160), l0Eval)
+            mstore(add(verifierTranscript, 0x180), zhEval)
+        }
+
+        require(
+            verifyGateEvals(
+                proof,
+                verifierTranscript,
+                challengeTranscript.v,
+                nullifierHash,
+                externalNullifier
+            ),
+            "Verifier: gate check failed"
+        );
+        }
+    }
+
+    function verifyGateEvals(
+        Types.Proof memory proof,
+        Types.VerifierTranscript memory verifierTranscript,
+        uint256 v_challenge,
+        uint256 nullifierHash,
+        uint256 externalNullifier
+    ) public pure returns (bool) {
+        uint256 p = Constants.PRIME_R;
+        uint256 rhs;
+        uint256 lhs;
+
+        assembly {
+            function pow7(val, prime) -> r {
+                let val2 := mulmod(val, val, prime)
+                let val4 := mulmod(val2, val2, prime)
+                let val6 := mulmod(val2, val4, prime)
+                r := mulmod(val6, val, prime)
+            }
+
+            let rolling_v := v_challenge
+            let openingsPtr := mload(add(proof, 0x20))
+
+            {
+            // Compute rhs = zh_eval * quotient_opening
+            let zh_eval := mload(add(verifierTranscript, 0x180))
+            let quotient_opening := mload(add(openingsPtr, 0x40))
+            rhs := mulmod(zh_eval, quotient_opening, p)
+            }
+
+            {
+            //let gate_0_eval = q_mimc_opening * (pow_7(w0_openings[0] + c_opening) - w0_openings[1]);
+            let q_mimc := mload(openingsPtr)
+            let c := mload(add(openingsPtr, 0x20))
+            let w0_0 := mload(add(openingsPtr, 0xc0))
+            let w0_1 := mload(add(openingsPtr, 0xe0))
+
+            let gate_0_eval := addmod(w0_0, c, p)
+            gate_0_eval := pow7(gate_0_eval, p)
+            gate_0_eval := addmod(gate_0_eval, sub(p, w0_1), p)
+            gate_0_eval := mulmod(gate_0_eval, q_mimc, p)
+            lhs := gate_0_eval
+            }
+
+            {
+            let q_mimc := mload(openingsPtr)
+            let c := mload(add(openingsPtr, 0x20))
+            // Gate 1: q_mimc_opening * ((w1_openings[0] + key_openings[0] + c_opening) ^ 7 - w1_openings[1])
+            let w1_0 := mload(add(openingsPtr, 0x120))
+            let w1_1 := mload(add(openingsPtr, 0x140))
+            let key_0 := mload(add(openingsPtr, 0x1e0))
+            let gate_1_eval := addmod(addmod(w1_0, key_0, p), c, p)
+            gate_1_eval := pow7(gate_1_eval, p)
+            gate_1_eval := addmod(gate_1_eval, sub(p, w1_1), p)
+            gate_1_eval := mulmod(gate_1_eval, q_mimc, p)
+            lhs := addmod(lhs, mulmod(rolling_v, gate_1_eval, p), p)
+
+            rolling_v := mulmod(rolling_v, v_challenge, p)
+            }
+
+            {
+            // Gate 2: q_mimc_opening * ((w2_openings[0] + key_openings[0] + c_opening) ^ 7 - w2_openings[1]) 
+            let q_mimc := mload(openingsPtr)
+            let c := mload(add(openingsPtr, 0x20))
+            let key_0 := mload(add(openingsPtr, 0x1e0))
+            let w2_0 := mload(add(openingsPtr, 0x180))
+            let w2_1 := mload(add(openingsPtr, 0x1a0))
+            let gate_2_eval := addmod(addmod(w2_0, key_0, p), c, p)
+            gate_2_eval := pow7(gate_2_eval, p)
+            gate_2_eval := addmod(gate_2_eval, sub(p, w2_1), p)
+            gate_2_eval := mulmod(gate_2_eval, q_mimc, p)
+            lhs := addmod(lhs, mulmod(rolling_v, gate_2_eval, p), p)
+
+            rolling_v := mulmod(rolling_v, v_challenge, p)
+            }
+
+            {
+            // Gate 3: q_mimc_opening * (key_openings[0] - key_openings[1])
+            let q_mimc := mload(openingsPtr)
+            let key_0 := mload(add(openingsPtr, 0x1e0))
+            let key_1 := mload(add(openingsPtr, 0x200))
+            let gate_3_eval := addmod(key_0, sub(p, key_1), p)
+            gate_3_eval := mulmod(gate_3_eval, q_mimc, p)
+            lhs := addmod(lhs, mulmod(rolling_v, gate_3_eval, p), p)
+
+            rolling_v := mulmod(rolling_v, v_challenge, p)
+
+            // Gate 4: l0 * (key_openings[0] - w0_openings[0] - w0_openings[2])
+            let w0_0 := mload(add(openingsPtr, 0xc0))
+            let w0_2 := mload(add(openingsPtr, 0x100))
+            let l0 := mload(add(verifierTranscript, 0x160))
+            let gate_4_eval := addmod(key_0, sub(p, addmod(w0_0, w0_2, p)), p)
+            gate_4_eval := mulmod(gate_4_eval, l0, p)
+            lhs := addmod(lhs, mulmod(rolling_v, gate_4_eval, p), p)
+
+            rolling_v := mulmod(rolling_v, v_challenge, p)
+
+            // Gate 5: l0 * (nullifierHash - w2_openings[0] - w2_openings[2] - (2 * key_openings[0])) 
+            let w2_0 := mload(add(openingsPtr, 0x180))
+            let w2_2 := mload(add(openingsPtr, 0x1c0))
+            let two_key_0 := addmod(key_0, key_0, p)
+            let r := addmod(w2_0, w2_2, p)
+            r := addmod(r, two_key_0, p)
+            let gate_5_eval := addmod(nullifierHash, sub(p, r), p)
+            gate_5_eval := mulmod(gate_5_eval, l0, p)
+            lhs := addmod(lhs, mulmod(rolling_v, gate_5_eval, p), p)
+
+            rolling_v := mulmod(rolling_v, v_challenge, p)
+
+            // Gate 6: l0 * (w2_openings[0] - external_nullifier)
+            let gate_6_eval := addmod(w2_0, sub(p, externalNullifier), p)
+            gate_6_eval := mulmod(gate_6_eval, l0, p)
+            lhs := addmod(lhs, mulmod(rolling_v, gate_6_eval, p), p)
+            }
+        }
+        return lhs == rhs;
     }
 
     function batchInvert(
         uint256[8] memory inputs
-    ) public view returns (uint256[8] memory results) {
+    ) public view returns (uint256[8] memory) {
+        uint256[8] memory results;
         uint256 p = Constants.PRIME_R;
         assembly {
             let mPtr := mload(0x40)
@@ -128,6 +342,10 @@ contract Verifier {
                 let b_i := mulmod(a_i, b_i_minus_1, p)
                 mstore(add(mPtr, offset), b_i)
             }
+
+            // Revert if any of the inputs are 0 (which will cause b_n to be 0)
+            switch mload(add(mPtr, 0xc0)) case 0 { revert(0, 0) }
+
 
             // 2. Compute and store t_7
             mstore(add(mPtr, 0x0e0), 0x20)
@@ -180,5 +398,7 @@ contract Verifier {
             mstore(add(results, 0xc0), mload(add(mPtr, 0x0340))) // c6
             mstore(add(results, 0xe0), mload(add(mPtr, 0x0360))) // c7
         }
+
+        return results;
     }
 }
