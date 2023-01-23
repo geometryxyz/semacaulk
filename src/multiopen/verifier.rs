@@ -210,8 +210,10 @@ impl Verifier {
             x3,
         );
 
-        let f_eval = f1 + x2_powers[0] * f2 + x2_powers[1] * f3 + x2_powers[2] * f4;
-        println!("{}", f_eval);
+        let f_eval = f1 +
+            (x2_powers[0] * f2) +
+            (x2_powers[1] * f3) +
+            (x2_powers[2] * f4);
 
         let final_poly: G1Affine = {
             let projective_part = 

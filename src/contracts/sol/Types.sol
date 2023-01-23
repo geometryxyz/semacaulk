@@ -63,6 +63,7 @@ library Types {
         /* 0x440 */ uint256 omega_alpha_minus_alpha_inv;
         /* 0x460 */ uint256 z3_xi;
         /* 0x480 */ uint256 f_eval;
+        /* 0x4a0 */ Types.G1Point final_poly;
     }
 
     struct Commitments {

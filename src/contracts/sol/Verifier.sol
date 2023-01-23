@@ -362,8 +362,6 @@ contract Verifier {
 
             mstore(mload(add(verifierTranscript, 0x2c0)), mload(0x00))
             mstore(add(mload(add(verifierTranscript, 0x2c0)), 0x20), mload(0x20))
-
-            switch success case 0 { revert(0, 0) }
             }
 
             {
@@ -556,15 +554,100 @@ contract Verifier {
             //                      (key * x4_pow_3) +
             //                      (q4 * x4_pow_4) +
 
+            let x
+            let y
+            let mPtr := mload(0x40)
+            // Compute and store (p1 * x4)
+            // in the stack
+            mstore(    mPtr,        mload(add(mload(commitmentsPtr), 0x240)))
+            mstore(add(mPtr, 0x20), mload(add(mload(commitmentsPtr), 0x260)))
+            mstore(add(mPtr, 0x40), mload(add(challengeTranscript, 0xc0)))
+            success := staticcall(sub(gas(), 2000), 7, mPtr, 0x60, 0x00, 0x40)
+            x := mload(0x00)
+            y := mload(0x20)
+
+            // Compute and store (p1 * x4) + (q2 * x4_pow_2)
+            // in the stack
+            mPtr := mload(0x40)
+            mstore(mPtr, mload(mload(add(verifierTranscript, 0x2a0))))
+            mstore(add(mPtr, 0x20), mload(add(mload(add(verifierTranscript, 0x2a0)), 0x20)))
+            mstore(add(mPtr, 0x40), mload(add(verifierTranscript, 0x240)))
+            success := staticcall(sub(gas(), 2000), 7, mPtr, 0x60, 0x00, 0x40)
+
+            mPtr := mload(0x40)
+            mstore(mPtr, mload(0x00))
+            mstore(add(mPtr, 0x20), mload(0x20))
+            mstore(add(mPtr, 0x40), x)
+            mstore(add(mPtr, 0x60), y)
+            success := and(success, staticcall(sub(gas(), 2000), 6, mPtr, 0x80, 0x00, 0x40))
+            x := mload(0x00)
+            y := mload(0x20)
+
+            // Compute and store (p1 * x4) + (q2 * x4_pow_2) + (key * x4_pow_3)
+            // in the stack
+            mPtr := mload(0x40)
+            mstore(mPtr, mload(add(mload(commitmentsPtr), 0xc0)))
+            mstore(add(mPtr, 0x20), mload(add(mload(commitmentsPtr), 0xe0)))
+            mstore(add(mPtr, 0x40), mload(add(verifierTranscript, 0x260)))
+            success := staticcall(sub(gas(), 2000), 7, mPtr, 0x60, 0x00, 0x40)
+
+            mPtr := mload(0x40)
+            mstore(mPtr, mload(0x00))
+            mstore(add(mPtr, 0x20), mload(0x20))
+            mstore(add(mPtr, 0x40), x)
+            mstore(add(mPtr, 0x60), y)
+            success := and(success, staticcall(sub(gas(), 2000), 6, mPtr, 0x80, 0x00, 0x40))
+            x := mload(0x00)
+            y := mload(0x20)
+
+            // Compute and store (p1 * x4) + (q2 * x4_pow_2) + (key * x4_pow_3) + (q4 * x4_pow_4)
+            // in the stack
+            mPtr := mload(0x40)
+            mstore(mPtr, mload(mload(add(verifierTranscript, 0x2c0))))
+            mstore(add(mPtr, 0x20), mload(add(mload(add(verifierTranscript, 0x2c0)), 0x20)))
+            mstore(add(mPtr, 0x40), mload(add(verifierTranscript, 0x280)))
+            success := staticcall(sub(gas(), 2000), 7, mPtr, 0x60, 0x00, 0x40)
+
+            mPtr := mload(0x40)
+            mstore(mPtr, mload(0x00))
+            mstore(add(mPtr, 0x20), mload(0x20))
+            mstore(add(mPtr, 0x40), x)
+            mstore(add(mPtr, 0x60), y)
+            success := and(success, staticcall(sub(gas(), 2000), 6, mPtr, 0x80, 0x00, 0x40))
+            x := mload(0x00)
+            y := mload(0x20)
+
+            // Compute and store (p1 * x4) + (q2 * x4_pow_2) + (key * x4_pow_3) + (q4 * x4_pow_4) + f_cm
+            // in verifierTranscript
+            let multiopenProofPtr := mload(proof)
+            mPtr := mload(0x40)
+            mstore(mPtr, mload(mload(add(multiopenProofPtr, 0x80))))
+            mstore(add(mPtr, 0x20), mload(add(mload(add(multiopenProofPtr, 0x80)), 0x20)))
+            mstore(add(mPtr, 0x40), x)
+            mstore(add(mPtr, 0x60), y)
+            success := and(success, staticcall(sub(gas(), 2000), 6, mPtr, 0x80, 0x00, 0x40))
+
+            mstore(mload(add(verifierTranscript, 0x4a0)), mload(0x00))
+            mstore(add(mload(add(verifierTranscript, 0x4a0)), 0x20), mload(0x20))
+            //x := mload(0x00)
+            //y := mload(0x20)
+
+            //debug := x
+
+            }
+
+            {
             // Compute final_poly_eval = f_eval
             //  + proof.q1_opening * x4
             //  + proof.q2_opening * x4_pow_2
             //  + proof.q3_opening * x4_pow_3
             //  + proof.q4_opening * x4_pow_4
+
+            switch success case 0 { revert(0, 0) }
             }
         }
+        debug = verifierTranscript.final_poly.x;
 
-        debug = verifierTranscript.f_eval;
         return debug;
     }
 
