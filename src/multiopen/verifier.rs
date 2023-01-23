@@ -183,8 +183,6 @@ impl Verifier {
             let projective_part = w1.mul(x1_powers[0]) + w2.mul(x1_powers[1]);
             projective_part.add_mixed(&w0).into()
         };
-        //println!("q2: {}", q2);
-        //println!("q4: {}", q4);
 
         let q4_at_alpha =
             w0_openings[0] + x1_powers[0] * w1_openings[0] + x1_powers[1] * w2_openings[0];
@@ -193,10 +191,6 @@ impl Verifier {
         let q4_at_omega_n_alpha =
             w0_openings[2] + x1_powers[0] * w1_openings[2] + x1_powers[1] * w2_openings[2];
         let q4_evals = [q4_at_alpha, q4_at_omega_alpha, q4_at_omega_n_alpha];
-
-        //println!("q4_at_alpha: {}", q4_at_alpha);
-        println!("q4_at_omega_alpha: {}", q4_at_omega_alpha);
-        println!("q4_at_omega_n_alpha: {}", q4_at_omega_n_alpha);
 
         /* END: construct qi-s */
 
@@ -217,6 +211,7 @@ impl Verifier {
         );
 
         let f_eval = f1 + x2_powers[0] * f2 + x2_powers[1] * f3 + x2_powers[2] * f4;
+        println!("{}", f_eval);
 
         let final_poly: G1Affine = {
             let projective_part = 

@@ -119,7 +119,10 @@ contract Verifier {
             let alpha_minus_omega_alpha := addmod(alpha, sub(p, omega_alpha), p)
             let alpha_minus_omega_n_alpha := addmod(alpha, sub(p, omega_n_alpha), p)
             let omega_alpha_minus_omega_n_alpha := addmod(omega_alpha, sub(p, omega_n_alpha), p)
-
+            // Store values used to evaluate f3 and f4 in verifierTranscript
+            mstore(add(verifierTranscript, 0x3e0), xi_minus_omega_alpha)
+            mstore(add(verifierTranscript, 0x400), xi_minus_alpha)
+            mstore(add(verifierTranscript, 0x420), xi_minus_omega_n_alpha)
             /* 0    (d - 1) is already stored */
             /* 1 */ mstore(add(inverted, 0x20), xi_minus_v)
             /* 2 */ mstore(add(inverted, 0x40), xi_minus_alpha)
@@ -184,7 +187,8 @@ contract Verifier {
     ) public view returns (uint256 debug) {
         uint256 p = Constants.PRIME_R;
         assembly {
-            let success
+            let success // TODO: check this later!
+
             let x1 := mload(add(challengeTranscript, 0x60))
             let x2 := mload(add(challengeTranscript, 0x80))
             let x4 := mload(add(challengeTranscript, 0xc0))
@@ -211,10 +215,10 @@ contract Verifier {
             mstore(add(verifierTranscript, 0x260), x4_pow_3)
             mstore(add(verifierTranscript, 0x280), x4_pow_4)
 
-            let q2_x
-            let q2_y
             let commitmentsPtr := mload(add(proof, 0x40))
             {
+            let q_x
+            let q_y
             // Compute q2 = q_mimc + (x1 * c) + (x1_pow_2 * quotient) + (x1_pow_3 + u_prime) + (x1_pow_4 + p2)
             let mPtr := mload(0x40)
 
@@ -243,8 +247,8 @@ contract Verifier {
             mstore(add(mPtr, 0x40), mload(0x00))
             mstore(add(mPtr, 0x60), mload(0x20))
             success := and(success, staticcall(sub(gas(), 2000), 6, mPtr, 0x80, 0x00, 0x40))
-            q2_x := mload(0x00)
-            q2_y := mload(0x20)
+            q_x := mload(0x00)
+            q_y := mload(0x20)
 
             // Compute x1_pow_3 * u_prime
             // and store the result in scratch space
@@ -257,13 +261,13 @@ contract Verifier {
             // Compute (x1 * c) + (x1_pow_2 * quotient) + (x1_pow_3 * u_prime)
             // and store the result in the stack
             mPtr := mload(0x40)
-            mstore(mPtr, q2_x)
-            mstore(add(mPtr, 0x20), q2_y)
+            mstore(mPtr, q_x)
+            mstore(add(mPtr, 0x20), q_y)
             mstore(add(mPtr, 0x40), mload(0x00))
             mstore(add(mPtr, 0x60), mload(0x20))
             success := and(success, staticcall(sub(gas(), 2000), 6, mPtr, 0x80, 0x00, 0x40))
-            q2_x := mload(0x00)
-            q2_y := mload(0x20)
+            q_x := mload(0x00)
+            q_y := mload(0x20)
 
             // Compute x1_pow_4 * p2 and store the result in scratch space
             mPtr := mload(0x40)
@@ -275,19 +279,19 @@ contract Verifier {
             // Compute (x1 * c) + (x1_pow_2 * quotient) + (x1_pow_3 * u_prime) + (x1_pow_4 * p2)
             // and store the result in the stack
             mPtr := mload(0x40)
-            mstore(mPtr, q2_x)
-            mstore(add(mPtr, 0x20), q2_y)
+            mstore(mPtr, q_x)
+            mstore(add(mPtr, 0x20), q_y)
             mstore(add(mPtr, 0x40), mload(0x00))
             mstore(add(mPtr, 0x60), mload(0x20))
             success := and(success, staticcall(sub(gas(), 2000), 6, mPtr, 0x80, 0x00, 0x40))
-            q2_x := mload(0x00)
-            q2_y := mload(0x20)
+            q_x := mload(0x00)
+            q_y := mload(0x20)
 
             // Compute q_mimc + (x1 * c) + (x1_pow_2 * quotient) + (x1_pow_3 * u_prime) + (x1_pow_4 * p2)
             // and store the result in verifierTranscript
             mPtr := mload(0x40)
-            mstore(mPtr, q2_x)
-            mstore(add(mPtr, 0x20), q2_y)
+            mstore(mPtr, q_x)
+            mstore(add(mPtr, 0x20), q_y)
             mstore(add(mPtr, 0x40), mload(add(mload(commitmentsPtr), 0x2c0)))
             mstore(add(mPtr, 0x60), mload(add(mload(commitmentsPtr), 0x2e0)))
             success := and(success, staticcall(sub(gas(), 2000), 6, mPtr, 0x80, 0x00, 0x40))
@@ -297,17 +301,41 @@ contract Verifier {
             }
 
             {
+            // Compute q2_eval = q_mimc_opening
+            //  + c_opening * x1
+            //  + quotient_opening * x1_pow_2
+            //  + u_prime_opening * x1_pow_3
+            //  + p2_opening * x1_pow_4
+            let q_x
+            let q_y
+            let openingsPtr := mload(add(proof, 0x20))
+            let c := mload(add(openingsPtr, 0x20))
+            let quotient := mload(add(openingsPtr, 0x40))
+            let u_prime := mload(add(openingsPtr, 0x60))
+            let p2 := mload(add(openingsPtr, 0xa0))
+            
+            let q2_eval := mulmod(c, x1, p)
+            q2_eval := addmod(q2_eval, mulmod(x1_pow_2, quotient, p), p)
+            q2_eval := addmod(q2_eval, mulmod(x1_pow_3, u_prime, p), p)
+            q2_eval := addmod(q2_eval, mulmod(x1_pow_4, p2, p), p)
+            q2_eval := addmod(q2_eval, mload(openingsPtr), p) // q_mimc
+            mstore(add(verifierTranscript, 0x340), q2_eval)
+            }
+
+            {
             // Compute q4 = (x1 * w1) + (x1_pow_2 * w2) + w0
 
             // Compute x1 * w1
             // and store the result in scratch space
+            let q_x
+            let q_y
             let mPtr := mload(0x40)
             mstore(    mPtr,        mload(add(mload(commitmentsPtr), 0x40)))
             mstore(add(mPtr, 0x20), mload(add(mload(commitmentsPtr), 0x60)))
             mstore(add(mPtr, 0x40), x1)
             success := and(success, staticcall(sub(gas(), 2000), 7, mPtr, 0x60, 0x00, 0x40))
-            q2_x := mload(0x00)
-            q2_y := mload(0x20)
+            q_x := mload(0x00)
+            q_y := mload(0x20)
 
             // Compute (x1 * w1) + (x1_pow_2 * w2)
             // and store the result in scratch space
@@ -318,8 +346,8 @@ contract Verifier {
             success := and(success, staticcall(sub(gas(), 2000), 7, mPtr, 0x60, 0x00, 0x40))
 
             mPtr := mload(0x40)
-            mstore(mPtr, q2_x)
-            mstore(add(mPtr, 0x20), q2_y)
+            mstore(mPtr, q_x)
+            mstore(add(mPtr, 0x20), q_y)
             mstore(add(mPtr, 0x40), mload(0x00))
             mstore(add(mPtr, 0x60), mload(0x20))
             success := and(success, staticcall(sub(gas(), 2000), 6, mPtr, 0x80, 0x00, 0x40))
@@ -344,6 +372,8 @@ contract Verifier {
             //let q4_at_omega_alpha = compute_q4_eval(w0_openings[1], w1_openings[1], w2_openings[1], &x1_powers);
             //let q4_at_omega_n_alpha = compute_q4_eval(w0_openings[2], w1_openings[2], w2_openings[2], &x1_powers);
 
+            let openingsPtr := mload(add(proof, 0x20))
+
             function compute_q4_eval(w0, w1, w2, x1_f, x1_pow_2_f, prime) -> result {
                 // w0_opening + (x1_powers[0] * w1_opening) + (x1_powers[1] * w2_opening)
                 // x1_f and x1_pow_2_f are named as such to avoid a name collision
@@ -352,8 +382,6 @@ contract Verifier {
                 let ab := addmod(a, b, prime)
                 result := addmod(w0, ab, prime)
             }
-
-            let openingsPtr := mload(add(proof, 0x20))
 
             let w0_0 := mload(add(openingsPtr, 0xc0))
             let w1_0 := mload(add(openingsPtr, 0x120))
@@ -373,9 +401,170 @@ contract Verifier {
             let q4_at_omega_n_alpha := compute_q4_eval(w0_2, w1_2, w2_2, x1, x1_pow_2, p)
             mstore(add(verifierTranscript, 0x320), q4_at_omega_n_alpha)
             }
+
+            // Compute fs (f1, f2, f3, f4)
+            {
+            let openingsPtr := mload(add(proof, 0x20))
+            let multiopenProofPtr := mload(proof)
+
+            // Compute f1 = (multiopenProof.q1_opening - p1_opening) * xi_minus_v_inv
+            // and store it in verifierTranscript
+            let q1 := mload(multiopenProofPtr)
+            let p1 := mload(add(openingsPtr, 0x80))
+            let xi_minus_v_inv := mload(add(verifierTranscript, 0x80))
+
+            let f1 := mulmod(
+                addmod(q1, sub(p, p1), p),
+                xi_minus_v_inv,
+                p
+            )
+            mstore(add(verifierTranscript, 0x360), f1)
+
+            // Compute f2 = (multiopenProof.q2_opening - q2_eval) * xi_minus_alpha_inv
+            let q2 := mload(add(multiopenProofPtr, 0x20))
+            let q2_eval := mload(add(verifierTranscript, 0x340))
+            let xi_minus_alpha_inv := mload(add(verifierTranscript, 0xa0))
+            let f2 := mulmod(
+                addmod(q2, sub(p, q2_eval), p),
+                xi_minus_alpha_inv,
+                p
+            )
+            mstore(add(verifierTranscript, 0x380), f2)
+            }
+
+            {
+            let openingsPtr := mload(add(proof, 0x20))
+            let multiopenProofPtr := mload(proof)
+            // Compute f3 = (multiopenProof.q3_opening - r3_xi) * 
+            //              (xi_minus_alpha_inv * xi_minus_omega_alpha_inv)
+            let q3 := mload(add(multiopenProofPtr, 0x40))
+            let xi_minus_alpha_inv := mload(add(verifierTranscript, 0xa0))
+            let xi_minus_omega_alpha_inv := mload(add(verifierTranscript, 0xc0))
+
+            // Compute l_1_3 = xi_minus_omega_alpha * alpha_minus_omega_alpha_inv;
+            let xi_minus_omega_alpha := mload(add(verifierTranscript, 0x3e0))
+            let alpha_minus_omega_alpha_inv := mload(add(verifierTranscript, 0x100))
+            let l_1_3 := mulmod(xi_minus_omega_alpha, alpha_minus_omega_alpha_inv, p)
+
+            // Compute l_2_3 = xi_minus_alpha * omega_alpha_minus_alpha_inv;
+            let xi_minus_alpha := mload(add(verifierTranscript, 0x400))
+            let omega_alpha_minus_alpha_inv := sub(p, alpha_minus_omega_alpha_inv)
+            let l_2_3 := mulmod(xi_minus_alpha, omega_alpha_minus_alpha_inv, p)
+
+            // Store omega_alpha_minus_alpha_inv
+            mstore(add(verifierTranscript, 0x440), omega_alpha_minus_alpha_inv)
+
+            // Compute r3_xi = key_openings[0] * l_1_3 + key_openings[1] * l_2_3;
+            let key_0 := mload(add(openingsPtr, 0x1e0))
+            let key_1 := mload(add(openingsPtr, 0x200))
+            let r3_xi := addmod(
+                mulmod(key_0, l_1_3, p),
+                mulmod(key_1, l_2_3, p),
+                p
+            )
+
+            // Compute z3_xi and store it in verifierTranscript
+            let z3_xi := mulmod(xi_minus_alpha_inv, xi_minus_omega_alpha_inv, p)
+            mstore(add(verifierTranscript, 0x460), z3_xi)
+
+            let f3 := mulmod(
+                addmod(q3, sub(p, r3_xi), p),
+                z3_xi,
+                p
+            )
+            mstore(add(verifierTranscript, 0x3a0), f3)
+            }
+
+            {
+            let openingsPtr := mload(add(proof, 0x20))
+            let multiopenProofPtr := mload(proof)
+            // Compute f4 = (multiopenProof.q4_opening - r4_xi) * z4_xi;
+
+            // Compute l_1_4 = xi_minus_omega_alpha
+                //* xi_minus_omega_n_alpha
+                //* alpha_minus_omega_alpha_inv
+                //* alpha_minus_omega_n_alpha_inv;
+            let xi_minus_omega_alpha := mload(add(verifierTranscript, 0x3e0))
+            let xi_minus_omega_n_alpha := mload(add(verifierTranscript, 0x420))
+            let alpha_minus_omega_alpha_inv := mload(add(verifierTranscript, 0x100))
+            let alpha_minus_omega_n_alpha_inv := mload(add(verifierTranscript, 0x120))
+            let l_1_4 := mulmod(xi_minus_omega_alpha, xi_minus_omega_n_alpha, p)
+            l_1_4 := mulmod(l_1_4, alpha_minus_omega_alpha_inv, p)
+            l_1_4 := mulmod(l_1_4, alpha_minus_omega_n_alpha_inv, p)
+
+            // Compute l_2_4 = xi_minus_alpha
+                //* xi_minus_omega_n_alpha
+                //* omega_alpha_minus_alpha_inv
+                //* omega_alpha_minus_omega_n_alpha_inv;
+            let xi_minus_alpha := mload(add(verifierTranscript, 0x400))
+            let omega_alpha_minus_alpha_inv := mload(add(verifierTranscript, 0x440))
+            let omega_alpha_minus_omega_n_alpha_inv := mload(add(verifierTranscript, 0x140))
+            let l_2_4 := mulmod(xi_minus_alpha, xi_minus_omega_n_alpha, p)
+            l_2_4 := mulmod(l_2_4, omega_alpha_minus_alpha_inv, p)
+            l_2_4 := mulmod(l_2_4, omega_alpha_minus_omega_n_alpha_inv, p)
+
+             // Compute l_3_4 = xi_minus_alpha
+                //* xi_minus_omega_alpha
+                //* omega_n_alpha_minus_alpha_inv
+                //* omega_n_alpha_minus_omega_alpha_inv;
+                //}
+            let omega_n_alpha_minus_alpha_inv := sub(p, mload(add(verifierTranscript, 0x120)))
+            let omega_n_alpha_minus_omega_alpha_inv := sub(p, mload(add(verifierTranscript, 0x140)))
+            let l_3_4 := mulmod(xi_minus_alpha, xi_minus_omega_alpha, p)
+            l_3_4 := mulmod(l_3_4, omega_n_alpha_minus_alpha_inv, p)
+            l_3_4 := mulmod(l_3_4, omega_n_alpha_minus_omega_alpha_inv, p)
+
+            // Compute r4_xi = (q4_at_alpha * l_1_4) + 
+            //                 (q4_at_omega_alpha * l_2_4) + 
+            //                 (q4_at_omega_n_alpha * l_3_4)
+            let q4_at_alpha := mload(add(verifierTranscript, 0x2e0))
+            let q4_at_omega_alpha := mload(add(verifierTranscript, 0x300))
+            let q4_at_omega_n_alpha := mload(add(verifierTranscript, 0x320))
+            let r4_xi := mulmod(q4_at_alpha, l_1_4, p)
+            r4_xi := addmod(r4_xi, mulmod(q4_at_omega_alpha, l_2_4, p), p)
+            r4_xi := addmod(r4_xi, mulmod(q4_at_omega_n_alpha, l_3_4, p), p)
+
+            // Compute z4_xi = z3_xi * xi_minus_omega_n_alpha_inv;
+            let z3_xi := mload(add(verifierTranscript, 0x460))
+            let xi_minus_omega_n_alpha_inv := mload(add(verifierTranscript, 0xe0))
+            let z4_xi := mulmod(z3_xi, xi_minus_omega_n_alpha_inv, p)
+
+            let q3 := mload(add(multiopenProofPtr, 0x60))
+            let f4 := mulmod(addmod(q3, sub(p, r4_xi), p), z4_xi, p)
+            mstore(add(verifierTranscript, 0x3c0), f4)
+            }
+
+            {
+            // Compute f_eval = f1 + 
+            //                  (x2_powers[0] * f2) + 
+            //                  (x2_powers[1] * f3) + 
+            //                  (x2_powers[2] * f4)
+            let x2_2 := mload(add(verifierTranscript, 0x200))
+            let x2_3 := mload(add(verifierTranscript, 0x220))
+
+            let f_eval := mload(add(verifierTranscript, 0x360))
+            f_eval := addmod(f_eval, mulmod(mload(add(verifierTranscript, 0x380)), x2, p), p)
+            f_eval := addmod(f_eval, mulmod(mload(add(verifierTranscript, 0x3a0)), x2_2, p), p)
+            f_eval := addmod(f_eval, mulmod(mload(add(verifierTranscript, 0x3c0)), x2_3, p), p)
+            mstore(add(verifierTranscript, 0x480), f_eval)
+            }
+
+            {
+            // Compute final_poly = f_cm +
+            //                      (p1 * x4) +
+            //                      (q2 * x4_pow_2) +
+            //                      (key * x4_pow_3) +
+            //                      (q4 * x4_pow_4) +
+
+            // Compute final_poly_eval = f_eval
+            //  + proof.q1_opening * x4
+            //  + proof.q2_opening * x4_pow_2
+            //  + proof.q3_opening * x4_pow_3
+            //  + proof.q4_opening * x4_pow_4
+            }
         }
 
-        debug = verifierTranscript.q4_at_omega_n_alpha;
+        debug = verifierTranscript.f_eval;
         return debug;
     }
 

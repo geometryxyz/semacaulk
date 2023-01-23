@@ -52,6 +52,17 @@ library Types {
         /* 0x2e0 */ uint256 q4_at_alpha;
         /* 0x300 */ uint256 q4_at_omega_alpha;
         /* 0x320 */ uint256 q4_at_omega_n_alpha;
+        /* 0x340 */ uint256 q2_eval;
+        /* 0x360 */ uint256 f1;
+        /* 0x380 */ uint256 f2;
+        /* 0x3a0 */ uint256 f3;
+        /* 0x3c0 */ uint256 f4;
+        /* 0x3e0 */ uint256 xi_minus_omega_alpha;
+        /* 0x400 */ uint256 xi_minus_alpha;
+        /* 0x420 */ uint256 xi_minus_omega_n_alpha;
+        /* 0x440 */ uint256 omega_alpha_minus_alpha_inv;
+        /* 0x460 */ uint256 z3_xi;
+        /* 0x480 */ uint256 f_eval;
     }
 
     struct Commitments {
