@@ -43,6 +43,29 @@ impl<F: PrimeField> Mimc7<F> {
         }
     }
 
+    /*
+     * @param arr The values to hash
+     * @param key The key
+     * @param fixed A fixed value which will be added to the round constant of only the second
+     *              iteration. For standard MiMC, just set it to 0. To compute the nullifier hash
+     *              in Semacaulk, set it to the signal hash. This allows the circuit to constrain
+     *              the signal hash without having to add an additional column.
+     */
+    pub fn multi_hash_with_fixed(&self, arr: &[F], key: F, fixed: F) -> F {
+        let mut r = key;
+        for (i, x) in arr.iter().enumerate() {
+            let h = if i == 1 {
+                self.hash_with_fixed(*x, r, fixed)
+            } else {
+                self.hash_with_fixed(*x, r, F::zero())
+            };
+
+            r += x;
+            r += h;
+        }
+        r
+    }
+
     pub fn multi_hash(&self, arr: &[F], key: F) -> F {
         let mut r = key;
         for x in arr {
@@ -51,6 +74,15 @@ impl<F: PrimeField> Mimc7<F> {
             r += h;
         }
         r
+    }
+
+    pub fn hash_with_fixed(&self, x: F, k: F, fixed: F) -> F {
+        let seven = [7u64, 0, 0, 0];
+        let mut round_digest = (x + k + fixed).pow(seven);
+        for i in 1..self.n_rounds {
+            round_digest = (round_digest + self.cts[i] + k + fixed).pow(seven);
+        }
+        round_digest + k
     }
 
     pub fn hash(&self, x: F, k: F) -> F {

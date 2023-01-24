@@ -26,9 +26,10 @@ pub fn test_prover_and_verifier() {
     let identity_nullifier = Fr::from(100u64);
     let identity_trapdoor = Fr::from(200u64);
     let external_nullifier = Fr::from(300u64);
+    let signal_hash = Fr::from(888u64);
 
     let nullifier_hash =
-        mimc7.multi_hash(&[identity_nullifier, external_nullifier], Fr::zero());
+        mimc7.multi_hash_with_fixed(&[identity_nullifier, external_nullifier], Fr::zero(), signal_hash);
 
     let identity_commitment =
         mimc7.multi_hash(&[identity_nullifier, identity_trapdoor], Fr::zero());
@@ -37,6 +38,7 @@ pub fn test_prover_and_verifier() {
         identity_nullifier,
         identity_trapdoor,
         external_nullifier,
+        signal_hash,
         &mimc7.cts,
         &mut rng,
     );
@@ -63,6 +65,7 @@ pub fn test_prover_and_verifier() {
         accumulator: accumulator,
         external_nullifier,
         nullifier_hash,
+        signal_hash,
     };
 
     let proof = Prover::prove(
@@ -82,6 +85,7 @@ pub fn test_prover_and_verifier() {
         accumulator,
         external_nullifier,
         nullifier_hash,
+        signal_hash,
     );
 
     assert_eq!(is_valid, true);

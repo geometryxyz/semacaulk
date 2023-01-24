@@ -19,6 +19,7 @@ impl Verifier {
         accumulator: G1Affine,
         external_nullifier: Fr,
         nullifier_hash: Fr,
+        signal_hash: Fr,
     ) -> bool {
         let mut transcript = Transcript::new_transcript();
 
@@ -93,7 +94,7 @@ impl Verifier {
 
         // Gate 2:
         // q_mimc_opening * ((w2_openings[0] + key_openings[0] + c_opening) ^ 7 - w2_openings[1]) 
-        let gate_2_eval = q_mimc_opening * (pow_7(w2_openings[0] + key_openings[0] + c_opening) - w2_openings[1]);
+        let gate_2_eval = q_mimc_opening * (pow_7(w2_openings[0] + key_openings[0] + c_opening + signal_hash) - w2_openings[1]);
         
         // Gate 3:
         // q_mimc_opening * (key_openings[0] - key_openings[1])

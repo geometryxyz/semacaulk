@@ -11,10 +11,14 @@ contract Verifier is BN254 {
     function verify(
         Types.Proof memory proof,
         Types.G1Point memory accumulator,
-        uint256 externalNullifier,
-        uint256 nullifierHash
+        uint256[3] memory publicInputs
     ) public view returns (bool) {
         uint256 p = Constants.PRIME_R;
+
+        require(publicInputs[0] < Constants.PRIME_R); // externalNullifier
+        require(publicInputs[1] < Constants.PRIME_R); // nullifierHash
+        require(publicInputs[2] < Constants.PRIME_R); // signalHash
+
         TranscriptLibrary.Transcript memory transcript = TranscriptLibrary.newTranscript();
         Types.ChallengeTranscript memory challengeTranscript;
         Types.VerifierTranscript memory verifierTranscript;
@@ -168,8 +172,7 @@ contract Verifier is BN254 {
                 proof,
                 verifierTranscript,
                 challengeTranscript.v,
-                nullifierHash,
-                externalNullifier
+                publicInputs
             ),
             "Verifier: gate check failed"
         );
@@ -732,8 +735,7 @@ contract Verifier is BN254 {
         Types.Proof memory proof,
         Types.VerifierTranscript memory verifierTranscript,
         uint256 v_challenge,
-        uint256 nullifierHash,
-        uint256 externalNullifier
+        uint256[3] memory publicInputs
     ) internal pure returns (bool) {
         uint256 p = Constants.PRIME_R;
         uint256 rhs;
@@ -788,13 +790,15 @@ contract Verifier is BN254 {
             }
 
             {
-            // Gate 2: q_mimc_opening * ((w2_openings[0] + key_openings[0] + c_opening) ^ 7 - w2_openings[1]) 
+            // Gate 2: q_mimc_opening * ((w2_openings[0] + key_openings[0] + c_opening + signal_hash) ^ 7 - w2_openings[1]) 
             let q_mimc := mload(openingsPtr)
             let c := mload(add(openingsPtr, 0x20))
             let key_0 := mload(add(openingsPtr, 0x1e0))
             let w2_0 := mload(add(openingsPtr, 0x180))
             let w2_1 := mload(add(openingsPtr, 0x1a0))
+            let signalHash := mload(add(publicInputs, 0x40))
             let gate_2_eval := addmod(addmod(w2_0, key_0, p), c, p)
+            gate_2_eval := addmod(gate_2_eval, signalHash, p)
             gate_2_eval := pow7(gate_2_eval, p)
             gate_2_eval := addmod(gate_2_eval, sub(p, w2_1), p)
             gate_2_eval := mulmod(gate_2_eval, q_mimc, p)
@@ -827,6 +831,8 @@ contract Verifier is BN254 {
             // Gate 5: l0 * (nullifierHash - w2_openings[0] - w2_openings[2] - (2 * key_openings[0])) 
             let w2_0 := mload(add(openingsPtr, 0x180))
             let w2_2 := mload(add(openingsPtr, 0x1c0))
+            let nullifierHash := mload(add(publicInputs, 0x20))
+            let externalNullifier := mload(publicInputs)
             let two_key_0 := addmod(key_0, key_0, p)
             let r := addmod(w2_0, w2_2, p)
             r := addmod(r, two_key_0, p)

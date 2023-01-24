@@ -77,6 +77,7 @@ fn gen_w0_evals(
 fn gen_w1_evals(
     id_nullifier: F,
     id_trapdoor: F,
+    fixed: F,
     mut rng: StdRng,
     n_rounds: usize,
     domain_size: usize,
@@ -93,7 +94,7 @@ fn gen_w1_evals(
     w_evals.extend_from_slice(&round_digests);
 
     w_evals.push(
-        id_trapdoor + round_digests[n_rounds - 1] + (id_nullifier + id_nullifier_hash) * F::from(2),
+        id_trapdoor + round_digests[n_rounds - 1] + fixed + (id_nullifier + id_nullifier_hash) * F::from(2),
     );
 
     fill_blinds(&mut w_evals, &mut rng, domain_size);
@@ -104,6 +105,7 @@ fn gen_w1_evals(
 fn gen_w2_evals(
     id_nullifier: F,
     ext_nullifier: F,
+    fixed: F,
     rng: StdRng,
     n_rounds: usize,
     domain_size: usize,
@@ -113,6 +115,7 @@ fn gen_w2_evals(
     gen_w1_evals(
         id_nullifier,
         ext_nullifier,
+        fixed,
         rng,
         n_rounds,
         domain_size,
@@ -211,6 +214,7 @@ fn id_comm_lrd() {
     let w_evals = gen_w1_evals(
         id_nullifier,
         id_trapdoor,
+        F::from(0),
         rng,
         n_rounds,
         domain_size,
@@ -264,6 +268,7 @@ fn nullifier_hash_lrd() {
 
     let id_nullifier = F::from(1);
     let ext_nullifier = F::from(3);
+    let signal_hash = F::from(2);
 
     let id_nullifier_hash = mimc7.hash(id_nullifier, F::zero());
 
@@ -274,6 +279,7 @@ fn nullifier_hash_lrd() {
     let w_evals = gen_w2_evals(
         id_nullifier,
         ext_nullifier,
+        signal_hash,
         rng,
         n_rounds,
         domain_size,
@@ -369,6 +375,7 @@ fn id_comm_final() {
     let w_evals = gen_w1_evals(
         id_nullifier,
         id_trapdoor,
+        F::from(0),
         rng,
         n_rounds,
         domain_size,
@@ -417,6 +424,7 @@ fn nullifier_hash_final() {
     let w_evals = gen_w2_evals(
         id_nullifier,
         ext_nullifier,
+        F::from(0),
         rng,
         n_rounds,
         domain_size,
@@ -506,6 +514,7 @@ fn nullifier_hash_col() {
     let w_evals = gen_w2_evals(
         id_nullifier,
         ext_nullifier,
+        F::from(0),
         rng,
         n_rounds,
         domain_size,
@@ -550,6 +559,7 @@ fn gate_9() {
     let w_evals = gen_w2_evals(
         id_nullifier,
         ext_nullifier,
+        F::from(0),
         rng,
         n_rounds,
         domain_size,

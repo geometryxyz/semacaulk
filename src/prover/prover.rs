@@ -393,6 +393,7 @@ impl Prover {
                     &zeroes,
                     &state.precomputed.c_coset_evals,
                     &state.precomputed.q_mimc_coset_evals,
+                    E::Fr::zero(),
                 );
 
             // Gate 1:
@@ -403,6 +404,7 @@ impl Prover {
                     &key_coset_evals,
                     &state.precomputed.c_coset_evals,
                     &state.precomputed.q_mimc_coset_evals,
+                    E::Fr::zero(),
                 );
 
             // Gate 2:
@@ -413,6 +415,7 @@ impl Prover {
                     &key_coset_evals,
                     &state.precomputed.c_coset_evals,
                     &state.precomputed.q_mimc_coset_evals,
+                    state.public_input.signal_hash,
                 );
 
             // Gate 3:

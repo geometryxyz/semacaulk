@@ -33,6 +33,7 @@ impl<F: PrimeField> Layouter<F> {
         identity_nullifier: F,
         identity_trapdoor: F,
         external_nullifier: F,
+        signal_hash: F,
         c: &Vec<F>,
         rng: &mut R,
     ) -> Assignment<F> {
@@ -77,15 +78,12 @@ impl<F: PrimeField> Layouter<F> {
         Self::blind(&mut identity_commitment_col, rng);
 
         //---------------------------------------------------------------------
-        // Assign the nullifier_external column
+        // Assign the external_nullifier column
         let mut external_nullifier_col = Vec::<F>::with_capacity(SUBGROUP_SIZE);
         external_nullifier_col.push(external_nullifier);
 
-        // The first round constant should be 0, so we don't have to add it to
-        // identity_nullifier for the first row.
-        external_nullifier_col.push(pow_7(external_nullifier + key_col[0]));
-        for i in 1..NUMBER_OF_MIMC_ROUNDS {
-            external_nullifier_col.push(pow_7(external_nullifier_col[i] + key_col[i] + c[i]));
+        for i in 0..NUMBER_OF_MIMC_ROUNDS {
+            external_nullifier_col.push(pow_7(external_nullifier_col[i] + key_col[i] + c[i] + signal_hash));
         }
         Self::blind(&mut external_nullifier_col, rng);
 
@@ -137,17 +135,21 @@ mod layouter_tests {
         let identity_nullifier = Fr::from(100u64);
         let identity_trapdoor = Fr::from(200u64);
         let external_nullifier = Fr::from(300u64);
+        let signal_hash = Fr::from(400u64);
+
+        let nullifier_hash =
+            mimc7.multi_hash_with_fixed(&[identity_nullifier, external_nullifier], Fr::zero(), signal_hash);
 
         let nullifier = mimc7.hash(identity_nullifier, Fr::zero());
+
         let identity_commitment =
             mimc7.multi_hash(&[identity_nullifier, identity_trapdoor], Fr::zero());
-        let nullifier_external =
-            mimc7.multi_hash(&[identity_nullifier, external_nullifier], Fr::zero());
 
         let assignment = Layouter::assign(
             identity_nullifier,
             identity_trapdoor,
             external_nullifier,
+            signal_hash,
             &mimc7.cts,
             &mut rng,
         );
@@ -195,9 +197,9 @@ mod layouter_tests {
                 + Fr::from(2u64) * assignment.key[0]
         );
 
-        // Check that the public nullifier is calculated correctly
+        // Check that the nullifier hash is calculated correctly
         assert_eq!(
-            nullifier_external,
+            nullifier_hash,
             assignment.external_nullifier[n_rounds]
                 + external_nullifier
                 + Fr::from(2u64) * assignment.key[0]

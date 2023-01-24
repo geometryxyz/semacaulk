@@ -23,11 +23,12 @@ impl<F: PrimeField> Mimc7RoundGate<F> {
         k: &Vec<F>,
         c: &Vec<F>,
         q_mimc: &Vec<F>,
+        signal_hash: F, // public input
     ) -> F {
         let pow_7 = |x: F| x.pow(&[7, 0, 0, 0]);
 
         let x_next = positive_rotation_in_coset(x, omega_i, 1, EXTENDED_DOMAIN_FACTOR);
-        q_mimc[omega_i] * (pow_7(x[omega_i] + k[omega_i] + c[omega_i]) - x_next)
+        q_mimc[omega_i] * (pow_7(x[omega_i] + k[omega_i] + c[omega_i] + signal_hash) - x_next)
     }
 }
 
