@@ -6,11 +6,11 @@ import { Constants } from "./Constants.sol";
 library Lagrange {
     function computeL0AndVanishingEval(
         uint256 alpha,
-        uint256 dMinusOneInv
+        uint256 dMinusOneInv,
+        uint256 log2DomainSize,
+        uint256 domainSizeInv
     ) internal pure returns (uint256 result, uint256 vanishingPolyEval) {
         uint256 p = Constants.PRIME_R;
-        uint256 log2DomainSize = Constants.log2DomainSize;
-        uint256 domainSizeInv = Constants.domainSizeInv;
 
         // Step 1: Compute the evaluation of the vanishing polynomial of the domain with domain_size at
         // alpha

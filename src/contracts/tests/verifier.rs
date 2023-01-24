@@ -9,7 +9,7 @@ use rand::rngs::StdRng;
 use ethers::prelude::abigen;
 use ethers::types::U256;
 use crate::{
-    bn_solidity_utils::{f_to_u256, u256_to_hex},
+    bn_solidity_utils::f_to_u256,
     kzg::{commit, unsafe_setup},
     layouter::Layouter,
     mimc7::init_mimc7,
@@ -17,13 +17,12 @@ use crate::{
 };
 use crate::prover::prover::{Prover, WitnessInput};
 use crate::verifier::{Verifier as SemacaulkVerifier};
-use crate::constants::DUMMY_VALUE;
 use crate::contracts::format_proof;
 use super::setup_eth_backend;
 
 abigen!(
-    Verifier,
-    "./src/contracts/out/Verifier.sol/Verifier.json",
+    TestVerifier,
+    "./src/contracts/out/TestVerifier.sol/TestVerifier.json",
 );
 
 #[tokio::test]
@@ -35,9 +34,9 @@ pub async fn test_semacaulk_verifier() {
 
     let mimc7 = init_mimc7::<Fr>();
 
-    let identity_nullifier = Fr::from(100u64);
-    let identity_trapdoor = Fr::from(200u64);
-    let external_nullifier = Fr::from(300u64);
+    let identity_nullifier = Fr::from(123u64);
+    let identity_trapdoor = Fr::from(456u64);
+    let external_nullifier = Fr::from(789u64);
 
     let nullifier_hash =
         mimc7.multi_hash(&[identity_nullifier, external_nullifier], Fr::zero());
@@ -53,8 +52,6 @@ pub async fn test_semacaulk_verifier() {
         &mut rng,
     );
 
-    let dummy_value = Fr::from(DUMMY_VALUE);
-
     let mut identity_commitments: Vec<_> = (0..table_size).map(|_| Fr::rand(&mut rng)).collect();
     let index = 10;
     identity_commitments[index] = identity_commitment;
@@ -63,7 +60,7 @@ pub async fn test_semacaulk_verifier() {
     let (srs_g1, srs_g2) = unsafe_setup::<Bn254, StdRng>(table_size, table_size, &mut rng);
     let pk = ProvingKey::<Bn254> { srs_g1, srs_g2: srs_g2.clone() };
 
-    let precomputed = ProverPrecomputedData::index(&pk, &mimc7.cts, dummy_value, index, &c, table_size);
+    let precomputed = ProverPrecomputedData::index(&pk, &mimc7.cts, index, &c, table_size);
 
     let witness = WitnessInput {
         identity_nullifier,
@@ -104,15 +101,25 @@ pub async fn test_semacaulk_verifier() {
     let anvil = eth_backend.0;
     let client = eth_backend.1;
     
-    let contract = Verifier::deploy(client, ()).unwrap().send().await.unwrap();
+    let contract = TestVerifier::deploy(client, ()).unwrap().send().await.unwrap();
     let result = contract.verify(
         p_to_p(&format_proof(&proof)),
+        G1Point  {
+            x: f_to_u256(accumulator.x),
+            y: f_to_u256(accumulator.y),
+        },
         f_to_u256(external_nullifier),
         f_to_u256(nullifier_hash),
-    ).call().await.unwrap();
+    ).send()
+     .await
+     .unwrap()
+     .await
+     .unwrap()
+     .expect("no receipt found");
 
-    //println!("u_prime_opening: {}", proof.openings.u_prime);
-    println!("\nresult: {}", u256_to_hex(result));
+    assert_eq!(result.status.unwrap(), ethers::types::U64::from(1));
+    println!("Gas used: {}", result.gas_used.unwrap());
+
     drop(anvil);
 }
 
@@ -274,7 +281,7 @@ pub async fn test_batch_invert() {
     let anvil = eth_backend.0;
     let client = eth_backend.1;
 
-    let contract = Verifier::deploy(client, ()).unwrap().send().await.unwrap();
+    let contract = TestVerifier::deploy(client, ()).unwrap().send().await.unwrap();
 
     let inputs_as_f = vec![
         Fr::from(1u64),
@@ -289,7 +296,7 @@ pub async fn test_batch_invert() {
 
     let expected_inverses = inputs_as_f.iter().map(|x| x.inverse().unwrap()).collect::<Vec<Fr>>();
 
-    let results = contract.batch_invert(
+    let results = contract.test_batch_invert(
         inputs_as_f.iter().map(|x| f_to_u256(*x)).collect::<Vec<U256>>().try_into().unwrap()
     ).call().await.unwrap();
 

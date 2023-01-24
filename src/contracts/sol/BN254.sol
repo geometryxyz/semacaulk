@@ -10,19 +10,21 @@ contract BN254 {
     function P1() internal pure returns (Types.G1Point memory) {
         return Types.G1Point(1, 2);
     }
+    
+    function P1Neg() internal pure returns (Types.G1Point memory) {
+        return Types.G1Point(1, 0x30644E72E131A029B85045B68181585D97816A916871CA8D3C208C16D87CFD45);
+    }
 
     /// @return the generator of G2
     // solhint-disable-next-line func-name-mixedcase
     function P2() internal pure returns (Types.G2Point memory) {
-        return
-            Types.G2Point({
-                x0: 0x198e9393920d483a7260bfb731fb5d25f1aa493335a9e71297e485b7aef312c2,
-                x1: 0x1800deef121f1e76426a00665e5c4479674322d4f75edadd46debd5cd992f6ed,
-                y0: 0x090689d0585ff075ec9e99ad690c3395bc4b313370b38ef355acdadcd122975b,
-                y1: 0x12c85ea5db8c6deb4aab71808dcb408fe3d1e7690c43d37b4ce6cc0166fa7daa
-            });
+        return Types.G2Point({
+            x0: 0x198e9393920d483a7260bfb731fb5d25f1aa493335a9e71297e485b7aef312c2,
+            x1: 0x1800deef121f1e76426a00665e5c4479674322d4f75edadd46debd5cd992f6ed,
+            y0: 0x090689d0585ff075ec9e99ad690c3395bc4b313370b38ef355acdadcd122975b,
+            y1: 0x12c85ea5db8c6deb4aab71808dcb408fe3d1e7690c43d37b4ce6cc0166fa7daa
+        });
     }
-
 
     /*
      * @return The negation of p, i.e. p.plus(p.negate()) should be zero. 
@@ -30,7 +32,6 @@ contract BN254 {
     function negate(
         Types.G1Point memory _p
     ) internal pure returns (Types.G1Point memory) {
-
         // The prime q in the base field F_q for G1
         if (_p.x == 0 && _p.y == 0) {
             return Types.G1Point(0, 0);
@@ -57,7 +58,7 @@ contract BN254 {
 
         // solium-disable-next-line security/no-inline-assembly
         assembly {
-            success := staticcall(sub(gas(), 2000), 7, input, 0x80, result, 0x60)
+            success := staticcall(sub(gas(), 2000), 7, input, 0x60, result, 0x40)
             switch success case 0 { revert(0, 0) }
         }
         require (success, "BN254: mul failed");
@@ -84,7 +85,7 @@ contract BN254 {
 
         // solium-disable-next-line security/no-inline-assembly
         assembly {
-            success := staticcall(sub(gas(), 2000), 6, input, 0xc0, result, 0x60)
+            success := staticcall(sub(gas(), 2000), 6, input, 0x80, result, 0x40)
             switch success case 0 { revert(0, 0) }
         }
 
@@ -93,11 +94,10 @@ contract BN254 {
         return result;
     }
 
-    /// @dev Evaluate the following pairing product:
-    /// @dev e(-a1, a2).e(b1, b2).e(c1, c2) == 1
-    /// @dev caller needs to ensure that a1, a2, b1, b2, c1 and c2 are within proper group
-    /// @notice credit: Aztec, Spilsbury Holdings Ltd
-    function caulkPlusPairing(
+    // Return true if the following pairing product equals 1:
+    // e(-a1, a2) * e(b1, b2) * e(c1, c2) 
+    // It is the caller's responsibility to ensure that the points are valid.
+    function pairingCheck(
         Types.G1Point memory a1,
         Types.G2Point memory a2,
         Types.G1Point memory b1,
@@ -109,22 +109,26 @@ contract BN254 {
         bool success;
         assembly {
             let mPtr := mload(0x40)
+            // a1
             mstore(mPtr, mload(a1))
             mstore(add(mPtr, 0x20), mload(add(a1, 0x20)))
+            // a2
             mstore(add(mPtr, 0x40), mload(a2))
             mstore(add(mPtr, 0x60), mload(add(a2, 0x20)))
             mstore(add(mPtr, 0x80), mload(add(a2, 0x40)))
             mstore(add(mPtr, 0xa0), mload(add(a2, 0x60)))
-
+            // b1
             mstore(add(mPtr, 0xc0), mload(b1))
             mstore(add(mPtr, 0xe0), mload(add(b1, 0x20)))
+            // b2
             mstore(add(mPtr, 0x100), mload(b2))
             mstore(add(mPtr, 0x120), mload(add(b2, 0x20)))
             mstore(add(mPtr, 0x140), mload(add(b2, 0x40)))
             mstore(add(mPtr, 0x160), mload(add(b2, 0x60)))
-
+            // c1
             mstore(add(mPtr, 0x180), mload(c1))
             mstore(add(mPtr, 0x1a0), mload(add(c1, 0x20)))
+            // c2
             mstore(add(mPtr, 0x1c0), mload(c2))
             mstore(add(mPtr, 0x1e0), mload(add(c2, 0x20)))
             mstore(add(mPtr, 0x200), mload(add(c2, 0x40)))
@@ -133,28 +137,7 @@ contract BN254 {
             success := staticcall(gas(), 8, mPtr, 0x240, 0x00, 0x20)
             out := mload(0x00)
         }
-        require(success, "Bn254: Pairing check failed!");
-        return (out != 0);
-    }
-
-    /// @dev Temporary function that invokes pairing check
-    function verifyPairingThree(
-        uint[2] memory a1,
-        uint[2][2] memory a2,
-        uint[2] memory b1,
-        uint[2][2] memory b2,
-        uint[2] memory c1,
-        uint[2][2] memory c2
-    ) public view returns (bool) {
-        Types.G1Point memory A1 = Types.G1Point(a1[0], a1[1]);
-        Types.G2Point memory A2 = Types.G2Point(a2[0][0], a2[0][1], a2[1][0], a2[1][1]);
-
-        Types.G1Point memory B1 = Types.G1Point(b1[0], b1[1]);
-        Types.G2Point memory B2 = Types.G2Point(b2[0][0], b2[0][1], b2[1][0], b2[1][1]);
-
-        Types.G1Point memory C1 = Types.G1Point(c1[0], c1[1]);
-        Types.G2Point memory C2 = Types.G2Point(c2[0][0], c2[0][1], c2[1][0], c2[1][1]);
-
-        return caulkPlusPairing(A1, A2, B1, B2, C1, C2);
+        require(success, "BN254: pairing check failed!");
+        return out == 1;
     }
 }

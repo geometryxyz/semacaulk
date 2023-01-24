@@ -8,7 +8,7 @@ use ark_poly::{
 use crate::{
     multiopen::MultiopenProof,
     caulk_plus::precomputed::Precomputed,
-    constants::{EXTENDED_DOMAIN_FACTOR, NUMBER_OF_MIMC_ROUNDS, SUBGROUP_SIZE},
+    constants::{DUMMY_VALUE, EXTENDED_DOMAIN_FACTOR, NUMBER_OF_MIMC_ROUNDS, SUBGROUP_SIZE},
     utils::compute_vanishing_poly_over_coset,
 };
 
@@ -77,7 +77,6 @@ impl<E: PairingEngine> ProverPrecomputedData<E> {
     pub fn index(
         pk: &ProvingKey<E>,
         mimc_round_constants: &Vec<E::Fr>,
-        dummy_value: E::Fr,
         index: usize,
         c: &DensePolynomial<E::Fr>,
         table_size: usize,
@@ -94,7 +93,7 @@ impl<E: PairingEngine> ProverPrecomputedData<E> {
         // Compute c coset evals
         assert_eq!(mimc_round_constants.len(), NUMBER_OF_MIMC_ROUNDS);
         let mut c_evals = mimc_round_constants[..].to_vec();
-        let mut to_append: Vec<E::Fr> = iter::repeat(dummy_value)
+        let mut to_append: Vec<E::Fr> = iter::repeat(E::Fr::from(DUMMY_VALUE))
             .take(SUBGROUP_SIZE - c_evals.len())
             .collect();
         c_evals.append(&mut to_append);
@@ -121,7 +120,7 @@ impl<E: PairingEngine> ProverPrecomputedData<E> {
         let l0 = DensePolynomial::from_coefficients_slice(&domain.ifft(&l0_evals));
         let l0_coset_evals = extended_coset_domain.coset_fft(&l0);
 
-        // precompute w1&w2 for caulk+ part of the proof
+        // Precompute w1 & w2 for the Caulk+ part of the proof
         let domain_t = GeneralEvaluationDomain::new(table_size).unwrap();
         let mut precomputed = Precomputed::<E>::empty();
         precomputed.precompute_w1(&pk.srs_g2, &[index], &c, &domain_t);

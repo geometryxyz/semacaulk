@@ -5,15 +5,15 @@ import { Types } from "./Types.sol";
 import { Constants } from "./Constants.sol";
 import { TranscriptLibrary } from "./Transcript.sol";
 import { Lagrange } from "./Lagrange.sol";
+import { BN254 } from "./BN254.sol";
 
-contract Verifier {
+contract Verifier is BN254 {
     function verify(
         Types.Proof memory proof,
+        Types.G1Point memory accumulator,
         uint256 externalNullifier,
         uint256 nullifierHash
-    ) public view returns (
-        uint256 debug0
-    ) {
+    ) public view returns (bool) {
         uint256 p = Constants.PRIME_R;
         TranscriptLibrary.Transcript memory transcript = TranscriptLibrary.newTranscript();
         Types.ChallengeTranscript memory challengeTranscript;
@@ -69,6 +69,7 @@ contract Verifier {
 
         challengeTranscript.x3 = TranscriptLibrary.getChallenge(transcript);
         challengeTranscript.x4 = TranscriptLibrary.getChallenge(transcript);
+        challengeTranscript.s = TranscriptLibrary.getChallenge(transcript);
         uint256[8] memory inverted;
         
         {
@@ -91,8 +92,8 @@ contract Verifier {
          // - omega_alpha_minus_omega_n_alpha = omega_alpha - omega_n_alpha;
 
         // Compute and store omega_alpha, omega_n_alpha
-        uint256 omega_alpha = Constants.omega;
-        uint256 omega_n_alpha = Constants.omega_n;
+        uint256 omega_alpha = Constants.OMEGA;
+        uint256 omega_n_alpha = Constants.OMEGA_N;
         assembly {
             let alpha := mload(add(challengeTranscript, 0x40))
             omega_alpha := mulmod(omega_alpha, alpha, p)
@@ -139,7 +140,9 @@ contract Verifier {
 
         (uint256 l0Eval, uint256 zhEval) = Lagrange.computeL0AndVanishingEval(
             challengeTranscript.alpha,
-            inverted[0]
+            inverted[0],
+            Constants.LOG2_DOMAIN_SIZE,
+            Constants.DOMAIN_SIZE_INV
         );
 
         assembly {
@@ -173,21 +176,83 @@ contract Verifier {
         }
 
         // Multiopen proof verification
-        debug0 = verifyMultiopen(
+        computeMultiopenFinaPolyAndEval(
             proof,
             verifierTranscript,
             challengeTranscript
         );
+
+        return verifyFinal(
+            proof,
+            verifierTranscript,
+            challengeTranscript,
+            accumulator
+        );
     }
 
-    function verifyMultiopen(
+    function verifyFinal(
+        Types.Proof memory proof,
+        Types.VerifierTranscript memory verifierTranscript,
+        Types.ChallengeTranscript memory challengeTranscript,
+        Types.G1Point memory accumulator
+    ) internal view returns (bool) {
+        // Compute a_lhs = a1 + a2 + a3
+        // let a1 = accumulator + proof.commitments.ci.neg();
+        Types.G1Point memory a1 = plus(accumulator, negate(proof.commitments.ci));
+
+        // let a2 = (a2_srs_g1 + g1_gen.neg()).mul(hi_2).into_affine();
+        Types.G1Point memory a2 = mul(
+            plus(
+                Types.G1Point(Constants.SRS_G1_T_X, Constants.SRS_G1_T_Y),
+                BN254.P1Neg()
+            ),
+            challengeTranscript.hi_2
+        );
+
+        // let a3 = (zq + minus_y).add_mixed(&final_poly).into_affine().mul(s).into_affine();
+        Types.G1Point memory a3 = mul(
+            plus(
+                plus(
+                    mul(proof.multiopenProof.final_poly_proof, challengeTranscript.x3), 
+                    negate(mul(BN254.P1(), verifierTranscript.final_poly_eval))
+                ), 
+                verifierTranscript.final_poly
+            ), 
+            challengeTranscript.s
+        );
+
+        Types.G1Point memory a_lhs = plus(plus(a1, a2), a3);
+        Types.G2Point memory a_rhs = BN254.P2();
+
+        // let b_lhs = proof.commitments.zi.neg();
+        Types.G1Point memory b_lhs = negate(proof.commitments.zi);
+        Types.G2Point memory b_rhs = proof.commitments.w;
+
+        // let c_lhs = final_poly_proof.neg().mul(s).into_affine();
+        Types.G1Point memory c_lhs = mul(negate(proof.multiopenProof.final_poly_proof), challengeTranscript.s);
+        Types.G2Point memory c_rhs = Types.G2Point(
+            Constants.SRS_G2_1_X_0,
+            Constants.SRS_G2_1_X_1,
+            Constants.SRS_G2_1_Y_0,
+            Constants.SRS_G2_1_Y_1
+        );
+
+        // TODO: check that all points are valid!
+        return BN254.pairingCheck(
+            a_lhs, a_rhs,
+            b_lhs, b_rhs,
+            c_lhs, c_rhs
+        );
+    }
+
+    function computeMultiopenFinaPolyAndEval(
         Types.Proof memory proof,
         Types.VerifierTranscript memory verifierTranscript,
         Types.ChallengeTranscript memory challengeTranscript
-    ) public view returns (uint256 debug) {
+    ) internal view {
         uint256 p = Constants.PRIME_R;
+        bool success;
         assembly {
-            let success // TODO: check this later!
 
             let x1 := mload(add(challengeTranscript, 0x60))
             let x2 := mload(add(challengeTranscript, 0x80))
@@ -660,9 +725,7 @@ contract Verifier {
             switch success case 0 { revert(0, 0) }
             }
         }
-
-        debug = verifierTranscript.final_poly_eval;
-        return debug;
+        require(success, "Verifier: failed to compute final poly or eval");
     }
 
     function verifyGateEvals(
@@ -671,7 +734,7 @@ contract Verifier {
         uint256 v_challenge,
         uint256 nullifierHash,
         uint256 externalNullifier
-    ) public pure returns (bool) {
+    ) internal pure returns (bool) {
         uint256 p = Constants.PRIME_R;
         uint256 rhs;
         uint256 lhs;
@@ -784,7 +847,7 @@ contract Verifier {
 
     function batchInvert(
         uint256[8] memory inputs
-    ) public view returns (uint256[8] memory) {
+    ) internal view returns (uint256[8] memory) {
         uint256[8] memory results;
         uint256 p = Constants.PRIME_R;
         assembly {

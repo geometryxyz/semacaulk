@@ -223,7 +223,7 @@ impl Verifier {
         //   A3:
         //   s is the separator challenge
         //     zq is final_poly_proof.mul(x3)
-        //     -y is g1.mul(final_poly_opening).neg()
+        //     -y is g1.mul(final_poly_eval).neg()
         //     p is final_poly
         //
         // B:
@@ -238,9 +238,9 @@ impl Verifier {
 
         let g1_gen = G1Affine::prime_subgroup_generator();
         let g2_gen = G2Affine::prime_subgroup_generator();
-        let (final_poly, final_poly_opening, x3) = multiopen_final_poly;
+        let (final_poly, final_poly_eval, x3) = multiopen_final_poly;
         let final_poly_proof = proof.multiopen_proof.final_poly_proof;
-        let minus_y = g1_gen.mul(final_poly_opening).neg();
+        let minus_y = g1_gen.mul(final_poly_eval).neg();
         let zq = final_poly_proof.mul(x3);
 
         let a1 = accumulator + proof.commitments.ci.neg();

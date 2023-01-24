@@ -44,7 +44,7 @@ impl Verifier {
         // proof specific information
         x_g2: G2Affine,
     ) -> bool {
-        let (final_poly, final_poly_opening, x3) = Self::compute_final_poly(
+        let (final_poly, final_poly_eval, x3) = Self::compute_final_poly(
             transcript,
             proof,
             w0,
@@ -75,7 +75,7 @@ impl Verifier {
 
         Self::verify_final_poly(
             &final_poly,
-            final_poly_opening,
+            final_poly_eval,
             proof.final_poly_proof,
             x3,
             x_g2,
@@ -229,8 +229,6 @@ impl Verifier {
             + proof.q2_opening * x4_powers[1]
             + proof.q3_opening * x4_powers[2]
             + proof.q4_opening * x4_powers[3];
-
-        println!("{}", final_poly_eval);
 
         (final_poly, final_poly_eval, x3)
     }
