@@ -11,9 +11,14 @@ contract TestVerifier is Verifier {
         Types.Proof memory proof,
         Types.G1Point memory accumulator,
         uint256 externalNullifier,
-        uint256 nullifierHash
+        uint256 nullifierHash,
+        uint256 signalHash
     ) public view {
-        verify(proof, accumulator, externalNullifier, nullifierHash);
+        uint256[3] memory publicInputs;
+        publicInputs[0] = externalNullifier;
+        publicInputs[1] = nullifierHash;
+        publicInputs[2] = signalHash;
+        verify(proof, accumulator, publicInputs);
     }
 
     function testBatchInvert(

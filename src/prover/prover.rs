@@ -141,7 +141,9 @@ impl Prover {
         let mut state = Self::init(pk, witness, assignment, public_input, precomputed, table_size);
         let mut transcript = Transcript::new_transcript();
 
-        // TODO: append public data
+        transcript.update_with_u256(public_input.external_nullifier);
+        transcript.update_with_u256(public_input.nullifier_hash);
+        transcript.update_with_u256(public_input.signal_hash);
 
         let (w0, key, w1, w2) = Self::assignment_round(&mut state);
 
@@ -197,6 +199,9 @@ impl Prover {
 
         // Sanity check multiopen_proof
         let mut transcript = Transcript::new_transcript();
+        transcript.update_with_u256(public_input.external_nullifier);
+        transcript.update_with_u256(public_input.nullifier_hash);
+        transcript.update_with_u256(public_input.signal_hash);
         transcript.update_with_g1(&w0);
         transcript.update_with_g1(&key);
         transcript.update_with_g1(&w1);

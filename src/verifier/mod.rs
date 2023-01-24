@@ -19,10 +19,15 @@ impl Verifier {
         accumulator: G1Affine,
         external_nullifier: Fr,
         nullifier_hash: Fr,
+        signal_hash: Fr,
     ) -> bool {
         let mut transcript = Transcript::new_transcript();
 
-        // Derive challenges
+        // Update transcript and derive challenges
+        transcript.update_with_u256(external_nullifier);
+        transcript.update_with_u256(nullifier_hash);
+        transcript.update_with_u256(signal_hash);
+
         transcript.update_with_g1(&proof.commitments.w0);
         transcript.update_with_g1(&proof.commitments.key);
         transcript.update_with_g1(&proof.commitments.w1);

@@ -11,13 +11,21 @@ contract Verifier is BN254 {
     function verify(
         Types.Proof memory proof,
         Types.G1Point memory accumulator,
-        uint256 externalNullifier,
-        uint256 nullifierHash
+        uint256[3] memory publicInputs
     ) public view returns (bool) {
         uint256 p = Constants.PRIME_R;
+
+        require(publicInputs[0] < Constants.PRIME_R); // externalNullifier
+        require(publicInputs[1] < Constants.PRIME_R); // nullifierHash
+        require(publicInputs[2] < Constants.PRIME_R); // signalHash
+        
         TranscriptLibrary.Transcript memory transcript = TranscriptLibrary.newTranscript();
         Types.ChallengeTranscript memory challengeTranscript;
         Types.VerifierTranscript memory verifierTranscript;
+
+        TranscriptLibrary.updateWithU256(transcript, publicInputs[0]);
+        TranscriptLibrary.updateWithU256(transcript, publicInputs[1]);
+        TranscriptLibrary.updateWithU256(transcript, publicInputs[2]);
 
         TranscriptLibrary.updateWithG1(transcript, proof.commitments.w0);
         TranscriptLibrary.updateWithG1(transcript, proof.commitments.key);
@@ -168,8 +176,7 @@ contract Verifier is BN254 {
                 proof,
                 verifierTranscript,
                 challengeTranscript.v,
-                nullifierHash,
-                externalNullifier
+                publicInputs
             ),
             "Verifier: gate check failed"
         );
@@ -732,8 +739,7 @@ contract Verifier is BN254 {
         Types.Proof memory proof,
         Types.VerifierTranscript memory verifierTranscript,
         uint256 v_challenge,
-        uint256 nullifierHash,
-        uint256 externalNullifier
+        uint256[3] memory publicInputs
     ) internal pure returns (bool) {
         uint256 p = Constants.PRIME_R;
         uint256 rhs;
@@ -827,6 +833,8 @@ contract Verifier is BN254 {
             // Gate 5: l0 * (nullifierHash - w2_openings[0] - w2_openings[2] - (2 * key_openings[0])) 
             let w2_0 := mload(add(openingsPtr, 0x180))
             let w2_2 := mload(add(openingsPtr, 0x1c0))
+            let nullifierHash := mload(add(publicInputs, 0x20))
+            let externalNullifier := mload(publicInputs)
             let two_key_0 := addmod(key_0, key_0, p)
             let r := addmod(w2_0, w2_2, p)
             r := addmod(r, two_key_0, p)
