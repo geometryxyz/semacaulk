@@ -5,17 +5,64 @@ use ark_ff::{One, Zero};
 use ark_poly::{
     univariate::DensePolynomial, EvaluationDomain, GeneralEvaluationDomain, UVPolynomial,
 };
-use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, Read, SerializationError, Write};
-
 use crate::{
+    multiopen::MultiopenProof,
     caulk_plus::precomputed::Precomputed,
-    constants::{EXTENDED_DOMAIN_FACTOR, NUMBER_OF_MIMC_ROUNDS, SUBGROUP_SIZE},
+    constants::{DUMMY_VALUE, EXTENDED_DOMAIN_FACTOR, NUMBER_OF_MIMC_ROUNDS, SUBGROUP_SIZE},
     utils::compute_vanishing_poly_over_coset,
 };
 
+use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, Read, SerializationError, Write};
+
 pub mod prover;
 
-#[derive(CanonicalSerialize, CanonicalDeserialize)]
+#[derive(CanonicalSerialize, CanonicalDeserialize, Clone, Debug)]
+pub struct Proof<E: PairingEngine> {
+    pub(crate) multiopen_proof: MultiopenProof<E>,
+    pub(crate) openings: Openings<E>,
+    pub(crate) commitments: Commitments<E>,
+}
+
+#[derive(CanonicalSerialize, CanonicalDeserialize, Clone, Debug)]
+pub struct Openings<E: PairingEngine> {
+    pub(crate) q_mimc: E::Fr,
+    pub(crate) c: E::Fr,
+    pub(crate) quotient: E::Fr,
+    pub(crate) u_prime: E::Fr,
+    pub(crate) p1: E::Fr,
+    pub(crate) p2: E::Fr,
+    pub(crate) w0_0: E::Fr,
+    pub(crate) w0_1: E::Fr,
+    pub(crate) w0_2: E::Fr,
+    pub(crate) w1_0: E::Fr,
+    pub(crate) w1_1: E::Fr,
+    pub(crate) w1_2: E::Fr,
+    pub(crate) w2_0: E::Fr,
+    pub(crate) w2_1: E::Fr,
+    pub(crate) w2_2: E::Fr,
+    pub(crate) key_0: E::Fr,
+    pub(crate) key_1: E::Fr,
+}
+
+#[derive(CanonicalSerialize, CanonicalDeserialize, Clone, Debug)]
+pub struct Commitments<E: PairingEngine> {
+    pub(crate) w0: E::G1Affine,
+    pub(crate) w1: E::G1Affine,
+    pub(crate) w2: E::G1Affine,
+    pub(crate) key: E::G1Affine,
+    pub(crate) c: E::G1Affine,
+    pub(crate) quotient: E::G1Affine,
+    pub(crate) u_prime: E::G1Affine,
+    pub(crate) zi: E::G1Affine,
+    pub(crate) ci: E::G1Affine,
+    pub(crate) p1: E::G1Affine,
+    pub(crate) p2: E::G1Affine,
+    pub(crate) q_mimc: E::G1Affine,
+    pub(crate) h: E::G1Affine,
+    pub(crate) w: E::G2Affine,
+}
+
+#[derive(CanonicalSerialize, CanonicalDeserialize, Clone, Debug)]
 pub struct ProverPrecomputedData<E: PairingEngine> {
     pub(crate) c: DensePolynomial<E::Fr>, // mimc round constants poly
     pub(crate) c_coset_evals: Vec<E::Fr>, // evaluations of mimc round constants over coset
@@ -30,9 +77,9 @@ impl<E: PairingEngine> ProverPrecomputedData<E> {
     pub fn index(
         pk: &ProvingKey<E>,
         mimc_round_constants: &Vec<E::Fr>,
-        dummy_value: E::Fr,
         index: usize,
         c: &DensePolynomial<E::Fr>,
+        table_size: usize,
     ) -> Self {
         let domain = GeneralEvaluationDomain::<E::Fr>::new(SUBGROUP_SIZE).unwrap();
         let extended_coset_domain =
@@ -46,7 +93,7 @@ impl<E: PairingEngine> ProverPrecomputedData<E> {
         // Compute c coset evals
         assert_eq!(mimc_round_constants.len(), NUMBER_OF_MIMC_ROUNDS);
         let mut c_evals = mimc_round_constants[..].to_vec();
-        let mut to_append: Vec<E::Fr> = iter::repeat(dummy_value)
+        let mut to_append: Vec<E::Fr> = iter::repeat(E::Fr::from(DUMMY_VALUE))
             .take(SUBGROUP_SIZE - c_evals.len())
             .collect();
         c_evals.append(&mut to_append);
@@ -73,11 +120,11 @@ impl<E: PairingEngine> ProverPrecomputedData<E> {
         let l0 = DensePolynomial::from_coefficients_slice(&domain.ifft(&l0_evals));
         let l0_coset_evals = extended_coset_domain.coset_fft(&l0);
 
-        // precompute w1&w2 for caulk+ part of the proof
-        let domain_h = GeneralEvaluationDomain::new(SUBGROUP_SIZE).unwrap();
+        // Precompute w1 & w2 for the Caulk+ part of the proof
+        let domain_t = GeneralEvaluationDomain::new(table_size).unwrap();
         let mut precomputed = Precomputed::<E>::empty();
-        precomputed.precompute_w1(&pk.srs_g2, &[index], &c, &domain_h);
-        precomputed.precompute_w2(&pk.srs_g2, &[index], &domain_h);
+        precomputed.precompute_w1(&pk.srs_g2, &[index], &c, &domain_t);
+        precomputed.precompute_w2(&pk.srs_g2, &[index], &domain_t);
 
         Self {
             c: c_poly,
@@ -96,8 +143,9 @@ pub struct ProvingKey<E: PairingEngine> {
     pub(crate) srs_g2: Vec<E::G2Affine>,
 }
 
+#[derive(CanonicalSerialize, CanonicalDeserialize, Clone, Debug)]
 pub struct PublicData<E: PairingEngine> {
-    c_commitment: E::G1Affine,
-    external_nullifier: E::Fr,
-    nullifier_hash: E::Fr,
+    pub(crate) accumulator: E::G1Affine,
+    pub(crate) external_nullifier: E::Fr,
+    pub(crate) nullifier_hash: E::Fr,
 }

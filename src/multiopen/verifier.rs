@@ -44,7 +44,7 @@ impl Verifier {
         // proof specific information
         x_g2: G2Affine,
     ) -> bool {
-        let (final_poly, final_poly_opening, x3) = Self::compute_final_poly(
+        let (final_poly, final_poly_eval, x3) = Self::compute_final_poly(
             transcript,
             proof,
             w0,
@@ -75,7 +75,7 @@ impl Verifier {
 
         Self::verify_final_poly(
             &final_poly,
-            final_poly_opening,
+            final_poly_eval,
             proof.final_poly_proof,
             x3,
             x_g2,
@@ -183,6 +183,7 @@ impl Verifier {
             let projective_part = w1.mul(x1_powers[0]) + w2.mul(x1_powers[1]);
             projective_part.add_mixed(&w0).into()
         };
+
         let q4_at_alpha =
             w0_openings[0] + x1_powers[0] * w1_openings[0] + x1_powers[1] * w2_openings[0];
         let q4_at_omega_alpha =
@@ -209,10 +210,14 @@ impl Verifier {
             x3,
         );
 
-        let f_eval = f1 + x2_powers[0] * f2 + x2_powers[1] * f3 + x2_powers[2] * f4;
+        let f_eval = f1 +
+            (x2_powers[0] * f2) +
+            (x2_powers[1] * f3) +
+            (x2_powers[2] * f4);
 
         let final_poly: G1Affine = {
-            let projective_part = q1.mul(x4_powers[0])
+            let projective_part = 
+                  q1.mul(x4_powers[0])
                 + q2.mul(x4_powers[1])
                 + q3.mul(x4_powers[2])
                 + q4.mul(x4_powers[3]);
@@ -243,7 +248,7 @@ impl Verifier {
         omega_n_alpha: F,
         xi: F,
     ) -> (F, F, F, F) {
-        // r1&r2
+        // r1 & r2
         let r1_xi = q1_eval;
         let r2_xi = q2_eval;
 
@@ -255,6 +260,7 @@ impl Verifier {
 
         let xi_minus_v_inv = xi_minus_v.inverse().unwrap();
         let xi_minus_alpha_inv = xi_minus_alpha.inverse().unwrap();
+
         let xi_minus_omega_alpha_inv = xi_minus_omega_alpha.inverse().unwrap();
         let xi_minus_omega_n_alpha_inv = xi_minus_omega_n_alpha.inverse().unwrap();
 

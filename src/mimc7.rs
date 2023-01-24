@@ -1,6 +1,7 @@
 use ark_ff::PrimeField;
 use ark_std::io::Cursor;
 use tiny_keccak::{Hasher, Keccak};
+use crate::constants::{NUMBER_OF_MIMC_ROUNDS, MIMC_SEED};
 
 pub fn compute_round_digests<F: PrimeField>(
     preimage: F,
@@ -27,6 +28,10 @@ pub struct Mimc7<F: PrimeField> {
     pub seed: String,
     pub n_rounds: usize,
     pub cts: Vec<F>,
+}
+
+pub fn init_mimc7<F: PrimeField>() -> Mimc7<F> {
+    Mimc7::<F>::new(MIMC_SEED, NUMBER_OF_MIMC_ROUNDS)
 }
 
 impl<F: PrimeField> Mimc7<F> {
@@ -82,7 +87,7 @@ impl<F: PrimeField> Mimc7<F> {
 
 #[cfg(test)]
 mod mimc7_tests {
-    use super::Mimc7;
+    use super::init_mimc7;
     use ark_bn254::Fr as F;
     use ark_ff::{field_new, Zero};
 
@@ -94,10 +99,7 @@ mod mimc7_tests {
         );
         assert_eq!(f, F::zero());
 
-        let seed: &str = "mimc";
-        let n_rounds = 91;
-
-        let mimc7 = Mimc7::<F>::new(seed, n_rounds);
+        let mimc7 = init_mimc7::<F>();
 
         let hash = mimc7.hash(F::from(1000u64), F::from(0));
         assert_eq!(
@@ -117,10 +119,7 @@ mod mimc7_tests {
         );
         assert_eq!(f, F::zero());
 
-        let seed: &str = "mimc";
-        let n_rounds = 91;
-
-        let mimc7 = Mimc7::<F>::new(seed, n_rounds);
+        let mimc7 = init_mimc7::<F>();
 
         // From https://github.com/iden3/circomlibjs/blob/main/test/mimc7.js
         let hash = mimc7.multi_hash(&[F::from(1), F::from(2)], F::from(0));

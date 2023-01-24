@@ -5,6 +5,7 @@ import { KeccakMT } from "./KeccakMT.sol";
 import { BN254 } from "./BN254.sol";
 import { TranscriptLibrary } from "./Transcript.sol";
 import { Types } from "./Types.sol";
+import { Constants } from "./Constants.sol";
 
 contract Semacaulk is KeccakMT, BN254 {
     bytes32 public lagrangeTreeRoot;
@@ -27,7 +28,7 @@ contract Semacaulk is KeccakMT, BN254 {
      *  ).toString(16)
      */
     uint256 NOTHING_UP_MY_SLEEVE_ZERO = 
-        uint256(keccak256(abi.encodePacked('Semacaulk'))) % PRIME_R;
+        uint256(keccak256(abi.encodePacked('Semacaulk'))) % Constants.PRIME_R;
 
     // Custom errors
     error RootMismatch(bytes32 _generatedRoot);
@@ -68,7 +69,7 @@ contract Semacaulk is KeccakMT, BN254 {
         }
 
         // 2. Compute (v - zero) * Li_comm
-        uint256 n = PRIME_R;
+        uint256 n = Constants.PRIME_R;
         uint256 negZero = mulmod(NOTHING_UP_MY_SLEEVE_ZERO, n - 1, n);
         uint256 vMinusZero = addmod(_identityCommitment, negZero, n);
 
@@ -83,46 +84,6 @@ contract Semacaulk is KeccakMT, BN254 {
         currentIndex = index + 1;
 
         emit InsertIdentity(index, _identityCommitment);
-    }
-
-    function verifyTranscript() public pure returns(uint256, uint256) {
-        TranscriptLibrary.Transcript memory transcript = TranscriptLibrary.newTranscript();
-
-        uint256 u1 = 100; 
-        TranscriptLibrary.updateWithU256(transcript, u1);
-
-        Types.G1Point memory pt = Types.G1Point(1, 2);
-        TranscriptLibrary.updateWithG1(transcript, pt);
-
-        uint256 challenge_1 =  TranscriptLibrary.getChallenge(transcript);
-
-        uint256 u2 = 200; 
-        TranscriptLibrary.updateWithU256(transcript, u2);
-
-        uint256 challenge_2 =  TranscriptLibrary.getChallenge(transcript);
-
-        return (challenge_1, challenge_2);
-    }
-
-    /// @dev Temporary function that invokes pairing check
-    function verifyProof(
-        uint[2] memory a1,
-        uint[2][2] memory a2,
-        uint[2] memory b1,
-        uint[2][2] memory b2,
-        uint[2] memory c1,
-        uint[2][2] memory c2
-    ) public view returns (bool) {
-        Types.G1Point memory A1 = Types.G1Point(a1[0], a1[1]);
-        Types.G2Point memory A2 = Types.G2Point(a2[0][0], a2[0][1], a2[1][0], a2[1][1]);
-
-        Types.G1Point memory B1 = Types.G1Point(b1[0], b1[1]);
-        Types.G2Point memory B2 = Types.G2Point(b2[0][0], b2[0][1], b2[1][0], b2[1][1]);
-
-        Types.G1Point memory C1 = Types.G1Point(c1[0], c1[1]);
-        Types.G2Point memory C2 = Types.G2Point(c2[0][0], c2[0][1], c2[1][0], c2[1][1]);
-
-        return caulkPlusPairing(A1, A2, B1, B2, C1, C2);
     }
 
     function broadcastSignal(

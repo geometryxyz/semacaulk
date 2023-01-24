@@ -125,14 +125,14 @@ mod layouter_tests {
 
     use super::Layouter;
     use crate::constants::{NUMBER_OF_MIMC_ROUNDS, SUBGROUP_SIZE};
-    use crate::mimc7::Mimc7;
+    use crate::mimc7::init_mimc7;
 
     #[test]
     fn test_mimc_correctness() {
-        let n_rounds = 91;
+        let n_rounds = NUMBER_OF_MIMC_ROUNDS;
         let mut rng = test_rng();
 
-        let mimc7 = Mimc7::<Fr>::new("mimc".into(), n_rounds);
+        let mimc7 = init_mimc7::<Fr>();
 
         let identity_nullifier = Fr::from(100u64);
         let identity_trapdoor = Fr::from(200u64);

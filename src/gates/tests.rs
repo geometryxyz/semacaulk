@@ -7,7 +7,7 @@ use crate::gates::gate_sanity_checks::{
     mimc as mimc_check,
 };
 use crate::gates::utils::{fill_blinds, fill_dummy, fill_zeroes};
-use crate::mimc7::{compute_round_digests, Mimc7};
+use crate::mimc7::{compute_round_digests, init_mimc7, Mimc7};
 use ark_bn254::Fr as F;
 use ark_ff::{field_new, One, PrimeField, Zero};
 use ark_std::test_rng;
@@ -33,8 +33,7 @@ fn prepare_mimc_gate_tests() -> MiMCGateTestVals<F> {
     let mut q_mimc_evals = vec![F::one(); n_rounds];
     fill_zeroes(&mut q_mimc_evals, domain_size);
 
-    let seed: &str = "mimc";
-    let mimc7 = Mimc7::<F>::new(seed, n_rounds);
+    let mimc7 = init_mimc7::<F>();
     let mut c_evals = mimc7.cts.clone();
     fill_dummy(&mut c_evals, dummy, domain_size);
 

@@ -11,8 +11,8 @@ pub struct Proof<E: PairingEngine> {
     pub(crate) h_commitment: E::G1Affine,
 
     // round 3
-    pub(crate) u_eval: E::Fr,
-    pub(crate) u_proof: E::G1Affine,
+    pub(crate) u_prime_eval: E::Fr,
+    pub(crate) u_prime_proof: E::G1Affine,
 
     pub(crate) p1_eval: E::Fr,
     pub(crate) p1_proof: E::G1Affine,
