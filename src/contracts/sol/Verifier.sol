@@ -533,27 +533,11 @@ contract Verifier {
             }
 
             {
-            // Compute f_eval = f1 + 
-            //                  (x2_powers[0] * f2) + 
-            //                  (x2_powers[1] * f3) + 
-            //                  (x2_powers[2] * f4)
-            let x2_2 := mload(add(verifierTranscript, 0x200))
-            let x2_3 := mload(add(verifierTranscript, 0x220))
-
-            let f_eval := mload(add(verifierTranscript, 0x360))
-            f_eval := addmod(f_eval, mulmod(mload(add(verifierTranscript, 0x380)), x2, p), p)
-            f_eval := addmod(f_eval, mulmod(mload(add(verifierTranscript, 0x3a0)), x2_2, p), p)
-            f_eval := addmod(f_eval, mulmod(mload(add(verifierTranscript, 0x3c0)), x2_3, p), p)
-            mstore(add(verifierTranscript, 0x480), f_eval)
-            }
-
-            {
             // Compute final_poly = f_cm +
             //                      (p1 * x4) +
             //                      (q2 * x4_pow_2) +
             //                      (key * x4_pow_3) +
             //                      (q4 * x4_pow_4) +
-
             let x
             let y
             let mPtr := mload(0x40)
@@ -629,25 +613,55 @@ contract Verifier {
 
             mstore(mload(add(verifierTranscript, 0x4a0)), mload(0x00))
             mstore(add(mload(add(verifierTranscript, 0x4a0)), 0x20), mload(0x20))
-            //x := mload(0x00)
-            //y := mload(0x20)
-
-            //debug := x
-
             }
 
             {
+            // Compute f_eval = f1 + 
+            //                  (x2_powers[0] * f2) + 
+            //                  (x2_powers[1] * f3) + 
+            //                  (x2_powers[2] * f4)
+            let x2_2 := mload(add(verifierTranscript, 0x200))
+            let x2_3 := mload(add(verifierTranscript, 0x220))
+
+            let f_eval := mload(add(verifierTranscript, 0x360))
+            f_eval := addmod(f_eval, mulmod(mload(add(verifierTranscript, 0x380)), x2, p), p)
+            f_eval := addmod(f_eval, mulmod(mload(add(verifierTranscript, 0x3a0)), x2_2, p), p)
+            f_eval := addmod(f_eval, mulmod(mload(add(verifierTranscript, 0x3c0)), x2_3, p), p)
+            mstore(add(verifierTranscript, 0x480), f_eval)
+
             // Compute final_poly_eval = f_eval
             //  + proof.q1_opening * x4
             //  + proof.q2_opening * x4_pow_2
             //  + proof.q3_opening * x4_pow_3
             //  + proof.q4_opening * x4_pow_4
+            let multiopenProofPtr := mload(proof)
+            let final_poly_eval := addmod(
+                f_eval,
+                mulmod(mload(multiopenProofPtr), mload(add(challengeTranscript, 0xc0)), p),
+                p
+            )
+            final_poly_eval := addmod(
+                final_poly_eval,
+                mulmod(mload(add(multiopenProofPtr, 0x20)), mload(add(verifierTranscript, 0x240)), p),
+                p
+            )
+            final_poly_eval := addmod(
+                final_poly_eval,
+                mulmod(mload(add(multiopenProofPtr, 0x40)), mload(add(verifierTranscript, 0x260)), p),
+                p
+            )
+            final_poly_eval := addmod(
+                final_poly_eval,
+                mulmod(mload(add(multiopenProofPtr, 0x60)), mload(add(verifierTranscript, 0x280)), p),
+                p
+            )
+            mstore(add(verifierTranscript, 0x4c0), final_poly_eval)
 
             switch success case 0 { revert(0, 0) }
             }
         }
-        debug = verifierTranscript.final_poly.x;
 
+        debug = verifierTranscript.final_poly_eval;
         return debug;
     }
 

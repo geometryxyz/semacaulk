@@ -230,6 +230,8 @@ impl Verifier {
             + proof.q3_opening * x4_powers[2]
             + proof.q4_opening * x4_powers[3];
 
+        println!("{}", final_poly_eval);
+
         (final_poly, final_poly_eval, x3)
     }
 

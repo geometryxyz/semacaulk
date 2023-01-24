@@ -64,6 +64,7 @@ library Types {
         /* 0x460 */ uint256 z3_xi;
         /* 0x480 */ uint256 f_eval;
         /* 0x4a0 */ Types.G1Point final_poly;
+        /* 0x4c0 */ uint256 final_poly_eval;
     }
 
     struct Commitments {
