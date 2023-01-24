@@ -1,5 +1,5 @@
-use std::ops::Neg;
-use ark_poly::{EvaluationDomain, GeneralEvaluationDomain};
+use super::setup_eth_backend;
+use crate::bn_solidity_utils::{f_to_u256, format_g1, format_g2};
 use ark_bn254::{Bn254, Fq12, Fr, G1Affine, G2Affine};
 use ark_ec::AffineCurve;
 use ark_ec::PairingEngine;
@@ -9,14 +9,12 @@ use ark_ff::Field;
 use ark_ff::One;
 use ark_ff::Zero;
 use ark_ff::{PrimeField, UniformRand};
+use ark_poly::{EvaluationDomain, GeneralEvaluationDomain};
 use ark_std::test_rng;
 use ethers::contract::abigen;
 use ethers::types::U256;
+use std::ops::Neg;
 use tokio::test;
-use super::setup_eth_backend;
-use crate::{
-    bn_solidity_utils::{f_to_u256, format_g1, format_g2},
-};
 
 abigen!(
     TestPairing,
@@ -49,7 +47,11 @@ pub async fn test_pairing() {
 
     let mut rng = test_rng();
 
-    let contract = TestPairing::deploy(client, ()).unwrap().send().await.unwrap();
+    let contract = TestPairing::deploy(client, ())
+        .unwrap()
+        .send()
+        .await
+        .unwrap();
 
     // Pairing tests that: e(-a1, a2) * e(b1, b2) * e(c2, c3) == 1
 
@@ -85,17 +87,18 @@ pub async fn test_pairing() {
     // Sanity 2
     assert_eq!(res, Fq12::one());
 
-    let result: bool = contract.test_pairing(
-        format_g1(a1),
-        format_g2(a2),
-        format_g1(b1),
-        format_g2(b2),
-        format_g1(c1),
-        format_g2(c2),
-    )
-    .call()
-    .await
-    .unwrap();
+    let result: bool = contract
+        .test_pairing(
+            format_g1(a1),
+            format_g2(a2),
+            format_g1(b1),
+            format_g2(b2),
+            format_g1(c1),
+            format_g2(c2),
+        )
+        .call()
+        .await
+        .unwrap();
 
     assert!(result);
 
@@ -118,16 +121,16 @@ pub async fn test_compute_l0_eval_case(alpha: Fr) {
     let log2_domain_size = 7;
     let domain_size_inv = Fr::from(domain_size as u64).inverse().unwrap();
     //println!("{}", domain_size_inv);
- 
+
     let domain = GeneralEvaluationDomain::<Fr>::new(domain_size).unwrap();
 
     // Sanity check
     let l0_eval = domain.evaluate_all_lagrange_coefficients(alpha)[0];
-    let expected = (alpha.pow(&[domain_size as u64, 0, 0, 0]) - Fr::one()) /
-        Fr::from(domain_size as u64) /
-        (alpha - Fr::one());
+    let expected = (alpha.pow(&[domain_size as u64, 0, 0, 0]) - Fr::one())
+        / Fr::from(domain_size as u64)
+        / (alpha - Fr::one());
     assert_eq!(expected, l0_eval);
-    
+
     // The above computation is represented in the Solidity verifier using the following steps:
 
     // Step 1: Compute the evaluation of the vanishing polynomial of the domain with domain_size at
@@ -157,14 +160,21 @@ pub async fn test_compute_l0_eval_case(alpha: Fr) {
 
     assert_eq!(result, l0_eval);
 
-    let contract = TestLagrange::deploy(client, ()).unwrap().send().await.unwrap();
-    let onchain_result = contract.test_compute_l0_eval(
-        f_to_u256(alpha),
-        f_to_u256(d_minus_one_inv),
-        U256::from(log2_domain_size),
-        f_to_u256(domain_size_inv)
-        
-    ).call().await.unwrap();
+    let contract = TestLagrange::deploy(client, ())
+        .unwrap()
+        .send()
+        .await
+        .unwrap();
+    let onchain_result = contract
+        .test_compute_l0_eval(
+            f_to_u256(alpha),
+            f_to_u256(d_minus_one_inv),
+            U256::from(log2_domain_size),
+            f_to_u256(domain_size_inv),
+        )
+        .call()
+        .await
+        .unwrap();
 
     assert_eq!(onchain_result, f_to_u256(l0_eval));
 

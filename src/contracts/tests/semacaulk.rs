@@ -1,11 +1,9 @@
+use super::{setup_eth_backend, EthersClient};
 use crate::accumulator::{
     commit_to_lagrange_bases, compute_lagrange_tree, compute_zero_leaf, Accumulator,
 };
 use crate::kzg::unsafe_setup_g1;
-use crate::{
-    bn_solidity_utils::f_to_u256,
-    keccak_tree::flatten_proof,
-};
+use crate::{bn_solidity_utils::f_to_u256, keccak_tree::flatten_proof};
 use ark_bn254::{Bn254, Fq, Fr};
 use ark_ff::UniformRand;
 use ark_std::{rand::rngs::StdRng, test_rng};
@@ -14,10 +12,6 @@ use ethers::core::types::U256;
 use ethers::core::utils::hex;
 use ethers::middleware::SignerMiddleware;
 use ethers::providers::Http;
-use super::{
-    setup_eth_backend,
-    EthersClient,
-};
 
 abigen!(
     Semacaulk,

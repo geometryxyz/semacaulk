@@ -82,7 +82,7 @@ impl Verifier {
         )
     }
 
-    /// @dev This function is used in dev purposes 
+    /// @dev This function is used in dev purposes
     /// final check is batched with rest of caulk+ pairings
     pub fn verify_final_poly(
         final_poly: &G1Affine,
@@ -210,14 +210,10 @@ impl Verifier {
             x3,
         );
 
-        let f_eval = f1 +
-            (x2_powers[0] * f2) +
-            (x2_powers[1] * f3) +
-            (x2_powers[2] * f4);
+        let f_eval = f1 + (x2_powers[0] * f2) + (x2_powers[1] * f3) + (x2_powers[2] * f4);
 
         let final_poly: G1Affine = {
-            let projective_part = 
-                  q1.mul(x4_powers[0])
+            let projective_part = q1.mul(x4_powers[0])
                 + q2.mul(x4_powers[1])
                 + q3.mul(x4_powers[2])
                 + q4.mul(x4_powers[3]);

@@ -1,7 +1,7 @@
+use crate::constants::{MIMC_SEED, NUMBER_OF_MIMC_ROUNDS};
 use ark_ff::PrimeField;
 use ark_std::io::Cursor;
 use tiny_keccak::{Hasher, Keccak};
-use crate::constants::{NUMBER_OF_MIMC_ROUNDS, MIMC_SEED};
 
 pub fn compute_round_digests<F: PrimeField>(
     preimage: F,

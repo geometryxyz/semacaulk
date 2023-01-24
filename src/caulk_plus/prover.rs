@@ -81,7 +81,9 @@ impl<E: PairingEngine> Prover<E> {
         // third round
         let (u_prime_eval, u_prime_proof, p1_eval, p1_proof, p2_proof) =
             Self::third_round(&state, &verifier_msgs);
-        fs_rng.absorb(&to_bytes![&u_prime_eval, &u_prime_proof, p1_eval, p1_proof, p2_proof].unwrap());
+        fs_rng.absorb(
+            &to_bytes![&u_prime_eval, &u_prime_proof, p1_eval, p1_proof, p2_proof].unwrap(),
+        );
 
         let proof = Proof {
             zi_commitment,
@@ -187,8 +189,9 @@ impl<E: PairingEngine> Prover<E> {
                     .element(state.witness.mapping[i])
             })
             .collect::<Vec<_>>();
-        let mut u =
-            DensePolynomial::from_coefficients_slice(&state.common_input.domain_v.ifft(&u_prime_evals));
+        let mut u = DensePolynomial::from_coefficients_slice(
+            &state.common_input.domain_v.ifft(&u_prime_evals),
+        );
 
         // 7. blind U
         let zv: DensePolynomial<_> = state.common_input.domain_v.vanishing_polynomial().into();

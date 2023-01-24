@@ -1,13 +1,7 @@
-use ark_bn254::{Bn254, Fr};
-use ark_ec::ProjectiveCurve;
-use ark_ff::{Field, UniformRand, Zero};
-use ark_poly::{
-    univariate::DensePolynomial, EvaluationDomain, GeneralEvaluationDomain, UVPolynomial,
-};
-use ark_std::test_rng;
-use rand::rngs::StdRng;
-use ethers::prelude::abigen;
-use ethers::types::U256;
+use super::setup_eth_backend;
+use crate::contracts::format_proof;
+use crate::prover::prover::{Prover, WitnessInput};
+use crate::verifier::Verifier as SemacaulkVerifier;
 use crate::{
     bn_solidity_utils::f_to_u256,
     kzg::{commit, unsafe_setup},
@@ -15,10 +9,16 @@ use crate::{
     mimc7::init_mimc7,
     prover::{ProverPrecomputedData, ProvingKey, PublicData},
 };
-use crate::prover::prover::{Prover, WitnessInput};
-use crate::verifier::{Verifier as SemacaulkVerifier};
-use crate::contracts::format_proof;
-use super::setup_eth_backend;
+use ark_bn254::{Bn254, Fr};
+use ark_ec::ProjectiveCurve;
+use ark_ff::{Field, UniformRand, Zero};
+use ark_poly::{
+    univariate::DensePolynomial, EvaluationDomain, GeneralEvaluationDomain, UVPolynomial,
+};
+use ark_std::test_rng;
+use ethers::prelude::abigen;
+use ethers::types::U256;
+use rand::rngs::StdRng;
 
 abigen!(
     TestVerifier,
@@ -38,8 +38,7 @@ pub async fn test_semacaulk_verifier() {
     let identity_trapdoor = Fr::from(456u64);
     let external_nullifier = Fr::from(789u64);
 
-    let nullifier_hash =
-        mimc7.multi_hash(&[identity_nullifier, external_nullifier], Fr::zero());
+    let nullifier_hash = mimc7.multi_hash(&[identity_nullifier, external_nullifier], Fr::zero());
 
     let identity_commitment =
         mimc7.multi_hash(&[identity_nullifier, identity_trapdoor], Fr::zero());
@@ -58,7 +57,10 @@ pub async fn test_semacaulk_verifier() {
     let c = DensePolynomial::from_coefficients_slice(&domain.ifft(&identity_commitments));
 
     let (srs_g1, srs_g2) = unsafe_setup::<Bn254, StdRng>(table_size, table_size, &mut rng);
-    let pk = ProvingKey::<Bn254> { srs_g1, srs_g2: srs_g2.clone() };
+    let pk = ProvingKey::<Bn254> {
+        srs_g1,
+        srs_g2: srs_g2.clone(),
+    };
 
     let precomputed = ProverPrecomputedData::index(&pk, &mimc7.cts, index, &c, table_size);
 
@@ -100,22 +102,28 @@ pub async fn test_semacaulk_verifier() {
     let eth_backend = setup_eth_backend().await;
     let anvil = eth_backend.0;
     let client = eth_backend.1;
-    
-    let contract = TestVerifier::deploy(client, ()).unwrap().send().await.unwrap();
-    let result = contract.verify(
-        p_to_p(&format_proof(&proof)),
-        G1Point  {
-            x: f_to_u256(accumulator.x),
-            y: f_to_u256(accumulator.y),
-        },
-        f_to_u256(external_nullifier),
-        f_to_u256(nullifier_hash),
-    ).send()
-     .await
-     .unwrap()
-     .await
-     .unwrap()
-     .expect("no receipt found");
+
+    let contract = TestVerifier::deploy(client, ())
+        .unwrap()
+        .send()
+        .await
+        .unwrap();
+    let result = contract
+        .verify(
+            p_to_p(&format_proof(&proof)),
+            G1Point {
+                x: f_to_u256(accumulator.x),
+                y: f_to_u256(accumulator.y),
+            },
+            f_to_u256(external_nullifier),
+            f_to_u256(nullifier_hash),
+        )
+        .send()
+        .await
+        .unwrap()
+        .await
+        .unwrap()
+        .expect("no receipt found");
 
     assert_eq!(result.status.unwrap(), ethers::types::U64::from(1));
     println!("Gas used: {}", result.gas_used.unwrap());
@@ -166,55 +174,55 @@ fn p_to_p(p: &crate::contracts::verifier::Proof) -> Proof {
             x: p.commitments.w_0.x,
             y: p.commitments.w_0.y,
         },
-        w_1: G1Point  {
+        w_1: G1Point {
             x: p.commitments.w_1.x,
             y: p.commitments.w_1.y,
         },
-        w_2: G1Point  {
+        w_2: G1Point {
             x: p.commitments.w_2.x,
             y: p.commitments.w_2.y,
         },
-        key: G1Point  {
+        key: G1Point {
             x: p.commitments.key.x,
             y: p.commitments.key.y,
         },
-        c: G1Point  {
+        c: G1Point {
             x: p.commitments.c.x,
             y: p.commitments.c.y,
         },
-        quotient: G1Point  {
+        quotient: G1Point {
             x: p.commitments.quotient.x,
             y: p.commitments.quotient.y,
         },
-        u_prime: G1Point  {
+        u_prime: G1Point {
             x: p.commitments.u_prime.x,
             y: p.commitments.u_prime.y,
         },
-        zi: G1Point  {
+        zi: G1Point {
             x: p.commitments.zi.x,
             y: p.commitments.zi.y,
         },
-        ci: G1Point  {
+        ci: G1Point {
             x: p.commitments.ci.x,
             y: p.commitments.ci.y,
         },
-        p_1: G1Point  {
+        p_1: G1Point {
             x: p.commitments.p_1.x,
             y: p.commitments.p_1.y,
         },
-        p_2: G1Point  {
+        p_2: G1Point {
             x: p.commitments.p_2.x,
             y: p.commitments.p_2.y,
         },
-        q_mimc: G1Point  {
+        q_mimc: G1Point {
             x: p.commitments.q_mimc.x,
             y: p.commitments.q_mimc.y,
         },
-        h: G1Point  {
+        h: G1Point {
             x: p.commitments.h.x,
             y: p.commitments.h.y,
         },
-        w: G2Point  {
+        w: G2Point {
             x_0: p.commitments.w.x_0,
             x_1: p.commitments.w.x_1,
             y_0: p.commitments.w.y_0,
@@ -265,13 +273,13 @@ pub async fn test_offchain_batch_invert() {
     }
 
     //for i in 0..num_vals {
-        //println!("t[{}]: {}", i, f_to_u256(t_vals[i]));
-        ////println!("a: {}", a_vals[i]);
-        //println!("b[{}]: {}", i, f_to_u256(b_vals[i]));
-        //println!("c[{}]: {}", i, f_to_u256(c_vals[i]));
-        ////let inv = a_vals[i].inverse().unwrap();
-        //assert_eq!(a_vals[i].inverse().unwrap(), result[i]);
-        //println!("")
+    //println!("t[{}]: {}", i, f_to_u256(t_vals[i]));
+    ////println!("a: {}", a_vals[i]);
+    //println!("b[{}]: {}", i, f_to_u256(b_vals[i]));
+    //println!("c[{}]: {}", i, f_to_u256(c_vals[i]));
+    ////let inv = a_vals[i].inverse().unwrap();
+    //assert_eq!(a_vals[i].inverse().unwrap(), result[i]);
+    //println!("")
     //}
 }
 
@@ -281,7 +289,11 @@ pub async fn test_batch_invert() {
     let anvil = eth_backend.0;
     let client = eth_backend.1;
 
-    let contract = TestVerifier::deploy(client, ()).unwrap().send().await.unwrap();
+    let contract = TestVerifier::deploy(client, ())
+        .unwrap()
+        .send()
+        .await
+        .unwrap();
 
     let inputs_as_f = vec![
         Fr::from(1u64),
@@ -294,11 +306,23 @@ pub async fn test_batch_invert() {
         Fr::from(8u64),
     ];
 
-    let expected_inverses = inputs_as_f.iter().map(|x| x.inverse().unwrap()).collect::<Vec<Fr>>();
+    let expected_inverses = inputs_as_f
+        .iter()
+        .map(|x| x.inverse().unwrap())
+        .collect::<Vec<Fr>>();
 
-    let results = contract.test_batch_invert(
-        inputs_as_f.iter().map(|x| f_to_u256(*x)).collect::<Vec<U256>>().try_into().unwrap()
-    ).call().await.unwrap();
+    let results = contract
+        .test_batch_invert(
+            inputs_as_f
+                .iter()
+                .map(|x| f_to_u256(*x))
+                .collect::<Vec<U256>>()
+                .try_into()
+                .unwrap(),
+        )
+        .call()
+        .await
+        .unwrap();
 
     assert_eq!(results.len(), expected_inverses.len());
     //println!("{:?}", results);

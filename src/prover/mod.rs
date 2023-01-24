@@ -1,15 +1,15 @@
 use std::iter;
 
+use crate::{
+    caulk_plus::precomputed::Precomputed,
+    constants::{DUMMY_VALUE, EXTENDED_DOMAIN_FACTOR, NUMBER_OF_MIMC_ROUNDS, SUBGROUP_SIZE},
+    multiopen::MultiopenProof,
+    utils::compute_vanishing_poly_over_coset,
+};
 use ark_ec::PairingEngine;
 use ark_ff::{One, Zero};
 use ark_poly::{
     univariate::DensePolynomial, EvaluationDomain, GeneralEvaluationDomain, UVPolynomial,
-};
-use crate::{
-    multiopen::MultiopenProof,
-    caulk_plus::precomputed::Precomputed,
-    constants::{DUMMY_VALUE, EXTENDED_DOMAIN_FACTOR, NUMBER_OF_MIMC_ROUNDS, SUBGROUP_SIZE},
-    utils::compute_vanishing_poly_over_coset,
 };
 
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, Read, SerializationError, Write};

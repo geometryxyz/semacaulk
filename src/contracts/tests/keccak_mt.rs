@@ -1,9 +1,9 @@
-use tokio::test;
+use super::setup_eth_backend;
+use crate::keccak_tree::{flatten_proof, KeccakTree};
 use ethers::contract::abigen;
 use ethers::core::types::U256;
 use ethers::core::utils::{hex, keccak256};
-use crate::keccak_tree::{flatten_proof, KeccakTree};
-use super::setup_eth_backend;
+use tokio::test;
 
 abigen!(KeccackMT, "./src/contracts/out/KeccakMT.sol/KeccakMT.json",);
 
@@ -61,4 +61,3 @@ pub async fn test_keccak_mt() {
 
     drop(anvil);
 }
-
