@@ -35,9 +35,7 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
       - name: Build contracts
-        uses: actions-rs/cargo@v1
-        with:
-          command: "./build_contracts.sh"
+        run: "./build_contracts.sh"
       - name: cargo build
         uses: actions-rs/cargo@v1
         with:
@@ -63,9 +61,7 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
       - name: Build contracts
-        uses: actions-rs/cargo@v1
-        with:
-          command: "./build_contracts.sh"
+        run: "./build_contracts.sh"
       - name: Run tests
         uses: actions-rs/cargo@v1
         with:
@@ -91,9 +87,7 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
       - name: Build contracts
-        uses: actions-rs/cargo@v1
-        with:
-          command: "./build_contracts.sh"
+        run: "./build_contracts.sh"
       - name: cargo fetch
         uses: actions-rs/cargo@v1
         with:
@@ -122,9 +116,7 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
       - name: Build contracts
-        uses: actions-rs/cargo@v1
-        with:
-          command: "./build_contracts.sh"
+        run: "./build_contracts.sh"
       - uses: actions-rs/cargo@v1
         with:
           command: fmt
@@ -145,9 +137,7 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
       - name: Build contracts
-        uses: actions-rs/cargo@v1
-        with:
-          command: "./build_contracts.sh"
+        run: "./build_contracts.sh"
       - name: Run clippy
         uses: actions-rs/cargo@v1
         with:
