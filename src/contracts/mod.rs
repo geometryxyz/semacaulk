@@ -4,6 +4,7 @@ use crate::prover::{Commitments as RustCommitments, Openings as RustOpenings, Pr
 use ark_bn254::{Bn254, G1Affine, G2Affine};
 use ethers::prelude::abigen;
 
+#[cfg(test)]
 mod tests;
 
 abigen!(Verifier, "./src/contracts/out/Verifier.sol/Verifier.json");
