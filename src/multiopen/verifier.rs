@@ -11,6 +11,7 @@ use super::MultiopenProof;
 pub struct Verifier {}
 
 impl Verifier {
+    #[allow(clippy::too_many_arguments)]
     pub fn verify(
         transcript: &mut Transcript,
         proof: &MultiopenProof<Bn254>,
@@ -104,6 +105,8 @@ impl Verifier {
 
         res == Fq12::one()
     }
+
+    #[allow(clippy::too_many_arguments)]
     pub fn compute_final_poly(
         transcript: &mut Transcript,
         proof: &MultiopenProof<Bn254>,
@@ -157,7 +160,7 @@ impl Verifier {
         /* BEGIN: construct qi-s */
 
         //q1
-        let q1 = p1.clone();
+        let q1 = *p1;
         let q1_eval = p1_opening;
 
         // q2
@@ -166,7 +169,7 @@ impl Verifier {
                 + quotient.mul(x1_powers[1])
                 + u_prime.mul(x1_powers[2])
                 + p2.mul(x1_powers[3]);
-            projective_part.add_mixed(&q_mimc).into()
+            projective_part.add_mixed(q_mimc).into()
         };
         let q2_eval = q_mimc_opening
             + c_opening * x1_powers[0]
@@ -175,13 +178,13 @@ impl Verifier {
             + p2_opening * x1_powers[3];
 
         // q3
-        let q3 = key.clone();
+        let q3 = *key;
         let q3_evals = key_openings;
 
         // q4
         let q4: G1Affine = {
             let projective_part = w1.mul(x1_powers[0]) + w2.mul(x1_powers[1]);
-            projective_part.add_mixed(&w0).into()
+            projective_part.add_mixed(w0).into()
         };
 
         let q4_at_alpha =
@@ -229,6 +232,7 @@ impl Verifier {
         (final_poly, final_poly_eval, x3)
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn evaluate_fs<F: Field>(
         q1_eval: F,
         q1_xi: F,

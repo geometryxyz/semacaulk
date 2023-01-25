@@ -2,7 +2,7 @@ use ark_ff::{FftField, Field, PrimeField};
 use ark_poly::{univariate::DensePolynomial, EvaluationDomain, UVPolynomial};
 
 pub fn positive_rotation_in_coset<F: PrimeField>(
-    coset_evals: &Vec<F>,
+    coset_evals: &[F],
     omega_i: usize,
     rotation_degree: usize,
     scaling_ratio: usize,
@@ -25,9 +25,9 @@ where
         poly_degree
     );
     let group_gen = domain.element(1);
-    let coset_gen = F::multiplicative_generator().pow(&[poly_degree, 0, 0, 0]);
+    let coset_gen = F::multiplicative_generator().pow([poly_degree, 0, 0, 0]);
     let v_h: Vec<_> = (0..domain.size())
-        .map(|i| (coset_gen * group_gen.pow(&[poly_degree * i as u64, 0, 0, 0])) - F::one())
+        .map(|i| (coset_gen * group_gen.pow([poly_degree * i as u64, 0, 0, 0])) - F::one())
         .collect();
     v_h
 }
@@ -42,8 +42,8 @@ pub fn shift_dense_poly<F: Field>(
 
     let mut coeffs = p.coeffs().to_vec();
     let mut acc = F::one();
-    for i in 0..coeffs.len() {
-        coeffs[i] = coeffs[i] * acc;
+    for coeff_i in &mut coeffs {
+        *coeff_i *= acc;
         acc *= shifting_factor;
     }
 
@@ -56,12 +56,12 @@ pub fn construct_lagrange_basis<F: FftField>(evaluation_domain: &[F]) -> Vec<Den
     for i in 0..evaluation_domain.len() {
         let mut l_i = DensePolynomial::from_coefficients_slice(&[F::one()]);
         let x_i = evaluation_domain[i];
-        for j in 0..evaluation_domain.len() {
+        for (j, &x_j) in evaluation_domain.iter().enumerate() {
             if j != i {
-                let xi_minus_xj_inv = (x_i - evaluation_domain[j]).inverse().unwrap();
+                let xi_minus_xj_inv = (x_i - x_j).inverse().unwrap();
                 l_i = &l_i
                     * &DensePolynomial::from_coefficients_slice(&[
-                        -evaluation_domain[j] * xi_minus_xj_inv,
+                        -x_j * xi_minus_xj_inv,
                         xi_minus_xj_inv,
                     ]);
             }

@@ -15,6 +15,6 @@ pub fn fill_blinds<F: PrimeField>(evals: &mut Vec<F>, rng: &mut StdRng, domain_s
 
 pub fn fill_dummy<F: PrimeField>(evals: &mut Vec<F>, dummy: F, domain_size: usize) {
     // [1, 2, 3] becomes [1, 2, 3, 1234, 1234, ...] up to domain_size
-    let dummys = vec![dummy.clone(); domain_size - evals.len()];
+    let dummys = vec![dummy; domain_size - evals.len()];
     evals.extend_from_slice(&dummys);
 }

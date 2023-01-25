@@ -75,14 +75,13 @@ impl Verifier {
         let l0_eval = domain_h.evaluate_all_lagrange_coefficients(alpha)[0];
 
         let n = domain_h.size();
-        let test = (alpha.pow(&[n as u64, 0, 0, 0]) - Fr::one())
-            / Fr::from(n as u64)
-            / (alpha - Fr::one());
+        let test =
+            (alpha.pow([n as u64, 0, 0, 0]) - Fr::one()) / Fr::from(n as u64) / (alpha - Fr::one());
         assert_eq!(test, l0_eval);
 
         // Compute the zh_eval - quotient_opening value, which is what the challenge-separated linear
         // combination of the gate evaluations should equal
-        let pow_7 = |x: Fr| x.pow(&[7, 0, 0, 0]);
+        let pow_7 = |x: Fr| x.pow([7, 0, 0, 0]);
 
         // Gate 0: q_mimc_opening * ((w0_openings[0] + c_opening) ^ 7 - w0_openings[1])
         let gate_0_eval = q_mimc_opening * (pow_7(w0_openings[0] + c_opening) - w0_openings[1]);
@@ -113,11 +112,11 @@ impl Verifier {
         // l0 * (w2_openings[0] - external_nullifier)
         let gate_6_eval = l0_eval * (w2_openings[0] - external_nullifier);
 
-        let v_pow_2 = v.pow(&[2, 0, 0, 0]);
-        let v_pow_3 = v.pow(&[3, 0, 0, 0]);
-        let v_pow_4 = v.pow(&[4, 0, 0, 0]);
-        let v_pow_5 = v.pow(&[5, 0, 0, 0]);
-        let v_pow_6 = v.pow(&[6, 0, 0, 0]);
+        let v_pow_2 = v.pow([2, 0, 0, 0]);
+        let v_pow_3 = v.pow([3, 0, 0, 0]);
+        let v_pow_4 = v.pow([4, 0, 0, 0]);
+        let v_pow_5 = v.pow([5, 0, 0, 0]);
+        let v_pow_6 = v.pow([6, 0, 0, 0]);
 
         let lhs = gate_0_eval
             + (v * gate_1_eval)
@@ -127,7 +126,7 @@ impl Verifier {
             + (v_pow_5 * gate_5_eval)
             + (v_pow_6 * gate_6_eval);
 
-        let zh_eval = alpha.pow(&[SUBGROUP_SIZE as u64, 0, 0, 0]) - Fr::one();
+        let zh_eval = alpha.pow([SUBGROUP_SIZE as u64, 0, 0, 0]) - Fr::one();
         let quotient_opening = proof.openings.quotient;
         let rhs = zh_eval * quotient_opening;
 

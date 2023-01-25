@@ -30,7 +30,7 @@ pub fn flatten_proof(proof: &KeccakMerkleProof) -> Vec<[u8; 32]> {
             Branch::Left(hash) => hash,
             Branch::Right(hash) => hash,
         };
-        result.push(hash.clone());
+        result.push(*hash);
     }
     result
 }

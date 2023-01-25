@@ -56,6 +56,14 @@ pub struct Prover<E: PairingEngine> {
     _pe: PhantomData<E>,
 }
 
+type ThirdRoundResult<E> = (
+    <E as PairingEngine>::Fr,
+    <E as PairingEngine>::G1Affine,
+    <E as PairingEngine>::Fr,
+    <E as PairingEngine>::G1Affine,
+    <E as PairingEngine>::G1Affine,
+);
+
 impl<E: PairingEngine> Prover<E> {
     pub fn prove<R: RngCore>(
         public_input: &PublicInput<E>,
@@ -277,7 +285,7 @@ impl<E: PairingEngine> Prover<E> {
         let r4 = state.r4.unwrap();
 
         let ci_blinder = &DensePolynomial::from_coefficients_slice(&[r2, r3, r4]);
-        let ci_blinder_commitment = commit(&state.public_input.srs_g2, &ci_blinder);
+        let ci_blinder_commitment = commit(&state.public_input.srs_g2, ci_blinder);
 
         let w_commitment = w1_xi2_w2.mul(r1.inverse().unwrap().into_repr()) - ci_blinder_commitment;
         let h_commitment = commit(&state.public_input.srs_g1, &h);
@@ -293,7 +301,7 @@ impl<E: PairingEngine> Prover<E> {
     fn third_round<'a>(
         state: &State<'a, E>,
         msgs: &VerifierMessages<E::Fr>,
-    ) -> (E::Fr, E::G1Affine, E::Fr, E::G1Affine, E::G1Affine) {
+    ) -> ThirdRoundResult<E> {
         let xi_1 = msgs.xi_1.unwrap();
         let alpha = msgs.alpha.unwrap();
 

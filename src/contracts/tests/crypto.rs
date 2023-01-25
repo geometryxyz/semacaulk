@@ -126,7 +126,7 @@ pub async fn test_compute_l0_eval_case(alpha: Fr) {
 
     // Sanity check
     let l0_eval = domain.evaluate_all_lagrange_coefficients(alpha)[0];
-    let expected = (alpha.pow(&[domain_size as u64, 0, 0, 0]) - Fr::one())
+    let expected = (alpha.pow([domain_size as u64, 0, 0, 0]) - Fr::one())
         / Fr::from(domain_size as u64)
         / (alpha - Fr::one());
     assert_eq!(expected, l0_eval);
@@ -143,7 +143,7 @@ pub async fn test_compute_l0_eval_case(alpha: Fr) {
         for _ in 0..log2_domain_size {
             vanishing_poly_eval = vanishing_poly_eval * vanishing_poly_eval;
         }
-        vanishing_poly_eval = vanishing_poly_eval - Fr::one();
+        vanishing_poly_eval -= Fr::one();
     }
 
     // Step 2: Compute the value 1 / (alpha - 1)

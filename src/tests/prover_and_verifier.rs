@@ -1,4 +1,4 @@
-use crate::prover::prover::{Prover, WitnessInput};
+use crate::prover::{Prover, WitnessInput};
 use crate::verifier::Verifier;
 use crate::{
     kzg::{commit, unsafe_setup},
@@ -62,7 +62,7 @@ pub fn test_prover_and_verifier() {
 
     let accumulator = commit(&pk.srs_g1, &c).into_affine();
     let public_input = PublicData::<Bn254> {
-        accumulator: accumulator,
+        accumulator,
         external_nullifier,
         nullifier_hash,
     };
@@ -79,12 +79,12 @@ pub fn test_prover_and_verifier() {
 
     let is_valid = Verifier::verify(
         &proof,
-        pk.srs_g1[table_size].clone(),
-        srs_g2[1].clone(),
+        pk.srs_g1[table_size],
+        srs_g2[1],
         accumulator,
         external_nullifier,
         nullifier_hash,
     );
 
-    assert_eq!(is_valid, true);
+    assert!(is_valid);
 }

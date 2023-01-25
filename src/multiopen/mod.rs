@@ -180,6 +180,6 @@ mod multiopen_tests {
             omega_n_alpha,
             srs_g2[1],
         );
-        assert_eq!(verification_result, true);
+        assert!(verification_result);
     }
 }
