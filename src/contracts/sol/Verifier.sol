@@ -23,63 +23,31 @@ contract Verifier is BN254 {
         Types.ChallengeTranscript memory challengeTranscript;
         Types.VerifierTranscript memory verifierTranscript;
 
-        TranscriptLibrary.updateWithU256(transcript, publicInputs[0]);
-        TranscriptLibrary.updateWithU256(transcript, publicInputs[1]);
-        TranscriptLibrary.updateWithU256(transcript, publicInputs[2]);
-
-        TranscriptLibrary.updateWithG1(transcript, proof.commitments.w0);
-        TranscriptLibrary.updateWithG1(transcript, proof.commitments.key);
-        TranscriptLibrary.updateWithG1(transcript, proof.commitments.w1);
-        TranscriptLibrary.updateWithG1(transcript, proof.commitments.w2);
+        TranscriptLibrary.round1(transcript, proof, publicInputs);
 
         challengeTranscript.v = TranscriptLibrary.getChallenge(transcript);
 
-        TranscriptLibrary.updateWithG1(transcript, proof.commitments.quotient);
-        TranscriptLibrary.updateWithG1(transcript, proof.commitments.zi);
-        TranscriptLibrary.updateWithG1(transcript, proof.commitments.ci);
-        TranscriptLibrary.updateWithG1(transcript, proof.commitments.u_prime);
+        TranscriptLibrary.round2(transcript, proof);
 
         TranscriptLibrary.getChallenge(transcript);
         challengeTranscript.hi_2 = TranscriptLibrary.getChallenge(transcript);
 
-        TranscriptLibrary.updateWithG2(transcript, proof.commitments.w);
-        TranscriptLibrary.updateWithG1(transcript, proof.commitments.h);
+        TranscriptLibrary.round3(transcript, proof);
 
         challengeTranscript.alpha = TranscriptLibrary.getChallenge(transcript);
 
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.w0_0);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.w0_1);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.w0_2);
-
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.w1_0);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.w1_1);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.w1_2);
-
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.w2_0);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.w2_1);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.w2_2);
-
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.key_0);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.key_1);
-
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.q_mimc);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.c);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.quotient);
-
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.u_prime);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.p1);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.p2);
+        TranscriptLibrary.round4(transcript, proof);
 
         challengeTranscript.x1 = TranscriptLibrary.getChallenge(transcript);
         challengeTranscript.x2 = TranscriptLibrary.getChallenge(transcript);
 
-        TranscriptLibrary.updateWithG1(transcript, proof.multiopenProof.f_cm);
+        TranscriptLibrary.round5(transcript, proof);
 
         challengeTranscript.x3 = TranscriptLibrary.getChallenge(transcript);
         challengeTranscript.x4 = TranscriptLibrary.getChallenge(transcript);
         challengeTranscript.s = TranscriptLibrary.getChallenge(transcript);
-        uint256[8] memory inverted;
         
+        uint256[8] memory inverted;
         {
          // Values needed before batch inversion:
          // - d (so we can invert d - 1)

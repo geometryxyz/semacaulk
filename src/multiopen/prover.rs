@@ -71,7 +71,7 @@ impl Prover {
         let f = f1.clone() + (&f2 * x2_powers[0]) + (&f3 * x2_powers[1]) + (&f4 * x2_powers[2]);
 
         let f_cm: G1Affine = commit(srs_g1, &f).into();
-        transcript.update_with_g1(&f_cm);
+        transcript.round_5(&f_cm);
 
         let x3 = transcript.get_challenge();
         let x4 = transcript.get_challenge();

@@ -17,7 +17,7 @@ use crate::{
 };
 use crate::prover::prover::{Prover, WitnessInput};
 use crate::verifier::{Verifier as SemacaulkVerifier};
-use crate::contracts::format_proof;
+use crate::contracts::format::proof_for_verifier::{ProofForVerifier, format_proof};
 use super::setup_eth_backend;
 
 abigen!(
@@ -93,9 +93,7 @@ pub async fn test_semacaulk_verifier() {
         pk.srs_g1[table_size].clone(),
         srs_g2[1].clone(),
         accumulator,
-        external_nullifier,
-        nullifier_hash,
-        signal_hash,
+        &public_input,
     );
 
     assert_eq!(is_valid, true);
@@ -131,7 +129,7 @@ pub async fn test_semacaulk_verifier() {
 
 // Get past the type errors that stem from the way that ethers-rs magically brings abigen types in
 // into scope
-fn p_to_p(p: &crate::contracts::verifier::Proof) -> Proof {
+fn p_to_p(p: &ProofForVerifier) -> Proof {
     let m = MultiopenProof {
         q_1_opening: p.multiopen_proof.q_1_opening,
         q_2_opening: p.multiopen_proof.q_2_opening,

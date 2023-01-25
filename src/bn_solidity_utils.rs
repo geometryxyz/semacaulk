@@ -8,6 +8,13 @@ pub fn u256_to_hex(val: U256) -> std::string::String {
     hex::encode(&b).to_uppercase()
 }
 
+pub fn u256_to_f<F: PrimeField>(val: U256) -> F {
+    let mut b = [0; 32];
+    val.to_little_endian(&mut b);
+
+    F::read(&mut b.as_slice()).unwrap()
+}
+
 pub fn f_to_u256<F: PrimeField>(val: F) -> U256 {
     let mut b = Vec::with_capacity(32);
     let _ = val.write(&mut b);

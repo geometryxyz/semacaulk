@@ -82,9 +82,7 @@ pub fn test_prover_and_verifier() {
         pk.srs_g1[table_size].clone(),
         srs_g2[1].clone(),
         accumulator,
-        external_nullifier,
-        nullifier_hash,
-        signal_hash,
+        &public_input,
     );
 
     assert_eq!(is_valid, true);

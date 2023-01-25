@@ -1,5 +1,7 @@
+use std::iter;
 use ark_ff::{FftField, Field, PrimeField};
-use ark_poly::{univariate::DensePolynomial, EvaluationDomain, UVPolynomial};
+use ark_poly::{univariate::DensePolynomial, EvaluationDomain, GeneralEvaluationDomain, UVPolynomial};
+use ark_ec::{AffineCurve, ProjectiveCurve};
 
 pub fn positive_rotation_in_coset<F: PrimeField>(
     coset_evals: &Vec<F>,
@@ -50,12 +52,14 @@ pub fn shift_dense_poly<F: Field>(
     DensePolynomial::from_coefficients_vec(coeffs)
 }
 
-// given x coords construct Li polynomials
+// Compute the Lagrange basis polynomials in O(n^2) time. This is not recommended for domains of
+// size above 32.
 pub fn construct_lagrange_basis<F: FftField>(evaluation_domain: &[F]) -> Vec<DensePolynomial<F>> {
     let mut bases = Vec::with_capacity(evaluation_domain.len());
     for i in 0..evaluation_domain.len() {
         let mut l_i = DensePolynomial::from_coefficients_slice(&[F::one()]);
         let x_i = evaluation_domain[i];
+
         for j in 0..evaluation_domain.len() {
             if j != i {
                 let xi_minus_xj_inv = (x_i - evaluation_domain[j]).inverse().unwrap();
@@ -73,6 +77,38 @@ pub fn construct_lagrange_basis<F: FftField>(evaluation_domain: &[F]) -> Vec<Den
     bases
 }
 
+// Compute the commitments to Lagrange basis polynomials quickly.
+// Credit: https://github.com/geometryresearch/cq/blob/main/src/tools.rs
+pub fn compute_lagrange_basis_commitments<C: AffineCurve>(tau_powers: Vec<C>) -> Vec<C> {
+    let n = tau_powers.len();
+    assert!(is_pow_2(n));
+
+    let domain = GeneralEvaluationDomain::<C::ScalarField>::new(n).unwrap();
+    let n_inv = domain
+        .size_as_field_element()
+        .inverse()
+        .unwrap()
+        .into_repr();
+
+    let tau_projective: Vec<C::Projective> = tau_powers
+        .iter()
+        .map(|tau_pow_i| tau_pow_i.into_projective())
+        .collect();
+    let p_evals: Vec<C::Projective> = domain.fft(&tau_projective);
+    let p_evals_reversed = iter::once(p_evals[0]).chain(p_evals.into_iter().skip(1).rev());
+
+    let mut ls: Vec<C::Projective> = p_evals_reversed
+        .into_iter()
+        .map(|pi| pi.mul(n_inv))
+        .collect();
+    C::Projective::batch_normalization(&mut ls);
+    ls.iter().map(|li| li.into_affine()).collect()
+}
+
+pub fn is_pow_2(x: usize) -> bool {
+    (x & (x - 1)) == 0
+}
+
 #[cfg(test)]
 mod util_tests {
     use ark_bn254::Fr as F;
@@ -80,8 +116,8 @@ mod util_tests {
     use ark_poly::{
         univariate::DensePolynomial, EvaluationDomain, GeneralEvaluationDomain, UVPolynomial,
     };
-
     use super::construct_lagrange_basis;
+
     #[test]
     fn test_lagrange_bases() {
         let domain_size = 8;
@@ -114,4 +150,13 @@ mod util_tests {
 
         assert_eq!(f_from_bases, f_from_ifft);
     }
+
+    //#[test]
+    //fn test_lagrange_bases_speed() {
+        //let domain_size = 1024;
+        //let domain = GeneralEvaluationDomain::<F>::new(domain_size).unwrap();
+
+        //let elems: Vec<F> = domain.elements().collect();
+        //let bases = construct_lagrange_basis(&elems);
+    //}
 }
