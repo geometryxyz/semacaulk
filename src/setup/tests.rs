@@ -16,5 +16,6 @@ pub fn test_g2() {
 
 #[test]
 pub fn test_load_hex() {
-    let _ = load_srs_from_hex("./out.hex");
+    let (srs_g1, srs_g2) = load_srs_from_hex("./powersOfTau28_hez_final_12_g1_g2.hex");
+    assert_eq!(srs_g1.len(), srs_g2.len() + 1);
 }

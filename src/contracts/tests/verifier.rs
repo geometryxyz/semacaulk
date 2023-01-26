@@ -18,6 +18,7 @@ use crate::{
 use crate::prover::prover::{Prover, WitnessInput};
 use crate::verifier::{Verifier as SemacaulkVerifier};
 use crate::contracts::format::proof_for_verifier::{ProofForVerifier, format_proof};
+use crate::setup::load_srs_from_hex;
 use super::setup_eth_backend;
 
 abigen!(
@@ -29,7 +30,7 @@ abigen!(
 pub async fn test_semacaulk_verifier() {
     let mut rng = test_rng();
 
-    let table_size: usize = 1024;
+    let table_size: usize = 2048;
     let domain = GeneralEvaluationDomain::<Fr>::new(table_size).unwrap();
 
     let mimc7 = init_mimc7::<Fr>();
@@ -58,7 +59,8 @@ pub async fn test_semacaulk_verifier() {
     identity_commitments[index] = identity_commitment;
     let c = DensePolynomial::from_coefficients_slice(&domain.ifft(&identity_commitments));
 
-    let (srs_g1, srs_g2) = unsafe_setup::<Bn254, StdRng>(table_size, table_size, &mut rng);
+    //let (srs_g1, srs_g2) = unsafe_setup::<Bn254, StdRng>(table_size, table_size, &mut rng);
+    let (srs_g1, srs_g2) = load_srs_from_hex("./powersOfTau28_hez_final_12_g1_g2.hex");
     let pk = ProvingKey::<Bn254> { srs_g1, srs_g2: srs_g2.clone() };
 
     let precomputed = ProverPrecomputedData::index(&pk, &mimc7.cts, index, &c, table_size);
@@ -77,6 +79,8 @@ pub async fn test_semacaulk_verifier() {
         nullifier_hash,
         signal_hash,
     };
+    //println!("{}", pk.srs_g1[table_size].clone());
+    //println!("{}", srs_g2[1].clone());
 
     let proof = Prover::prove(
         &pk,

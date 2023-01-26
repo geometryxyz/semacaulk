@@ -25,6 +25,7 @@ use crate::{
 };
 use crate::contracts::compute_signal_hash;
 use crate::contracts::format::proof_for_semacaulk::{ProofForSemacaulk, format_proof};
+use crate::setup::load_srs_from_hex;
 use super::{
     setup_eth_backend,
     EthersClient,
@@ -50,7 +51,7 @@ pub async fn deploy_semacaulk(
         SemacaulkContract, Accumulator<Bn254>, Vec<G1Affine>, Vec<G2Affine>
     ) {
     let zero = compute_zero_leaf::<Fr>();
-    let (srs_g1, srs_g2) = unsafe_setup::<Bn254, StdRng>(table_size, table_size, rng);
+    let (srs_g1, srs_g2) = load_srs_from_hex("./powersOfTau28_hez_final_12_g1_g2.hex");
 
     let lagrange_comms = commit_to_lagrange_bases::<Bn254>(table_size, &srs_g1);
 
@@ -82,7 +83,7 @@ pub async fn test_semacaulk_insert_and_broadcast() {
 
     // During development, remember to update Constants.sol's SRS values if you change the table
     // size!
-    let table_size = 1024;
+    let table_size = 2048;
     let mut rng = test_rng();
     let mimc7 = init_mimc7::<Fr>();
 
