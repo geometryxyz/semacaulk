@@ -10,6 +10,7 @@ pub mod kzg;
 pub mod layouter;
 pub mod mimc7;
 pub mod multiopen;
+pub mod setup;
 pub mod prover;
 pub mod verifier;
 pub mod rng;

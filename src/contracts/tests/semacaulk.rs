@@ -231,7 +231,7 @@ pub async fn test_semacaulk_insert_and_broadcast() {
     assert_eq!(result.status.unwrap(), ethers::types::U64::from(1));
 
     // Attempt to double-signal
-    let result = semacaulk_contract
+    let _result = semacaulk_contract
         .broadcast_signal(
             ethers::types::Bytes::from(String::from(signal).as_bytes().to_vec()),
             p_to_p(&format_proof(&proof)),
