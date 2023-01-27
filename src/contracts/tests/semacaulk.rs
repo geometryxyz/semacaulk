@@ -245,6 +245,10 @@ pub async fn test_semacaulk_insert_and_broadcast() {
         .expect("no receipt found");
 
     assert_eq!(result.status.unwrap(), ethers::types::U64::from(1));
+    println!(
+        "Gas used by broadcastSignal(): {:?}",
+        result.gas_used.unwrap()
+    );
 
     // Attempt to double-signal
     let _result = semacaulk_contract
