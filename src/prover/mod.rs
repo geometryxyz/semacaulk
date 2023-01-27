@@ -11,9 +11,6 @@ use ark_poly::{
 use ark_std::{cfg_into_iter, UniformRand};
 use rand::RngCore;
 
-pub mod structs;
-pub use structs::*;
-
 use crate::{
     constants::{EXTENDED_DOMAIN_FACTOR, NUMBER_OF_MIMC_ROUNDS, SUBGROUP_SIZE},
     gates::{ExternalNullifierGate, KeyCopyGate, KeyEquality, Mimc7RoundGate, NullifierGate},
@@ -27,7 +24,32 @@ use crate::{
     utils::shift_dense_poly,
 };
 
+pub mod structs;
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, Read, SerializationError, Write};
+pub use structs::*;
+
+type OpeningRoundResult = (
+    MultiopenProof<Bn254>,
+    Fr,
+    Fr,
+    Fr,
+    Fr,
+    Fr,
+    Fr,
+    Fr,
+    Fr,
+    Fr,
+    Fr,
+    Fr,
+    Fr,
+    Fr,
+    Fr,
+    Fr,
+    Fr,
+    Fr,
+    DensePolynomial<Fr>,
+    DensePolynomial<Fr>,
+);
 
 #[derive(CanonicalSerialize, CanonicalDeserialize, Clone, Debug)]
 pub struct WitnessInput<F: PrimeField> {
@@ -76,29 +98,6 @@ pub struct State<'a, E: PairingEngine> {
     pub(crate) ci_of_ui: Option<DensePolynomial<E::Fr>>,
     pub(crate) h: Option<DensePolynomial<E::Fr>>,
 }
-
-type OpeningRoundResult = (
-    MultiopenProof<Bn254>,
-    Fr,
-    Fr,
-    Fr,
-    Fr,
-    Fr,
-    Fr,
-    Fr,
-    Fr,
-    Fr,
-    Fr,
-    Fr,
-    Fr,
-    Fr,
-    Fr,
-    Fr,
-    Fr,
-    Fr,
-    DensePolynomial<Fr>,
-    DensePolynomial<Fr>,
-);
 
 pub struct Prover {}
 
@@ -171,33 +170,31 @@ impl Prover {
         );
         let mut transcript = Transcript::new_transcript();
 
-        // TODO: append public data
-
         let (w0, key, w1, w2) = Self::assignment_round(&mut state);
 
-        transcript.update_with_g1(&w0);
-        transcript.update_with_g1(&key);
-        transcript.update_with_g1(&w1);
-        transcript.update_with_g1(&w2);
+        transcript.round_1(
+            [&w0, &key, &w1, &w2],
+            [
+                public_input.external_nullifier,
+                public_input.nullifier_hash,
+                public_input.signal_hash,
+            ],
+        );
 
         let v = transcript.get_challenge();
 
         let quotient = Self::quotient_round(&mut state, v);
 
-        transcript.update_with_g1(&quotient);
-
         let (zi, ci, u_prime) = Self::caulk_plus_first_round(&mut state, zk_rng);
 
-        transcript.update_with_g1(&zi);
-        transcript.update_with_g1(&ci);
-        transcript.update_with_g1(&u_prime);
+        transcript.round_2([&quotient, &zi, &ci, &u_prime]);
 
         let hi_1 = transcript.get_challenge();
         let hi_2 = transcript.get_challenge();
 
         let (w, h) = Self::caulk_plus_second_round(&mut state, hi_1, hi_2);
-        transcript.update_with_g2(&w);
-        transcript.update_with_g1(&h);
+
+        transcript.round_3(&w, &h);
 
         let alpha = transcript.get_challenge();
 
@@ -226,6 +223,9 @@ impl Prover {
 
         // Sanity check multiopen_proof
         let mut transcript = Transcript::new_transcript();
+        transcript.update_with_u256(public_input.external_nullifier);
+        transcript.update_with_u256(public_input.nullifier_hash);
+        transcript.update_with_u256(public_input.signal_hash);
         transcript.update_with_g1(&w0);
         transcript.update_with_g1(&key);
         transcript.update_with_g1(&w1);
@@ -413,13 +413,13 @@ impl Prover {
                 .collect();
 
         let mut numerator_coset_evals = vec![E::Fr::zero(); extended_coset_domain.size()];
-        for (i, numerator_coset_evals_i) in numerator_coset_evals
+        for (i, numerator_coset_eval_i) in numerator_coset_evals
             .iter_mut()
             .enumerate()
             .take(extended_coset_domain.size())
         {
             // Gate 0:
-            *numerator_coset_evals_i += v_powers[0]
+            *numerator_coset_eval_i += v_powers[0]
                 * Mimc7RoundGate::compute_in_coset(
                     i,
                     &w0_coset_evals,
@@ -429,7 +429,7 @@ impl Prover {
                 );
 
             // Gate 1:
-            *numerator_coset_evals_i += v_powers[1]
+            *numerator_coset_eval_i += v_powers[1]
                 * Mimc7RoundGate::compute_in_coset(
                     i,
                     &w1_coset_evals,
@@ -439,7 +439,7 @@ impl Prover {
                 );
 
             // Gate 2:
-            *numerator_coset_evals_i += v_powers[2]
+            *numerator_coset_eval_i += v_powers[2]
                 * Mimc7RoundGate::compute_in_coset(
                     i,
                     &w2_coset_evals,
@@ -449,7 +449,7 @@ impl Prover {
                 );
 
             // Gate 3:
-            *numerator_coset_evals_i += v_powers[3]
+            *numerator_coset_eval_i += v_powers[3]
                 * KeyEquality::compute_in_coset(
                     i,
                     &key_coset_evals,
@@ -457,7 +457,7 @@ impl Prover {
                 );
 
             // Gate 4:
-            *numerator_coset_evals_i += v_powers[4]
+            *numerator_coset_eval_i += v_powers[4]
                 * KeyCopyGate::compute_in_coset(
                     i,
                     &w0_coset_evals,
@@ -466,7 +466,7 @@ impl Prover {
                 );
 
             // Gate 5:
-            *numerator_coset_evals_i += v_powers[5]
+            *numerator_coset_eval_i += v_powers[5]
                 * NullifierGate::compute_in_coset(
                     i,
                     &w2_coset_evals,
@@ -476,7 +476,7 @@ impl Prover {
                 );
 
             // Gate 6:
-            *numerator_coset_evals_i += v_powers[6]
+            *numerator_coset_eval_i += v_powers[6]
                 * ExternalNullifierGate::compute_in_coset(
                     i,
                     &w2_coset_evals,
@@ -734,30 +734,25 @@ impl Prover {
 
         assert_eq!(p2_opening, Fr::zero());
 
-        // BEGIN: append all openings to transcipt
-        transcript.update_with_u256(w0_openings[0]);
-        transcript.update_with_u256(w0_openings[1]);
-        transcript.update_with_u256(w0_openings[2]);
-
-        transcript.update_with_u256(w1_openings[0]);
-        transcript.update_with_u256(w1_openings[1]);
-        transcript.update_with_u256(w1_openings[2]);
-
-        transcript.update_with_u256(w2_openings[0]);
-        transcript.update_with_u256(w2_openings[1]);
-        transcript.update_with_u256(w2_openings[2]);
-
-        transcript.update_with_u256(key_openings[0]);
-        transcript.update_with_u256(key_openings[1]);
-
-        transcript.update_with_u256(q_mimc_opening);
-        transcript.update_with_u256(c_opening);
-        transcript.update_with_u256(quotient_opening);
-
-        transcript.update_with_u256(u_prime_opening);
-        transcript.update_with_u256(p1_opening);
-        transcript.update_with_u256(p2_opening);
-        // END: append all openings to transcipt
+        transcript.round_4([
+            w0_openings[0],
+            w0_openings[1],
+            w0_openings[2],
+            w1_openings[0],
+            w1_openings[1],
+            w1_openings[2],
+            w2_openings[0],
+            w2_openings[1],
+            w2_openings[2],
+            key_openings[0],
+            key_openings[1],
+            q_mimc_opening,
+            c_opening,
+            quotient_opening,
+            u_prime_opening,
+            p1_opening,
+            p2_opening,
+        ]);
 
         // compute proof
         let m = MultiopenProver::prove(

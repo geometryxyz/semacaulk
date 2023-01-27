@@ -1,9 +1,7 @@
+use super::utils::compute_lagrange_basis_commitments;
 use crate::keccak_tree::KeccakTree;
-use crate::kzg::commit;
-use crate::utils::construct_lagrange_basis;
 use ark_ec::{AffineCurve, PairingEngine, ProjectiveCurve};
 use ark_ff::{PrimeField, ToBytes};
-use ark_poly::{EvaluationDomain, GeneralEvaluationDomain};
 use ethers::core::utils::keccak256;
 use ethers::types::U256;
 use serde::{Deserialize, Serialize};
@@ -78,22 +76,13 @@ pub fn compute_zero_leaf<F: PrimeField>() -> F {
     F::from_be_bytes_mod_order(&z)
 }
 
-// In production, this would be taken from an existing trusted setup, so srs_g1 is an argument
-// to this function
 pub fn commit_to_lagrange_bases<E: PairingEngine>(
     domain_size: usize,
     srs_g1: &[E::G1Affine],
 ) -> Vec<E::G1Affine> {
-    let domain = GeneralEvaluationDomain::<E::Fr>::new(domain_size).unwrap();
-    let elems: Vec<E::Fr> = domain.elements().collect();
-    let bases = construct_lagrange_basis(&elems);
+    let tau_powers: Vec<E::G1Affine> = srs_g1.iter().take(domain_size).copied().collect();
 
-    let comm_lagrnage_bases: Vec<_> = bases
-        .iter()
-        .map(|base| commit(srs_g1, base).into_affine())
-        .collect();
-
-    comm_lagrnage_bases
+    compute_lagrange_basis_commitments(tau_powers)
 }
 
 // Hash the X and Y values of a vector of Lagrange commitments, and insert them into a tree.

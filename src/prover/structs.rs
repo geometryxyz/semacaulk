@@ -145,5 +145,6 @@ pub struct ProvingKey<E: PairingEngine> {
 pub struct PublicData<E: PairingEngine> {
     pub(crate) accumulator: E::G1Affine,
     pub(crate) external_nullifier: E::Fr,
+    pub(crate) signal_hash: E::Fr,
     pub(crate) nullifier_hash: E::Fr,
 }

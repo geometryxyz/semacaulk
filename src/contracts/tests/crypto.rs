@@ -1,5 +1,8 @@
 use super::setup_eth_backend;
-use crate::bn_solidity_utils::{f_to_u256, format_g1, format_g2};
+use crate::{
+    bn_solidity_utils::{f_to_u256, format_g1, format_g2},
+    contracts::compute_signal_hash,
+};
 use ark_bn254::{Bn254, Fq12, Fr, G1Affine, G2Affine};
 use ark_ec::AffineCurve;
 use ark_ec::PairingEngine;
@@ -24,6 +27,14 @@ abigen!(
     TestLagrange,
     "./src/contracts/out/TestLagrange.sol/TestLagrange.json",
 );
+
+#[test]
+pub async fn test_signal_hashing() {
+    let signal = "signal";
+    let expected = U256::from("0x10537c1131cd3f3903a4b2a61be9a331416afa5da19a5b0c18e81f0e9b3381");
+    let signal_hash = compute_signal_hash(signal);
+    assert_eq!(signal_hash, expected);
+}
 
 #[test]
 pub async fn test_u256_conversion() {

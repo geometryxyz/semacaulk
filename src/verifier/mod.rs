@@ -1,6 +1,6 @@
 use crate::constants::{NUMBER_OF_MIMC_ROUNDS, SUBGROUP_SIZE};
 use crate::multiopen::verifier::Verifier as MultiopenVerifier;
-use crate::prover::Proof;
+use crate::prover::{Proof, PublicData};
 use crate::transcript::Transcript;
 use ark_bn254::{Bn254, Fq12, Fr, G1Affine, G2Affine};
 use ark_ec::{AffineCurve, PairingEngine, ProjectiveCurve};
@@ -17,27 +17,38 @@ impl Verifier {
         a2_srs_g1: G1Affine,
         x_g2: G2Affine,
         accumulator: G1Affine,
-        external_nullifier: Fr,
-        nullifier_hash: Fr,
+        public_input: &PublicData<Bn254>,
     ) -> bool {
+        let external_nullifier = public_input.external_nullifier;
+        let nullifier_hash = public_input.nullifier_hash;
+        let signal_hash = public_input.signal_hash;
+
         let mut transcript = Transcript::new_transcript();
 
-        // Derive challenges
-        transcript.update_with_g1(&proof.commitments.w0);
-        transcript.update_with_g1(&proof.commitments.key);
-        transcript.update_with_g1(&proof.commitments.w1);
-        transcript.update_with_g1(&proof.commitments.w2);
+        // Update transcript and derive challenges
+        transcript.round_1(
+            [
+                &proof.commitments.w0,
+                &proof.commitments.key,
+                &proof.commitments.w1,
+                &proof.commitments.w2,
+            ],
+            [external_nullifier, nullifier_hash, signal_hash],
+        );
 
         let v = transcript.get_challenge();
-        transcript.update_with_g1(&proof.commitments.quotient);
-        transcript.update_with_g1(&proof.commitments.zi);
-        transcript.update_with_g1(&proof.commitments.ci);
-        transcript.update_with_g1(&proof.commitments.u_prime);
+
+        transcript.round_2([
+            &proof.commitments.quotient,
+            &proof.commitments.zi,
+            &proof.commitments.ci,
+            &proof.commitments.u_prime,
+        ]);
+
         let _hi_1 = transcript.get_challenge();
         let hi_2 = transcript.get_challenge();
 
-        transcript.update_with_g2(&proof.commitments.w);
-        transcript.update_with_g1(&proof.commitments.h);
+        transcript.round_3(&proof.commitments.w, &proof.commitments.h);
 
         let alpha = transcript.get_challenge();
 
@@ -134,28 +145,25 @@ impl Verifier {
             return false;
         }
 
-        transcript.update_with_u256(proof.openings.w0_0);
-        transcript.update_with_u256(proof.openings.w0_1);
-        transcript.update_with_u256(proof.openings.w0_2);
-
-        transcript.update_with_u256(proof.openings.w1_0);
-        transcript.update_with_u256(proof.openings.w1_1);
-        transcript.update_with_u256(proof.openings.w1_2);
-
-        transcript.update_with_u256(proof.openings.w2_0);
-        transcript.update_with_u256(proof.openings.w2_1);
-        transcript.update_with_u256(proof.openings.w2_2);
-
-        transcript.update_with_u256(proof.openings.key_0);
-        transcript.update_with_u256(proof.openings.key_1);
-
-        transcript.update_with_u256(q_mimc_opening);
-        transcript.update_with_u256(c_opening);
-        transcript.update_with_u256(proof.openings.quotient);
-
-        transcript.update_with_u256(proof.openings.u_prime);
-        transcript.update_with_u256(proof.openings.p1);
-        transcript.update_with_u256(proof.openings.p2);
+        transcript.round_4([
+            proof.openings.w0_0,
+            proof.openings.w0_1,
+            proof.openings.w0_2,
+            proof.openings.w1_0,
+            proof.openings.w1_1,
+            proof.openings.w1_2,
+            proof.openings.w2_0,
+            proof.openings.w2_1,
+            proof.openings.w2_2,
+            proof.openings.key_0,
+            proof.openings.key_1,
+            q_mimc_opening,
+            c_opening,
+            proof.openings.quotient,
+            proof.openings.u_prime,
+            proof.openings.p1,
+            proof.openings.p2,
+        ]);
 
         let multiopen_final_poly = MultiopenVerifier::compute_final_poly(
             &mut transcript,

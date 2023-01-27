@@ -71,6 +71,68 @@ library TranscriptLibrary {
         }
     }
 
+    function round1(
+        Transcript memory transcript, 
+        Types.Proof memory proof,
+        uint256[3] memory publicInputs
+    ) internal pure {
+        updateWithU256(transcript, publicInputs[0]);
+        updateWithU256(transcript, publicInputs[1]);
+        updateWithU256(transcript, publicInputs[2]);
+        updateWithG1(transcript, proof.commitments.w0);
+        updateWithG1(transcript, proof.commitments.key);
+        updateWithG1(transcript, proof.commitments.w1);
+        updateWithG1(transcript, proof.commitments.w2);
+    }
+
+    function round2(
+        Transcript memory transcript, 
+        Types.Proof memory proof
+    ) internal pure {
+        TranscriptLibrary.updateWithG1(transcript, proof.commitments.quotient);
+        TranscriptLibrary.updateWithG1(transcript, proof.commitments.zi);
+        TranscriptLibrary.updateWithG1(transcript, proof.commitments.ci);
+        TranscriptLibrary.updateWithG1(transcript, proof.commitments.u_prime);
+    }
+
+    function round3(
+        Transcript memory transcript, 
+        Types.Proof memory proof
+    ) internal pure {
+        TranscriptLibrary.updateWithG2(transcript, proof.commitments.w);
+        TranscriptLibrary.updateWithG1(transcript, proof.commitments.h);
+    }
+
+    function round4(
+        Transcript memory transcript, 
+        Types.Proof memory proof
+    ) internal pure {
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.w0_0);
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.w0_1);
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.w0_2);
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.w1_0);
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.w1_1);
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.w1_2);
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.w2_0);
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.w2_1);
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.w2_2);
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.key_0);
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.key_1);
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.q_mimc);
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.c);
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.quotient);
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.u_prime);
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.p1);
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.p2);
+    }
+
+    function round5(
+        Transcript memory transcript, 
+        Types.Proof memory proof
+    ) internal pure {
+        TranscriptLibrary.updateWithG1(transcript, proof.multiopenProof.f_cm);
+    }
+
     function updateWithG2(Transcript memory self, Types.G2Point memory p) internal pure {
         bytes memory dataPtr = self.data;
         assembly {

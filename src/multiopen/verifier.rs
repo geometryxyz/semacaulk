@@ -148,7 +148,7 @@ impl Verifier {
             .take(3)
             .collect();
 
-        transcript.update_with_g1(&proof.f_cm);
+        transcript.round_5(&proof.f_cm);
 
         let x3 = transcript.get_challenge();
         let x4 = transcript.get_challenge();

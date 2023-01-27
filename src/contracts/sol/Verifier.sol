@@ -11,67 +11,43 @@ contract Verifier is BN254 {
     function verify(
         Types.Proof memory proof,
         Types.G1Point memory accumulator,
-        uint256 externalNullifier,
-        uint256 nullifierHash
+        uint256[3] memory publicInputs
     ) public view returns (bool) {
         uint256 p = Constants.PRIME_R;
+
+        require(publicInputs[0] < Constants.PRIME_R); // externalNullifier
+        require(publicInputs[1] < Constants.PRIME_R); // nullifierHash
+        require(publicInputs[2] < Constants.PRIME_R); // signalHash
+        
         TranscriptLibrary.Transcript memory transcript = TranscriptLibrary.newTranscript();
         Types.ChallengeTranscript memory challengeTranscript;
         Types.VerifierTranscript memory verifierTranscript;
 
-        TranscriptLibrary.updateWithG1(transcript, proof.commitments.w0);
-        TranscriptLibrary.updateWithG1(transcript, proof.commitments.key);
-        TranscriptLibrary.updateWithG1(transcript, proof.commitments.w1);
-        TranscriptLibrary.updateWithG1(transcript, proof.commitments.w2);
+        TranscriptLibrary.round1(transcript, proof, publicInputs);
 
         challengeTranscript.v = TranscriptLibrary.getChallenge(transcript);
 
-        TranscriptLibrary.updateWithG1(transcript, proof.commitments.quotient);
-        TranscriptLibrary.updateWithG1(transcript, proof.commitments.zi);
-        TranscriptLibrary.updateWithG1(transcript, proof.commitments.ci);
-        TranscriptLibrary.updateWithG1(transcript, proof.commitments.u_prime);
+        TranscriptLibrary.round2(transcript, proof);
 
         TranscriptLibrary.getChallenge(transcript);
         challengeTranscript.hi_2 = TranscriptLibrary.getChallenge(transcript);
 
-        TranscriptLibrary.updateWithG2(transcript, proof.commitments.w);
-        TranscriptLibrary.updateWithG1(transcript, proof.commitments.h);
+        TranscriptLibrary.round3(transcript, proof);
 
         challengeTranscript.alpha = TranscriptLibrary.getChallenge(transcript);
 
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.w0_0);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.w0_1);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.w0_2);
-
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.w1_0);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.w1_1);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.w1_2);
-
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.w2_0);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.w2_1);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.w2_2);
-
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.key_0);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.key_1);
-
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.q_mimc);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.c);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.quotient);
-
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.u_prime);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.p1);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.p2);
+        TranscriptLibrary.round4(transcript, proof);
 
         challengeTranscript.x1 = TranscriptLibrary.getChallenge(transcript);
         challengeTranscript.x2 = TranscriptLibrary.getChallenge(transcript);
 
-        TranscriptLibrary.updateWithG1(transcript, proof.multiopenProof.f_cm);
+        TranscriptLibrary.round5(transcript, proof);
 
         challengeTranscript.x3 = TranscriptLibrary.getChallenge(transcript);
         challengeTranscript.x4 = TranscriptLibrary.getChallenge(transcript);
         challengeTranscript.s = TranscriptLibrary.getChallenge(transcript);
-        uint256[8] memory inverted;
         
+        uint256[8] memory inverted;
         {
          // Values needed before batch inversion:
          // - d (so we can invert d - 1)
@@ -168,8 +144,7 @@ contract Verifier is BN254 {
                 proof,
                 verifierTranscript,
                 challengeTranscript.v,
-                nullifierHash,
-                externalNullifier
+                publicInputs
             ),
             "Verifier: gate check failed"
         );
@@ -732,8 +707,7 @@ contract Verifier is BN254 {
         Types.Proof memory proof,
         Types.VerifierTranscript memory verifierTranscript,
         uint256 v_challenge,
-        uint256 nullifierHash,
-        uint256 externalNullifier
+        uint256[3] memory publicInputs
     ) internal pure returns (bool) {
         uint256 p = Constants.PRIME_R;
         uint256 rhs;
@@ -827,6 +801,8 @@ contract Verifier is BN254 {
             // Gate 5: l0 * (nullifierHash - w2_openings[0] - w2_openings[2] - (2 * key_openings[0])) 
             let w2_0 := mload(add(openingsPtr, 0x180))
             let w2_2 := mload(add(openingsPtr, 0x1c0))
+            let nullifierHash := mload(add(publicInputs, 0x20))
+            let externalNullifier := mload(publicInputs)
             let two_key_0 := addmod(key_0, key_0, p)
             let r := addmod(w2_0, w2_2, p)
             r := addmod(r, two_key_0, p)
