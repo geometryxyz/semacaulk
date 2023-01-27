@@ -1,9 +1,11 @@
-mod tests;
+#[cfg(test)]
 mod format;
+#[cfg(test)]
+mod tests;
 
-use std::ops::Shr;
 use ethers::core::utils::keccak256;
 use ethers::types::U256;
+use std::ops::Shr;
 
 pub fn compute_signal_hash(signal: &str) -> U256 {
     let signal_bytes = signal.as_bytes();

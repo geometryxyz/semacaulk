@@ -33,11 +33,11 @@ impl<F: PrimeField> Layouter<F> {
         identity_nullifier: F,
         identity_trapdoor: F,
         external_nullifier: F,
-        c: &Vec<F>,
+        c: &[F],
         rng: &mut R,
     ) -> Assignment<F> {
         // Raises a given field element to the power of 7
-        let pow_7 = |x: F| x.pow(&[7, 0, 0, 0]);
+        let pow_7 = |x: F| x.pow([7, 0, 0, 0]);
 
         //---------------------------------------------------------------------
         // Assign the nullifier column

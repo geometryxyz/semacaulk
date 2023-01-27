@@ -8,7 +8,7 @@ use std::{cmp::max, iter};
 // Unsafe setup only for G1 points
 pub fn unsafe_setup_g1<E: PairingEngine, R: RngCore>(size: usize, rng: &mut R) -> Vec<E::G1Affine> {
     let tau = E::Fr::rand(rng);
-    let powers_of_tau: Vec<E::Fr> = iter::successors(Some(E::Fr::one()), |p| Some(p.clone() * tau))
+    let powers_of_tau: Vec<E::Fr> = iter::successors(Some(E::Fr::one()), |p| Some(*p * tau))
         .take(size)
         .collect();
 
@@ -30,7 +30,7 @@ pub fn unsafe_setup<E: PairingEngine, R: RngCore>(
 ) -> (Vec<E::G1Affine>, Vec<E::G2Affine>) {
     let tau = E::Fr::rand(rng);
     let size = max(max_power_g1 + 1, max_power_g2 + 1);
-    let powers_of_tau: Vec<E::Fr> = iter::successors(Some(E::Fr::one()), |p| Some(p.clone() * tau))
+    let powers_of_tau: Vec<E::Fr> = iter::successors(Some(E::Fr::one()), |p| Some(*p * tau))
         .take(size)
         .collect();
 
@@ -60,7 +60,7 @@ pub fn commit<G: AffineCurve>(srs: &[G], poly: &DensePolynomial<G::ScalarField>)
         );
     }
     let coeff_scalars: Vec<_> = poly.coeffs.iter().map(|c| c.into_repr()).collect();
-    VariableBaseMSM::multi_scalar_mul(&srs, &coeff_scalars)
+    VariableBaseMSM::multi_scalar_mul(srs, &coeff_scalars)
 }
 
 pub fn open<G: AffineCurve>(

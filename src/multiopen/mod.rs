@@ -1,5 +1,5 @@
 /*
-   For detailed spec check: 
+   For detailed spec check:
     - https://hackmd.io/D-bL6-oNSbSej7Ao_-9PLA?view
    For background in multiopen argument check:
     - https://zcash.github.io/halo2/design/proving-system/multipoint-opening.html
@@ -37,7 +37,7 @@ mod multiopen_tests {
     };
 
     use super::{prover::Prover, verifier::Verifier};
-    use crate::constants::{SUBGROUP_SIZE, NUMBER_OF_MIMC_ROUNDS};
+    use crate::constants::{NUMBER_OF_MIMC_ROUNDS, SUBGROUP_SIZE};
 
     #[test]
     fn test_full_multiopen_roundtrip() {
@@ -180,6 +180,6 @@ mod multiopen_tests {
             omega_n_alpha,
             srs_g2[1],
         );
-        assert_eq!(verification_result, true);
+        assert!(verification_result);
     }
 }

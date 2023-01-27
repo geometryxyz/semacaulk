@@ -122,7 +122,7 @@ mod precomputed_test {
             }
 
             let denom_inv = denom.inverse().unwrap();
-            w2 = w2 + w2_i.mul(denom_inv);
+            w2 += w2_i.mul(denom_inv);
         }
         w2.into()
     }
@@ -146,7 +146,7 @@ mod precomputed_test {
             }
 
             let denom_inv = denom.inverse().unwrap();
-            w1 = w1 + w1_i.mul(denom_inv);
+            w1 += w1_i.mul(denom_inv);
         }
 
         w1.into()
@@ -207,7 +207,7 @@ mod precomputed_test {
 
         for (i, (c, cf)) in c_evals.iter().zip(ci_fft_evals.iter()).enumerate() {
             if c == cf {
-                assert_eq!(true, indices.contains(&i));
+                assert!(indices.contains(&i));
             }
         }
 
@@ -336,7 +336,7 @@ mod precomputed_test {
         let ci_commitment = commit(&srs_g1, &ci);
 
         let c_blinder = &DensePolynomial::from_coefficients_slice(&[r2, r3, r4]);
-        let c_blinder_commitment = commit(&srs_g2, &c_blinder);
+        let c_blinder_commitment = commit(&srs_g2, c_blinder);
 
         let mut precomputed = Precomputed::<Bn254>::empty();
 
