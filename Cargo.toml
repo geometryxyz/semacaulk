@@ -30,3 +30,8 @@ tokio = { version = "1.22.0", features = ["macros"] }
 edition = "2021"
 name = "setup"
 path = "src/setup/main.rs"
+
+[[bin]]
+edition = "2021"
+name = "demo"
+path = "src/demo/main.rs"
