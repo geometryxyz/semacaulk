@@ -16,15 +16,14 @@ library Constants {
     uint256 constant OMEGA = 0x16E73DFDAD310991DF5CE19CE85943E01DCB5564B6F24C799D0E470CBA9D1811;
     uint256 constant OMEGA_N = 0x1332CB377D53B9C681AFA4DC09F66BC37E3F2F33DEB33D9B40BD245C971B2447;
 
-    // These values should be overwritten with new ones from a trusted setup.
+    // These values should be replaced with new ones from a trusted setup.
     // During development, remember to update these values if you use
-    // unsafe_setup() and change the table size!
+    // unsafe_setup() or change the table size!
 
-    // srs_g1[2048] x and y from powersOfTau28_hez_final_12_g1_g2.hex
+    // srs_g1[table_size] x and y and srs_g2[1] x0, x1, y0, and y1
+    // from the output of https://github.com/geometryresearch/export-ptau-points
     uint256 constant SRS_G1_T_X = 0x195B22E5A84C5D5A70E8FAEA64DB9BFE8EB57577CFEB3A7798F5470C60B99BED;
     uint256 constant SRS_G1_T_Y = 0x15D250AF555DC3DBF386C1BBDD00D9AB2B6908120041BC75F496A6FBE051A494;
-
-    // srs_g2[1] x0, x1, y0, and y1
     uint256 constant SRS_G2_1_X_0 = 0x26186A2D65EE4D2F9C9A5B91F86597D35F192CD120CAF7E935D8443D1938E23D;
     uint256 constant SRS_G2_1_X_1 = 0x30441FD1B5D3370482C42152A8899027716989A6996C2535BC9F7FEE8AAEF79E;
     uint256 constant SRS_G2_1_Y_0 = 0x1970EA81DD6992ADFBC571EFFB03503ADBBB6A857F578403C6C40E22D65B3C02;

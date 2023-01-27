@@ -1,8 +1,9 @@
-use crate::setup::{g1_str_to_g1, g2_str_to_g2, load_srs_from_hex};
+use crate::setup::{g1_str_to_g1, g2_str_to_g2, load_srs_from_hex, setup};
 
 #[test]
 pub fn test_g1() {
-    let g1_str = "01000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000";
+    //let g1_str = "01000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000";
+    let g1_str = "65C58017927150D104B032050F73EC6A18D1135615069F6A4AFF45847C0D29274A46B7E1C915691021D130F9837D066F30CCCFB9CCBD78EB335382F4591E7E20";
     let g1 = g1_str_to_g1(&String::from(g1_str));
     assert!(g1.is_on_curve());
 }
@@ -18,4 +19,9 @@ pub fn test_g2() {
 pub fn test_load_hex() {
     let (srs_g1, srs_g2) = load_srs_from_hex("./powersOfTau28_hez_final_12_g1_g2.hex");
     assert_eq!(srs_g1.len(), srs_g2.len() + 1);
+}
+
+#[test]
+pub fn test_setup() {
+    let pk = setup(11, "./powersOfTau28_hez_final_12_g1_g2.hex");
 }
