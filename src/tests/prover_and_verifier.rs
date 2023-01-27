@@ -26,6 +26,7 @@ pub fn test_prover_and_verifier() {
     let identity_nullifier = Fr::from(100u64);
     let identity_trapdoor = Fr::from(200u64);
     let external_nullifier = Fr::from(300u64);
+    let signal_hash = Fr::from(888u64);
 
     let nullifier_hash =
         mimc7.multi_hash(&[identity_nullifier, external_nullifier], Fr::zero());
@@ -63,6 +64,7 @@ pub fn test_prover_and_verifier() {
         accumulator: accumulator,
         external_nullifier,
         nullifier_hash,
+        signal_hash,
     };
 
     let proof = Prover::prove(
@@ -80,8 +82,7 @@ pub fn test_prover_and_verifier() {
         pk.srs_g1[table_size].clone(),
         srs_g2[1].clone(),
         accumulator,
-        external_nullifier,
-        nullifier_hash,
+        &public_input,
     );
 
     assert_eq!(is_valid, true);

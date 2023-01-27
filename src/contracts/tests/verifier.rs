@@ -17,7 +17,7 @@ use crate::{
 };
 use crate::prover::prover::{Prover, WitnessInput};
 use crate::verifier::{Verifier as SemacaulkVerifier};
-use crate::contracts::format_proof;
+use crate::contracts::format::proof_for_verifier::{ProofForVerifier, format_proof};
 use super::setup_eth_backend;
 
 abigen!(
@@ -37,6 +37,7 @@ pub async fn test_semacaulk_verifier() {
     let identity_nullifier = Fr::from(123u64);
     let identity_trapdoor = Fr::from(456u64);
     let external_nullifier = Fr::from(789u64);
+    let signal_hash = Fr::from(888u64);
 
     let nullifier_hash =
         mimc7.multi_hash(&[identity_nullifier, external_nullifier], Fr::zero());
@@ -71,9 +72,10 @@ pub async fn test_semacaulk_verifier() {
 
     let accumulator = commit(&pk.srs_g1, &c).into_affine();
     let public_input = PublicData::<Bn254> {
-        accumulator: accumulator,
+        accumulator,
         external_nullifier,
         nullifier_hash,
+        signal_hash,
     };
 
     let proof = Prover::prove(
@@ -91,8 +93,7 @@ pub async fn test_semacaulk_verifier() {
         pk.srs_g1[table_size].clone(),
         srs_g2[1].clone(),
         accumulator,
-        external_nullifier,
-        nullifier_hash,
+        &public_input,
     );
 
     assert_eq!(is_valid, true);
@@ -108,8 +109,11 @@ pub async fn test_semacaulk_verifier() {
             x: f_to_u256(accumulator.x),
             y: f_to_u256(accumulator.y),
         },
-        f_to_u256(external_nullifier),
-        f_to_u256(nullifier_hash),
+        [
+            f_to_u256(external_nullifier),
+            f_to_u256(nullifier_hash),
+            f_to_u256(signal_hash),
+        ],
     ).send()
      .await
      .unwrap()
@@ -125,7 +129,7 @@ pub async fn test_semacaulk_verifier() {
 
 // Get past the type errors that stem from the way that ethers-rs magically brings abigen types in
 // into scope
-fn p_to_p(p: &crate::contracts::verifier::Proof) -> Proof {
+fn p_to_p(p: &ProofForVerifier) -> Proof {
     let m = MultiopenProof {
         q_1_opening: p.multiopen_proof.q_1_opening,
         q_2_opening: p.multiopen_proof.q_2_opening,

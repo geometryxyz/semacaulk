@@ -6,8 +6,9 @@ import { BN254 } from "./BN254.sol";
 import { TranscriptLibrary } from "./Transcript.sol";
 import { Types } from "./Types.sol";
 import { Constants } from "./Constants.sol";
+import { Verifier } from "./Verifier.sol";
 
-contract Semacaulk is KeccakMT, BN254 {
+contract Semacaulk is KeccakMT, BN254, Verifier {
     bytes32 public lagrangeTreeRoot;
     uint256 currentIndex;
     Types.G1Point accumulator;
@@ -19,8 +20,6 @@ contract Semacaulk is KeccakMT, BN254 {
      * preimage and therefore cannot spend funds they do not own.
      * To reproduce this value, run the following in a JS console:
      *
-     * TODO: should this be mod Fq instead of Fr?
-     *
      *  e = require('ethers')
      *  (
      *      BigInt(e.utils.solidityKeccak256(['string'], ['Semacaulk'])) %
@@ -30,11 +29,16 @@ contract Semacaulk is KeccakMT, BN254 {
     uint256 NOTHING_UP_MY_SLEEVE_ZERO = 
         uint256(keccak256(abi.encodePacked('Semacaulk'))) % Constants.PRIME_R;
 
+    mapping (uint256 => bool) public nullifierHashHistory;
+
     // Custom errors
     error RootMismatch(bytes32 _generatedRoot);
+    error NullifierHashAlreadySeen(uint256 _nullifierHash);
+    error InvalidProof();
 
     // Events
     event InsertIdentity(uint256 indexed _index, uint256 indexed _identityCommitment);
+    event BroadcastSignal(uint256 indexed _signalHash, uint256 indexed _externalNullifier);
 
     constructor(
         bytes32 _lagrangeTreeRoot,
@@ -57,7 +61,7 @@ contract Semacaulk is KeccakMT, BN254 {
         uint256 index = currentIndex;
         bytes32 lagrangeLeaf = keccak256(abi.encodePacked(_lagrangeLeafX, _lagrangeLeafY));
 
-        // 1. Verify that _lagrangeLeaf exists in the lagrange tree at index currentIndex
+        // 1. Verify that _lagrangeLeaf is a leaf of the tree at currentIndex
         bytes32 generatedRoot = genRootFromPath(
             index,
             lagrangeLeaf,
@@ -87,7 +91,42 @@ contract Semacaulk is KeccakMT, BN254 {
     }
 
     function broadcastSignal(
+        bytes memory _signal,
+        Types.Proof memory proof,
+        uint256 _nullifierHash,
+        uint256 _externalNullifier
     ) public {
+        // Check whether the nullifier hash has been seen
+        if (nullifierHashHistory[_nullifierHash]) {
+            revert NullifierHashAlreadySeen({ _nullifierHash: _nullifierHash });
+        }
+
+        uint256 signalHash = hashSignal(_signal);
+
+        uint256[3] memory publicInputs;
+        publicInputs[0] = _externalNullifier;
+        publicInputs[1] = _nullifierHash;
+        publicInputs[2] = signalHash;
+
+        // Verify the proof and revert if it is invalid
+        bool isValid = verify(proof, getAccumulator(), publicInputs);
+        if (!isValid) {
+            revert InvalidProof();
+        }
+
+        // Store the nullifier hash to prevent double-signalling
+        nullifierHashHistory[_nullifierHash] = true;
+
+        emit BroadcastSignal(signalHash, _externalNullifier);
+    }
+
+    /*
+     * Hash a bytes array with Keccak256 and shift the result by 8 bits so that
+     * it can fit within the BN254 field size.
+     * @param _signal The signal to hash
+     */
+    function hashSignal(bytes memory _signal) internal pure returns (uint256) {
+        return uint256(keccak256(_signal)) >> 8;
     }
 
     function getCurrentIndex() public view returns (uint256) {

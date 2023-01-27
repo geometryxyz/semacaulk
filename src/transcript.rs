@@ -21,6 +21,36 @@ impl Transcript {
         [0u8; 32]
     }
 
+    pub fn round_1(&mut self, g1_vals: [&G1Affine; 4], f_vals: [Fr; 3]) {
+        for val in f_vals {
+            self.update_with_u256(val);
+        }
+        for val in g1_vals {
+            self.update_with_g1(val);
+        }
+    }
+
+    pub fn round_2(&mut self, g1_vals: [&G1Affine; 4]) {
+        for val in g1_vals {
+            self.update_with_g1(val);
+        }
+    }
+
+    pub fn round_3(&mut self, w: &G2Affine, h: &G1Affine) {
+        self.update_with_g2(w);
+        self.update_with_g1(h);
+    }
+
+    pub fn round_4(&mut self, f_vals: [Fr; 17]) {
+        for val in f_vals {
+            self.update_with_u256(val);
+        }
+    }
+
+    pub fn round_5(&mut self, f_cm: &G1Affine) {
+        self.update_with_g1(f_cm);
+    }
+
     pub fn update_with_u256(&mut self, x: Fr) {
         let mut x_bytes = x.into_repr().to_bytes_be();
         self.data.append(&mut x_bytes);

@@ -141,34 +141,32 @@ impl Prover {
         let mut state = Self::init(pk, witness, assignment, public_input, precomputed, table_size);
         let mut transcript = Transcript::new_transcript();
 
-        // TODO: append public data
-
         let (w0, key, w1, w2) = Self::assignment_round(&mut state);
 
-        transcript.update_with_g1(&w0);
-        transcript.update_with_g1(&key);
-        transcript.update_with_g1(&w1);
-        transcript.update_with_g1(&w2);
+        transcript.round_1(
+            [&w0, &key, &w1, &w2],
+            [
+                public_input.external_nullifier,
+                public_input.nullifier_hash,
+                public_input.signal_hash,
+            ],
+        );
 
         let v = transcript.get_challenge();
 
         let quotient = Self::quotient_round(&mut state, v);
 
-        transcript.update_with_g1(&quotient);
-
         let (zi, ci, u_prime) =
             Self::caulk_plus_first_round(&mut state, zk_rng);
 
-        transcript.update_with_g1(&zi);
-        transcript.update_with_g1(&ci);
-        transcript.update_with_g1(&u_prime);
+        transcript.round_2([&quotient, &zi, &ci, &u_prime]);
 
         let hi_1 = transcript.get_challenge();
         let hi_2 = transcript.get_challenge();
 
         let (w, h) = Self::caulk_plus_second_round(&mut state, hi_1, hi_2);
-        transcript.update_with_g2(&w);
-        transcript.update_with_g1(&h);
+
+        transcript.round_3(&w, &h);
 
         let alpha = transcript.get_challenge();
 
@@ -197,6 +195,9 @@ impl Prover {
 
         // Sanity check multiopen_proof
         let mut transcript = Transcript::new_transcript();
+        transcript.update_with_u256(public_input.external_nullifier);
+        transcript.update_with_u256(public_input.nullifier_hash);
+        transcript.update_with_u256(public_input.signal_hash);
         transcript.update_with_g1(&w0);
         transcript.update_with_g1(&key);
         transcript.update_with_g1(&w1);
@@ -705,30 +706,25 @@ impl Prover {
 
         assert_eq!(p2_opening, Fr::zero());
 
-        // BEGIN: append all openings to transcipt
-        transcript.update_with_u256(w0_openings[0]);
-        transcript.update_with_u256(w0_openings[1]);
-        transcript.update_with_u256(w0_openings[2]);
-
-        transcript.update_with_u256(w1_openings[0]);
-        transcript.update_with_u256(w1_openings[1]);
-        transcript.update_with_u256(w1_openings[2]);
-
-        transcript.update_with_u256(w2_openings[0]);
-        transcript.update_with_u256(w2_openings[1]);
-        transcript.update_with_u256(w2_openings[2]);
-
-        transcript.update_with_u256(key_openings[0]);
-        transcript.update_with_u256(key_openings[1]);
-
-        transcript.update_with_u256(q_mimc_opening);
-        transcript.update_with_u256(c_opening);
-        transcript.update_with_u256(quotient_opening);
-
-        transcript.update_with_u256(u_prime_opening);
-        transcript.update_with_u256(p1_opening);
-        transcript.update_with_u256(p2_opening);
-        // END: append all openings to transcipt
+        transcript.round_4([
+            w0_openings[0],
+            w0_openings[1],
+            w0_openings[2],
+            w1_openings[0],
+            w1_openings[1],
+            w1_openings[2],
+            w2_openings[0],
+            w2_openings[1],
+            w2_openings[2],
+            key_openings[0],
+            key_openings[1],
+            q_mimc_opening,
+            c_opening,
+            quotient_opening,
+            u_prime_opening,
+            p1_opening,
+            p2_opening,
+        ]);
 
         // compute proof
         let m = MultiopenProver::prove(
