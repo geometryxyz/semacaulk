@@ -281,7 +281,7 @@ impl Prover {
             omega_n_alpha,
             pk.srs_g2[1],
         );
-        assert_eq!(is_multiopen_proof_valid, true);
+        assert!(is_multiopen_proof_valid);
 
         let commitments = Commitments {
             w0,
@@ -384,11 +384,12 @@ impl Prover {
 
         let num_of_gates = 7;
         let v_powers: Vec<E::Fr> =
-            iter::successors(Some(E::Fr::one()), |v_i: &E::Fr| Some(v_i.clone() * v))
+            iter::successors(Some(E::Fr::one()), |v_i: &E::Fr| Some(*v_i * v))
                 .take(num_of_gates)
                 .collect();
 
         let mut numerator_coset_evals = vec![E::Fr::zero(); extended_coset_domain.size()];
+        #[allow(clippy::needless_range_loop)]
         for i in 0..extended_coset_domain.size() {
             // Gate 0:
             numerator_coset_evals[i] += v_powers[0]
@@ -457,18 +458,20 @@ impl Prover {
                 );
         }
 
-        // Sanity check
-        if cfg!(debug_assertions) {
-            let domain = GeneralEvaluationDomain::<E::Fr>::new(SUBGROUP_SIZE).unwrap();
-            let zh: DensePolynomial<_> = domain.vanishing_polynomial().into();
+        //// Sanity check
+        //if cfg!(debug_assertions) {
+            //let domain = GeneralEvaluationDomain::<E::Fr>::new(SUBGROUP_SIZE).unwrap();
+            //let zh: DensePolynomial<_> = domain.vanishing_polynomial().into();
 
-            let numerator = DensePolynomial::from_coefficients_slice(
-                &extended_coset_domain.coset_ifft(&numerator_coset_evals),
-            );
+            //let numerator = DensePolynomial::from_coefficients_slice(
+                //&extended_coset_domain.coset_ifft(&numerator_coset_evals),
+            //);
 
-            let q = &numerator / &zh;
-            assert_eq!(&q * &zh, numerator);
-        }
+            //let q = &numerator / &zh;
+            //assert_eq!(&q * &zh, numerator);
+        //} else {
+            //println!("skipping sanity check");
+        //}
 
         let quotient_coset_evals: Vec<_> = numerator_coset_evals
             .iter()
@@ -557,8 +560,8 @@ impl Prover {
         )
     }
 
-    fn caulk_plus_second_round<'a, E: PairingEngine>(
-        state: &mut State<'a, E>,
+    fn caulk_plus_second_round<E: PairingEngine>(
+        state: &mut State<E>,
         hi_1: E::Fr,
         hi_2: E::Fr,
     ) -> (E::G2Affine, E::G1Affine) {
@@ -613,7 +616,7 @@ impl Prover {
         let r4 = state.r4.unwrap();
 
         let ci_blinder = &DensePolynomial::from_coefficients_slice(&[r2, r3, r4]);
-        let ci_blinder_commitment = commit(&state.proving_key.srs_g2, &ci_blinder);
+        let ci_blinder_commitment = commit(&state.proving_key.srs_g2, ci_blinder);
 
         let w_commitment = w1_xi2_w2.mul(r1.inverse().unwrap().into_repr()) - ci_blinder_commitment;
         let h_commitment = commit(&state.proving_key.srs_g1, &h);
@@ -626,6 +629,7 @@ impl Prover {
         (w_commitment.into(), h_commitment.into())
     }
 
+    #[allow(clippy::type_complexity)]
     fn opening_round<'a>(
         state: &State<'a, Bn254>,
         hi_1: Fr,

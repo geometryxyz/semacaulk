@@ -14,6 +14,7 @@ use ark_poly::{
 
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, Read, SerializationError, Write};
 
+#[allow(clippy::module_inception)]
 pub mod prover;
 
 #[derive(CanonicalSerialize, CanonicalDeserialize, Clone, Debug)]
@@ -87,7 +88,7 @@ impl<E: PairingEngine> ProverPrecomputedData<E> {
 
         // Compute zh inverse coset evals
         let mut zh_inverse_coset_evals =
-            compute_vanishing_poly_over_coset(extended_coset_domain.clone(), domain.size() as u64);
+            compute_vanishing_poly_over_coset(extended_coset_domain, domain.size() as u64);
         ark_ff::batch_inversion(&mut zh_inverse_coset_evals);
 
         // Compute c coset evals
@@ -123,7 +124,7 @@ impl<E: PairingEngine> ProverPrecomputedData<E> {
         // Precompute w1 & w2 for the Caulk+ part of the proof
         let domain_t = GeneralEvaluationDomain::new(table_size).unwrap();
         let mut precomputed = Precomputed::<E>::empty();
-        precomputed.precompute_w1(&pk.srs_g2, &[index], &c, &domain_t);
+        precomputed.precompute_w1(&pk.srs_g2, &[index], c, &domain_t);
         precomputed.precompute_w2(&pk.srs_g2, &[index], &domain_t);
 
         Self {

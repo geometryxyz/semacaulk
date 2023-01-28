@@ -124,7 +124,7 @@ async fn main() {
     let signal_hash = compute_signal_hash(signal);
     let signal_hash_f: Fr = u256_to_f(signal_hash);
 
-    //for index in 0..tree.num_leaves() {
+    #[allow(clippy::needless_range_loop)]
     for index in 0..8 {
         let proof = tree.proof(index).unwrap();
         let flattened_proof = flatten_proof(&proof);
@@ -219,8 +219,8 @@ async fn main() {
 
     let is_valid = SemacaulkVerifier::verify(
         &proof,
-        srs_g1[table_size].clone(),
-        srs_g2[1].clone(),
+        srs_g1[table_size],
+        srs_g2[1],
         acc.point,
         &public_input,
     );

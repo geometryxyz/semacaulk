@@ -26,8 +26,8 @@ fn main() {
 
     for comm in lagrange_comms {
         let line = format!("{}{}", f_to_hex_le(comm.x), f_to_hex_le(comm.y));
-        let _ = file.write_all(line.as_bytes()).unwrap();
-        let _ = file.write_all(b"\n").unwrap();
+        file.write_all(line.as_bytes()).unwrap();
+        file.write_all(b"\n").unwrap();
     }
-    let _ = file.flush().unwrap();
+    file.flush().unwrap();
 }

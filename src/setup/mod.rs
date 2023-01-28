@@ -55,7 +55,7 @@ pub fn setup(
     (
         ProvingKey::<Bn254> {
             srs_g1,
-            srs_g2: srs_g2.clone(),
+            srs_g2,
         },
         lagrange_comms,
     )
@@ -71,13 +71,11 @@ where
 
 pub fn load_lagrange_comms_from_file(filename: &str) -> Vec<G1Affine> {
     let mut lagrange_comms = vec![];
-    if let Ok(lines) = read_lines(filename) {
-        for line in lines {
-            if let Ok(val) = line {
-                if val.len() == 128 {
-                    lagrange_comms.push(g1_str_to_g1(&String::from(val)));
-                }
-            }
+    let lines = read_lines(filename).unwrap();
+    for line in lines {
+        let val = line.unwrap();
+        if val.len() == 128 {
+            lagrange_comms.push(g1_str_to_g1(&val));
         }
     }
     lagrange_comms
@@ -88,24 +86,23 @@ pub fn load_srs_from_hex(filename: &str) -> (Vec<G1Affine>, Vec<G2Affine>) {
     let mut srs_g2 = vec![];
     if let Ok(lines) = read_lines(filename) {
         for line in lines {
-            if let Ok(val) = line {
-                if val.len() == 128 {
-                    let g1 = g1_str_to_g1(&String::from(val));
-                    srs_g1.push(g1);
-                } else if val.len() == 256 {
-                    let g2 = g2_str_to_g2(&String::from(val));
-                    srs_g2.push(g2);
-                } else if val.len() == 0 {
-                    // do nothing
-                } else {
-                    panic!("Invalid line detected - was this file generated correctly?");
-                }
+            let val = line.unwrap();
+            if val.len() == 128 {
+                let g1 = g1_str_to_g1(&val);
+                srs_g1.push(g1);
+            } else if val.len() == 256 {
+                let g2 = g2_str_to_g2(&val);
+                srs_g2.push(g2);
+            } else if val.is_empty() {
+                // do nothing
+            } else {
+                panic!("Invalid line detected - was this file generated correctly?");
             }
         }
     }
-    assert!(srs_g1.len() > 0);
-    assert!(srs_g2.len() > 0);
-    return (srs_g1, srs_g2);
+    assert!(!srs_g1.is_empty());
+    assert!(!srs_g2.is_empty());
+     (srs_g1, srs_g2)
 }
 
 pub fn hex_to_fq(val: &str) -> Fq {
@@ -124,8 +121,8 @@ pub fn g1_str_to_g1(v: &str) -> G1Affine {
     unsafe {
         let x_str = val.get_unchecked(0..64);
         let y_str = val.get_unchecked(64..128);
-        x = hex_to_fq(&x_str);
-        y = hex_to_fq(&y_str);
+        x = hex_to_fq(x_str);
+        y = hex_to_fq(y_str);
     }
     let g1 = G1Affine::new(x, y, false);
     assert!(g1.is_on_curve());
@@ -147,10 +144,10 @@ pub fn g2_str_to_g2(val: &str) -> G2Affine {
         y1_str = val.get_unchecked(192..256);
     }
 
-    let x0 = hex_to_fq(&x0_str);
-    let x1 = hex_to_fq(&x1_str);
-    let y0 = hex_to_fq(&y0_str);
-    let y1 = hex_to_fq(&y1_str);
+    let x0 = hex_to_fq(x0_str);
+    let x1 = hex_to_fq(x1_str);
+    let y0 = hex_to_fq(y0_str);
+    let y1 = hex_to_fq(y1_str);
 
     let x = Fq2::new(x0, x1);
     let y = Fq2::new(y0, y1);
