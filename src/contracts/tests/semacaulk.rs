@@ -1,6 +1,14 @@
 use super::{setup_eth_backend, EthersClient};
+use crate::accumulator::{compute_lagrange_tree, compute_zero_leaf, Accumulator};
 use crate::contracts::compute_signal_hash;
 use crate::contracts::format::proof_for_semacaulk::{format_proof, ProofForSemacaulk};
+use crate::kzg::commit;
+use crate::layouter::Layouter;
+use crate::mimc7::init_mimc7;
+use crate::prover::prover::{Prover, WitnessInput};
+use crate::prover::{Proof as SemacaulkProof, ProverPrecomputedData, ProvingKey, PublicData};
+use crate::setup::{load_lagrange_comms_from_file, load_srs_from_hex};
+use crate::verifier::Verifier as SemacaulkVerifier;
 use crate::{
     bn_solidity_utils::{f_to_u256, u256_to_f},
     keccak_tree::flatten_proof,
@@ -17,21 +25,6 @@ use ethers::core::types::U256;
 use ethers::core::utils::hex;
 use ethers::middleware::SignerMiddleware;
 use ethers::providers::Http;
-use crate::kzg::commit;
-use crate::mimc7::init_mimc7;
-use crate::prover::{ProverPrecomputedData, ProvingKey, PublicData, Proof as SemacaulkProof};
-use crate::prover::prover::{Prover, WitnessInput};
-use crate::layouter::Layouter;
-use crate::verifier::{Verifier as SemacaulkVerifier};
-use crate::accumulator::{
-    compute_lagrange_tree,
-    compute_zero_leaf,
-    Accumulator,
-};
-use crate::setup::{
-    load_srs_from_hex,
-    load_lagrange_comms_from_file,
-};
 
 abigen!(
     Semacaulk,
@@ -93,11 +86,7 @@ pub async fn test_semacaulk_insert_and_broadcast() {
     // size!
     let table_size = 2048;
 
-    let r = deploy_semacaulk(
-        client,
-        "./11.hex",
-        "./lagrangeComms_11",
-    ).await;
+    let r = deploy_semacaulk(client, "./11.hex", "./lagrangeComms_11").await;
     let semacaulk_contract = r.0;
     let mut acc = r.1;
     let srs_g1 = r.2;
@@ -151,7 +140,10 @@ pub async fn test_semacaulk_insert_and_broadcast() {
         assert_eq!(hex::encode(index_slice), hex::encode(event_index));
         assert_eq!(result.status.unwrap(), ethers::types::U64::from(1));
 
-        println!("Gas used by insertIdentity(): {:?}", result.gas_used.unwrap());
+        println!(
+            "Gas used by insertIdentity(): {:?}",
+            result.gas_used.unwrap()
+        );
 
         // Check that currentIndex is incremented
         let new_index = semacaulk_contract.get_current_index().call().await.unwrap();

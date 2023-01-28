@@ -1,9 +1,9 @@
-use std::env;
-use semacaulk::setup::setup;
 use semacaulk::bn_solidity_utils::f_to_hex_le;
-use std::io::LineWriter;
-use std::io::prelude::*;
+use semacaulk::setup::setup;
+use std::env;
 use std::fs::File;
+use std::io::prelude::*;
+use std::io::LineWriter;
 
 /*
  * Usage: cargo run setup <table_size> <hex_filename> <lagrange_comms_out>
@@ -29,5 +29,5 @@ fn main() {
         let _ = file.write_all(line.as_bytes()).unwrap();
         let _ = file.write_all(b"\n").unwrap();
     }
-    let _  = file.flush().unwrap();
+    let _ = file.flush().unwrap();
 }

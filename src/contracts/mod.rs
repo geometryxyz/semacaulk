@@ -1,5 +1,5 @@
-pub mod tests;
 pub mod format;
+pub mod tests;
 
 use ethers::core::utils::keccak256;
 use ethers::types::U256;

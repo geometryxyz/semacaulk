@@ -80,11 +80,7 @@ pub fn commit_to_lagrange_bases<E: PairingEngine>(
     table_size: usize,
     srs_g1: &Vec<E::G1Affine>,
 ) -> Vec<E::G1Affine> {
-    let tau_powers: Vec<E::G1Affine> = srs_g1
-        .iter()
-        .take(table_size)
-        .map(|&x| x.into())
-        .collect();
+    let tau_powers: Vec<E::G1Affine> = srs_g1.iter().take(table_size).map(|&x| x.into()).collect();
 
     compute_lagrange_basis_commitments(tau_powers)
 }

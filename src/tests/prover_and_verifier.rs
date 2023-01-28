@@ -1,3 +1,5 @@
+use crate::prover::prover::{Prover, WitnessInput};
+use crate::setup::load_srs_from_hex;
 use crate::verifier::Verifier;
 use crate::{
     kzg::commit,
@@ -12,15 +14,16 @@ use ark_poly::{
     univariate::DensePolynomial, EvaluationDomain, GeneralEvaluationDomain, UVPolynomial,
 };
 use ark_std::test_rng;
-use crate::prover::prover::{Prover, WitnessInput};
-use crate::setup::load_srs_from_hex;
 
 #[test]
 pub fn test_prover_and_verifier() {
     let mut rng = test_rng();
     let table_size: usize = 2048;
     let (srs_g1, srs_g2) = load_srs_from_hex("./11.hex");
-    let pk = ProvingKey::<Bn254> { srs_g1, srs_g2: srs_g2.clone() };
+    let pk = ProvingKey::<Bn254> {
+        srs_g1,
+        srs_g2: srs_g2.clone(),
+    };
 
     let domain = GeneralEvaluationDomain::<Fr>::new(table_size).unwrap();
 

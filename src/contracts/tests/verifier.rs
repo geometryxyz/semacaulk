@@ -1,6 +1,7 @@
 use super::setup_eth_backend;
 use crate::contracts::format::proof_for_verifier::{format_proof, ProofForVerifier};
 use crate::prover::prover::{Prover, WitnessInput};
+use crate::setup::load_srs_from_hex;
 use crate::verifier::Verifier as SemacaulkVerifier;
 use crate::{
     bn_solidity_utils::f_to_u256,
@@ -18,7 +19,6 @@ use ark_poly::{
 use ark_std::test_rng;
 use ethers::prelude::abigen;
 use ethers::types::U256;
-use crate::setup::load_srs_from_hex;
 
 abigen!(
     TestVerifier,
@@ -58,7 +58,10 @@ pub async fn test_semacaulk_verifier() {
     let c = DensePolynomial::from_coefficients_slice(&domain.ifft(&identity_commitments));
 
     let (srs_g1, srs_g2) = load_srs_from_hex("./11.hex");
-    let pk = ProvingKey::<Bn254> { srs_g1, srs_g2: srs_g2.clone() };
+    let pk = ProvingKey::<Bn254> {
+        srs_g1,
+        srs_g2: srs_g2.clone(),
+    };
 
     let precomputed = ProverPrecomputedData::index(&pk, &mimc7.cts, index, &c, table_size);
 

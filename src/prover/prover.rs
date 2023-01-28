@@ -13,20 +13,18 @@ use rand::RngCore;
 
 use crate::{
     constants::{EXTENDED_DOMAIN_FACTOR, NUMBER_OF_MIMC_ROUNDS, SUBGROUP_SIZE},
-    gates::{KeyCopyGate, KeyEquality, Mimc7RoundGate, NullifierGate, ExternalNullifierGate},
+    gates::{ExternalNullifierGate, KeyCopyGate, KeyEquality, Mimc7RoundGate, NullifierGate},
     kzg::commit,
     layouter::Assignment,
+    multiopen::{
+        prover::Prover as MultiopenProver, verifier::Verifier as MultiopenVerifier, MultiopenProof,
+    },
     transcript::Transcript,
     utils::construct_lagrange_basis,
     utils::shift_dense_poly,
-    multiopen::{
-        prover::Prover as MultiopenProver,
-        MultiopenProof,
-        verifier::Verifier as MultiopenVerifier,
-    }
 };
 
-use super::{Proof, Commitments, Openings, ProverPrecomputedData, ProvingKey, PublicData};
+use super::{Commitments, Openings, Proof, ProverPrecomputedData, ProvingKey, PublicData};
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, Read, SerializationError, Write};
 
 #[derive(CanonicalSerialize, CanonicalDeserialize, Clone, Debug)]
@@ -138,7 +136,14 @@ impl Prover {
         zk_rng: &mut R,
         table_size: usize,
     ) -> Proof<Bn254> {
-        let mut state = Self::init(pk, witness, assignment, public_input, precomputed, table_size);
+        let mut state = Self::init(
+            pk,
+            witness,
+            assignment,
+            public_input,
+            precomputed,
+            table_size,
+        );
         let mut transcript = Transcript::new_transcript();
 
         let (w0, key, w1, w2) = Self::assignment_round(&mut state);
@@ -156,8 +161,7 @@ impl Prover {
 
         let quotient = Self::quotient_round(&mut state, v);
 
-        let (zi, ci, u_prime) =
-            Self::caulk_plus_first_round(&mut state, zk_rng);
+        let (zi, ci, u_prime) = Self::caulk_plus_first_round(&mut state, zk_rng);
 
         transcript.round_2([&quotient, &zi, &ci, &u_prime]);
 
@@ -453,9 +457,8 @@ impl Prover {
                 );
         }
 
-        // sanity check
-        // TODO: add cfg if sanity
-        {
+        // Sanity check
+        if cfg!(debug_assertions) {
             let domain = GeneralEvaluationDomain::<E::Fr>::new(SUBGROUP_SIZE).unwrap();
             let zh: DensePolynomial<_> = domain.vanishing_polynomial().into();
 
@@ -529,7 +532,8 @@ impl Prover {
 
         // 6. define u_prime
         let u_prime_eval = state.domain_t.element(state.witness.index);
-        let mut u_prime = DensePolynomial::from_coefficients_slice(&state.domain_v.ifft(&[u_prime_eval]));
+        let mut u_prime =
+            DensePolynomial::from_coefficients_slice(&state.domain_v.ifft(&[u_prime_eval]));
 
         // 7. blind u_prime
         let zv: DensePolynomial<_> = state.domain_v.vanishing_polynomial().into();
@@ -576,7 +580,10 @@ impl Prover {
         let u_prime = state.u_prime.as_ref().unwrap();
         let a = state.a.as_ref().unwrap();
 
-        let composed_degree = max(zi.degree() * u_prime.degree(), ci.degree() * u_prime.degree());
+        let composed_degree = max(
+            zi.degree() * u_prime.degree(),
+            ci.degree() * u_prime.degree(),
+        );
         let extended_domain = GeneralEvaluationDomain::<E::Fr>::new(composed_degree).unwrap();
 
         let u_prime_evals_on_extended_domain =
@@ -623,17 +630,30 @@ impl Prover {
         state: &State<'a, Bn254>,
         hi_1: Fr,
         alpha: Fr, // evaluation challenge
-        transcript: &mut Transcript
+        transcript: &mut Transcript,
     ) -> (
         MultiopenProof<Bn254>,
-        Fr, Fr, Fr, Fr,
-        Fr, Fr, Fr, Fr,
-        Fr, Fr, Fr, Fr,
-        Fr, Fr, Fr, Fr,
         Fr,
-        DensePolynomial<Fr>, DensePolynomial<Fr>,
+        Fr,
+        Fr,
+        Fr,
+        Fr,
+        Fr,
+        Fr,
+        Fr,
+        Fr,
+        Fr,
+        Fr,
+        Fr,
+        Fr,
+        Fr,
+        Fr,
+        Fr,
+        Fr,
+        DensePolynomial<Fr>,
+        DensePolynomial<Fr>,
     ) {
-        let omega = state.domain_h.element(1); 
+        let omega = state.domain_h.element(1);
         let omega_n = state.domain_h.element(NUMBER_OF_MIMC_ROUNDS);
 
         let omega_alpha = omega * alpha;
@@ -673,7 +693,7 @@ impl Prover {
             h_zv
         };
 
-        // compute all evaluations 
+        // compute all evaluations
         let v = u_prime.evaluate(&alpha);
 
         // compute all openings
@@ -682,21 +702,21 @@ impl Prover {
             w0.evaluate(&omega_alpha),
             w0.evaluate(&omega_n_alpha),
         ];
-        
+
         let w1_openings = [
             w1.evaluate(&alpha),
             w1.evaluate(&omega_alpha),
             w1.evaluate(&omega_n_alpha),
         ];
-        
+
         let w2_openings = [
             w2.evaluate(&alpha),
             w2.evaluate(&omega_alpha),
             w2.evaluate(&omega_n_alpha),
         ];
-        
+
         let key_openings = [key.evaluate(&alpha), key.evaluate(&omega_alpha)];
-        
+
         let q_mimc_opening = q_mimc.evaluate(&alpha);
         let c_opening = c.evaluate(&alpha);
         let quotient_opening = quotient.evaluate(&alpha);
