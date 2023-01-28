@@ -52,13 +52,7 @@ pub fn setup(
     println!("Computing commitments to Lagrange basis polynomials...");
     let lagrange_comms = commit_to_lagrange_bases::<Bn254>(table_size, &srs_g1);
 
-    (
-        ProvingKey::<Bn254> {
-            srs_g1,
-            srs_g2,
-        },
-        lagrange_comms,
-    )
+    (ProvingKey::<Bn254> { srs_g1, srs_g2 }, lagrange_comms)
 }
 
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
@@ -102,7 +96,7 @@ pub fn load_srs_from_hex(filename: &str) -> (Vec<G1Affine>, Vec<G2Affine>) {
     }
     assert!(!srs_g1.is_empty());
     assert!(!srs_g2.is_empty());
-     (srs_g1, srs_g2)
+    (srs_g1, srs_g2)
 }
 
 pub fn hex_to_fq(val: &str) -> Fq {

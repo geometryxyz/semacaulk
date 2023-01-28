@@ -460,17 +460,17 @@ impl Prover {
 
         //// Sanity check
         //if cfg!(debug_assertions) {
-            //let domain = GeneralEvaluationDomain::<E::Fr>::new(SUBGROUP_SIZE).unwrap();
-            //let zh: DensePolynomial<_> = domain.vanishing_polynomial().into();
+        //let domain = GeneralEvaluationDomain::<E::Fr>::new(SUBGROUP_SIZE).unwrap();
+        //let zh: DensePolynomial<_> = domain.vanishing_polynomial().into();
 
-            //let numerator = DensePolynomial::from_coefficients_slice(
-                //&extended_coset_domain.coset_ifft(&numerator_coset_evals),
-            //);
+        //let numerator = DensePolynomial::from_coefficients_slice(
+        //&extended_coset_domain.coset_ifft(&numerator_coset_evals),
+        //);
 
-            //let q = &numerator / &zh;
-            //assert_eq!(&q * &zh, numerator);
+        //let q = &numerator / &zh;
+        //assert_eq!(&q * &zh, numerator);
         //} else {
-            //println!("skipping sanity check");
+        //println!("skipping sanity check");
         //}
 
         let quotient_coset_evals: Vec<_> = numerator_coset_evals
