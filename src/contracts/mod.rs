@@ -1,5 +1,5 @@
-mod tests;
-mod format;
+pub mod tests;
+pub mod format;
 
 use std::ops::Shr;
 use ethers::core::utils::keccak256;

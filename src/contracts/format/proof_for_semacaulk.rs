@@ -83,4 +83,3 @@ pub fn format_proof(proof: &RustProof<Bn254>) -> Proof {
         openings: format_openings(&proof.openings),
     }
 }
-

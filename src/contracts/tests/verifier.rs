@@ -60,7 +60,7 @@ pub async fn test_semacaulk_verifier() {
     let c = DensePolynomial::from_coefficients_slice(&domain.ifft(&identity_commitments));
 
     //let (srs_g1, srs_g2) = unsafe_setup::<Bn254, StdRng>(table_size, table_size, &mut rng);
-    let (srs_g1, srs_g2) = load_srs_from_hex("./powersOfTau28_hez_final_12_g1_g2.hex");
+    let (srs_g1, srs_g2) = load_srs_from_hex("./11.hex");
     let pk = ProvingKey::<Bn254> { srs_g1, srs_g2: srs_g2.clone() };
 
     let precomputed = ProverPrecomputedData::index(&pk, &mimc7.cts, index, &c, table_size);

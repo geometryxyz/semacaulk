@@ -5,7 +5,6 @@ use ark_poly::{
     univariate::DensePolynomial, EvaluationDomain, GeneralEvaluationDomain, UVPolynomial,
 };
 use ark_std::test_rng;
-use rand::rngs::StdRng;
 use crate::{
     kzg::commit,
     layouter::Layouter,
@@ -19,7 +18,10 @@ use crate::setup::load_srs_from_hex;
 #[test]
 pub fn test_prover_and_verifier() {
     let mut rng = test_rng();
-    let table_size: usize = 4096;
+    let table_size: usize = 2048;
+    let (srs_g1, srs_g2) = load_srs_from_hex("./11.hex");
+    let pk = ProvingKey::<Bn254> { srs_g1, srs_g2: srs_g2.clone() };
+
     let domain = GeneralEvaluationDomain::<Fr>::new(table_size).unwrap();
 
     let mimc7 = init_mimc7::<Fr>();
@@ -47,10 +49,6 @@ pub fn test_prover_and_verifier() {
     let index = 10;
     identity_commitments[index] = identity_commitment;
     let c = DensePolynomial::from_coefficients_slice(&domain.ifft(&identity_commitments));
-
-    //let (srs_g1, srs_g2) = unsafe_setup::<Bn254, StdRng>(table_size, table_size, &mut rng);
-    let (srs_g1, srs_g2) = load_srs_from_hex("./powersOfTau28_hez_final_12_g1_g2.hex");
-    let pk = ProvingKey::<Bn254> { srs_g1, srs_g2: srs_g2.clone() };
 
     let precomputed = ProverPrecomputedData::index(&pk, &mimc7.cts, index, &c, table_size);
 

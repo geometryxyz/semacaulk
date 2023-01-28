@@ -20,11 +20,12 @@ semaphore = { git = "https://github.com/worldcoin/semaphore-rs" }
 serde = "1.0"
 ark-bn254 = "0.3.0"
 sha3 = "0.10.6"
+tokio = { version = "1.22.0", features = ["macros"] }
+stopwatch = "0.0.7"
 
 [dev-dependencies]
 rand_chacha = { version = "0.3.0", default-features = false }
 blake2 = { version = "0.9", default-features = false }
-tokio = { version = "1.22.0", features = ["macros"] }
 
 [[bin]]
 edition = "2021"

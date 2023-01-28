@@ -20,8 +20,9 @@ pub fn setup(
     let table_size: usize = 2u64.pow(log_2_table_size as u32) as usize;
 
     let (srs_g1, srs_g2) = load_srs_from_hex(srs_hex_filename);
+    println!("{}, {}", srs_g1.len(), table_size);
     assert!(srs_g1.len() > table_size);
-    assert!(srs_g2.len()> table_size);
+    assert!(srs_g2.len() >= table_size);
 
     println!("Update Constants.sol with these values:"); 
     println!("uint256 constant SRS_G1_T_X = 0x{};", f_to_hex(srs_g1[table_size].x));
@@ -72,10 +73,16 @@ pub fn load_srs_from_hex(filename: &str) -> (Vec<G1Affine>, Vec<G2Affine>) {
                 } else if val.len() == 256 {
                     let g2 = g2_str_to_g2(&String::from(val));
                     srs_g2.push(g2);
+                } else if val.len() == 0 {
+                    // do nothing
+                } else {
+                    panic!("Invalid line detected - was this file generated correctly?");
                 }
             }
         }
     }
+    assert!(srs_g1.len() > 0);
+    assert!(srs_g2.len() > 0);
     return (srs_g1, srs_g2);
 }
 

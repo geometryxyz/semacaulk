@@ -139,14 +139,14 @@ impl<E: PairingEngine> ProverPrecomputedData<E> {
 }
 
 pub struct ProvingKey<E: PairingEngine> {
-    pub(crate) srs_g1: Vec<E::G1Affine>,
-    pub(crate) srs_g2: Vec<E::G2Affine>,
+    pub srs_g1: Vec<E::G1Affine>,
+    pub srs_g2: Vec<E::G2Affine>,
 }
 
 #[derive(CanonicalSerialize, CanonicalDeserialize, Clone, Debug)]
 pub struct PublicData<E: PairingEngine> {
-    pub(crate) accumulator: E::G1Affine,
-    pub(crate) external_nullifier: E::Fr,
-    pub(crate) signal_hash: E::Fr,
-    pub(crate) nullifier_hash: E::Fr,
+    pub accumulator: E::G1Affine,
+    pub external_nullifier: E::Fr,
+    pub signal_hash: E::Fr,
+    pub nullifier_hash: E::Fr,
 }

@@ -31,10 +31,10 @@ use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, Read, Serializatio
 
 #[derive(CanonicalSerialize, CanonicalDeserialize, Clone, Debug)]
 pub struct WitnessInput<F: PrimeField> {
-    pub(crate) identity_nullifier: F,
-    pub(crate) identity_trapdoor: F,
-    pub(crate) identity_commitment: F,
-    pub(crate) index: usize,
+    pub identity_nullifier: F,
+    pub identity_trapdoor: F,
+    pub identity_commitment: F,
+    pub index: usize,
 }
 
 pub struct State<'a, E: PairingEngine> {

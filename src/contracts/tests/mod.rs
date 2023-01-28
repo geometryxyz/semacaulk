@@ -7,7 +7,7 @@ use ethers::signers::Signer;
 use ethers::{prelude::{Wallet, LocalWallet}, utils::Anvil};
 
 #[cfg(test)]
-mod semacaulk;
+pub mod semacaulk;
 
 #[cfg(test)]
 mod keccak_mt;

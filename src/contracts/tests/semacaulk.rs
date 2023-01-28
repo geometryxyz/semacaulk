@@ -10,7 +10,7 @@ use ethers::core::types::U256;
 use ethers::core::utils::hex;
 use ethers::middleware::SignerMiddleware;
 use ethers::providers::Http;
-use crate::kzg::{commit, unsafe_setup};
+use crate::kzg::commit;
 use crate::mimc7::init_mimc7;
 use crate::prover::{ProverPrecomputedData, ProvingKey, PublicData, Proof as SemacaulkProof};
 use crate::prover::prover::{Prover, WitnessInput};
@@ -49,11 +49,10 @@ type SemacaulkContract = semacaulk::Semacaulk<
 >;
 
 pub async fn deploy_semacaulk(
-    table_size: usize,
     rng: &mut StdRng,
     client: EthersClient,
-    srs_hex_filename,
-    lagrange_comms_filename,
+    srs_hex_filename: &str,
+    lagrange_comms_filename: &str,
 ) -> (
         SemacaulkContract, Accumulator<Bn254>, Vec<G1Affine>, Vec<G2Affine>
     ) {
@@ -86,6 +85,7 @@ pub async fn deploy_semacaulk(
 
 #[tokio::test]
 pub async fn test_semacaulk_insert_and_broadcast() {
+    let mut rng = test_rng();
     let eth_backend = setup_eth_backend().await;
     let anvil = eth_backend.0;
     let client = eth_backend.1;
@@ -93,14 +93,11 @@ pub async fn test_semacaulk_insert_and_broadcast() {
     // During development, remember to update Constants.sol's SRS values if you change the table
     // size!
     let table_size = 2048;
-    let mut rng = test_rng();
-    let mimc7 = init_mimc7::<Fr>();
 
     let r = deploy_semacaulk(
-        table_size,
         &mut rng,
         client,
-        "./powersOfTau28_hez_final_12_g1_g2.hex",
+        "./11.hex",
         "./lagrangeComms_11",
     ).await;
     let semacaulk_contract = r.0;
@@ -108,6 +105,7 @@ pub async fn test_semacaulk_insert_and_broadcast() {
     let srs_g1 = r.2;
     let srs_g2 = r.3;
 
+    let mimc7 = init_mimc7::<Fr>();
     let zero = compute_zero_leaf::<Fr>();
     let tree = compute_lagrange_tree::<Bn254>(&acc.lagrange_comms);
     let mut identity_nullifiers = Vec::<Fr>::new();
@@ -155,10 +153,7 @@ pub async fn test_semacaulk_insert_and_broadcast() {
         assert_eq!(hex::encode(index_slice), hex::encode(event_index));
         assert_eq!(result.status.unwrap(), ethers::types::U64::from(1));
 
-        println!(
-            "Gas used by insertIdentity(): {:?}",
-            result.gas_used.unwrap()
-        );
+        println!("Gas used by insertIdentity(): {:?}", result.gas_used.unwrap());
 
         // Check that currentIndex is incremented
         let new_index = semacaulk_contract.get_current_index().call().await.unwrap();
