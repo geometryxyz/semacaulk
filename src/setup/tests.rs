@@ -24,4 +24,6 @@ pub fn test_load_hex() {
 #[test]
 pub fn test_setup() {
     let pk = setup(11, "./11.hex");
+    assert_eq!(pk.0.srs_g1.len(), pk.0.srs_g2.len() + 1);
+    assert_eq!(pk.1.len(), pk.0.srs_g2.len());
 }

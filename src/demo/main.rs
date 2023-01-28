@@ -189,7 +189,9 @@ async fn main () {
 
     let sw = Stopwatch::start_new();
     let precomputed = ProverPrecomputedData::index(&pk, &mimc7.cts, index, &c, table_size);
+    println!("Precomputation took {}ms", sw.elapsed_ms());
 
+    let sw = Stopwatch::start_new();
     let witness = WitnessInput {
         identity_nullifier: identity_nullifiers[index],
         identity_trapdoor: identity_trapdoors[index],
@@ -213,7 +215,7 @@ async fn main () {
         &mut rng,
         table_size,
     );
-    println!("Proof generation (including precomputation) took {}ms", sw.elapsed_ms());
+    println!("Proof generation (excluding precomputation) took {}ms", sw.elapsed_ms());
 
     let is_valid = SemacaulkVerifier::verify(
         &proof,
