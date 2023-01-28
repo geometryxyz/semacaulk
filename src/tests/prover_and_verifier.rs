@@ -1,3 +1,10 @@
+use crate::verifier::Verifier;
+use crate::{
+    kzg::commit,
+    layouter::Layouter,
+    mimc7::init_mimc7,
+    prover::{ProverPrecomputedData, ProvingKey, PublicData},
+};
 use ark_bn254::{Bn254, Fr};
 use ark_ec::ProjectiveCurve;
 use ark_ff::{UniformRand, Zero};
@@ -5,14 +12,7 @@ use ark_poly::{
     univariate::DensePolynomial, EvaluationDomain, GeneralEvaluationDomain, UVPolynomial,
 };
 use ark_std::test_rng;
-use crate::{
-    kzg::commit,
-    layouter::Layouter,
-    mimc7::init_mimc7,
-    prover::{ProverPrecomputedData, ProvingKey, PublicData},
-};
 use crate::prover::prover::{Prover, WitnessInput};
-use crate::verifier::Verifier;
 use crate::setup::load_srs_from_hex;
 
 #[test]
@@ -31,8 +31,7 @@ pub fn test_prover_and_verifier() {
     let external_nullifier = Fr::from(300u64);
     let signal_hash = Fr::from(888u64);
 
-    let nullifier_hash =
-        mimc7.multi_hash(&[identity_nullifier, external_nullifier], Fr::zero());
+    let nullifier_hash = mimc7.multi_hash(&[identity_nullifier, external_nullifier], Fr::zero());
 
     let identity_commitment =
         mimc7.multi_hash(&[identity_nullifier, identity_trapdoor], Fr::zero());
@@ -61,7 +60,7 @@ pub fn test_prover_and_verifier() {
 
     let accumulator = commit(&pk.srs_g1, &c).into_affine();
     let public_input = PublicData::<Bn254> {
-        accumulator: accumulator,
+        accumulator,
         external_nullifier,
         nullifier_hash,
         signal_hash,
@@ -79,11 +78,11 @@ pub fn test_prover_and_verifier() {
 
     let is_valid = Verifier::verify(
         &proof,
-        pk.srs_g1[table_size].clone(),
-        srs_g2[1].clone(),
+        pk.srs_g1[table_size],
+        srs_g2[1],
         accumulator,
         &public_input,
     );
 
-    assert_eq!(is_valid, true);
+    assert!(is_valid);
 }

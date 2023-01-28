@@ -14,6 +14,7 @@ use super::MultiopenProof;
 pub struct Prover {}
 
 impl Prover {
+    #[allow(clippy::too_many_arguments)]
     pub fn prove(
         //srs
         srs_g1: &[G1Affine],
@@ -68,7 +69,7 @@ impl Prover {
         let f3 = &q3 / &z3;
         let f4 = &q4 / &z4;
 
-        let f = f1.clone() + (&f2 * x2_powers[0]) + (&f3 * x2_powers[1]) + (&f4 * x2_powers[2]);
+        let f = f1 + (&f2 * x2_powers[0]) + (&f3 * x2_powers[1]) + (&f4 * x2_powers[2]);
 
         let f_cm: G1Affine = commit(srs_g1, &f).into();
         transcript.round_5(&f_cm);

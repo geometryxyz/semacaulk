@@ -1,24 +1,24 @@
+use crate::constants::{MIMC_SEED, NUMBER_OF_MIMC_ROUNDS};
 use ark_ff::PrimeField;
 use ark_std::io::Cursor;
 use tiny_keccak::{Hasher, Keccak};
-use crate::constants::{NUMBER_OF_MIMC_ROUNDS, MIMC_SEED};
 
 pub fn compute_round_digests<F: PrimeField>(
     preimage: F,
     key: F,
-    c_evals: &Vec<F>,
+    c_evals: &[F],
     n_rounds: usize,
 ) -> Vec<F> {
     // The first constant should be 0
     assert_eq!(c_evals[0], F::zero());
 
     let mut round_digests = vec![];
-    round_digests.push((preimage + key).pow(&[7u64, 0, 0, 0]));
+    round_digests.push((preimage + key).pow([7u64, 0, 0, 0]));
     for i in 1..n_rounds {
         let w_prev = round_digests[i - 1];
         let c = c_evals[i];
 
-        round_digests.push((w_prev + c + key).pow(&[7u64, 0, 0, 0]));
+        round_digests.push((w_prev + c + key).pow([7u64, 0, 0, 0]));
     }
 
     round_digests
@@ -70,13 +70,13 @@ impl<F: PrimeField> Mimc7<F> {
 
         let mut hasher = Keccak::v256();
         hasher.update(seed.as_bytes());
-        hasher.finalize(&mut out_buff.get_mut());
+        hasher.finalize(out_buff.get_mut());
 
         for _ in 1..n_rounds {
             let mut hasher = Keccak::v256();
             hasher.update(out_buff.get_ref());
             out_buff.set_position(0);
-            hasher.finalize(&mut out_buff.get_mut());
+            hasher.finalize(out_buff.get_mut());
 
             cts.push(F::from_be_bytes_mod_order(out_buff.get_ref()));
         }

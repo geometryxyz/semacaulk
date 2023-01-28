@@ -37,14 +37,14 @@ fn prepare_mimc_gate_tests() -> MiMCGateTestVals<F> {
     let mut c_evals = mimc7.cts.clone();
     fill_dummy(&mut c_evals, dummy, domain_size);
 
-    return MiMCGateTestVals {
+    MiMCGateTestVals {
         dummy,
         n_rounds,
         domain_size,
         q_mimc_evals,
         c_evals,
         mimc7,
-    };
+    }
 }
 
 fn gen_l_evals(domain_size: usize) -> Vec<F> {
@@ -58,12 +58,12 @@ fn gen_w0_evals(
     mut rng: StdRng,
     n_rounds: usize,
     domain_size: usize,
-    c_evals: &Vec<F>,
+    c_evals: &[F],
     mimc7: &Mimc7<F>,
 ) -> Vec<F> {
     let key = F::zero();
 
-    let round_digests = compute_round_digests(id_nullifier, key, &c_evals, n_rounds);
+    let round_digests = compute_round_digests(id_nullifier, key, c_evals, n_rounds);
     let mut w_evals = vec![id_nullifier; 1];
     w_evals.extend_from_slice(&round_digests);
 
@@ -80,14 +80,14 @@ fn gen_w1_evals(
     mut rng: StdRng,
     n_rounds: usize,
     domain_size: usize,
-    c_evals: &Vec<F>,
+    c_evals: &[F],
     mimc7: &Mimc7<F>,
 ) -> Vec<F> {
     let id_nullifier_hash = mimc7.hash(id_nullifier, F::zero());
 
     let key = id_nullifier_hash + id_nullifier;
 
-    let round_digests = compute_round_digests(id_trapdoor, key, &c_evals, n_rounds);
+    let round_digests = compute_round_digests(id_trapdoor, key, c_evals, n_rounds);
 
     let mut w_evals = vec![id_trapdoor; 1];
     w_evals.extend_from_slice(&round_digests);
@@ -107,7 +107,7 @@ fn gen_w2_evals(
     rng: StdRng,
     n_rounds: usize,
     domain_size: usize,
-    c_evals: &Vec<F>,
+    c_evals: &[F],
     mimc7: &Mimc7<F>,
 ) -> Vec<F> {
     gen_w1_evals(

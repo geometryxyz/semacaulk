@@ -6,9 +6,9 @@ use ark_ff::PrimeField;
  */
 pub fn mimc<F: PrimeField>(
     key: F,
-    q_mimc_evals: &Vec<F>,
-    w_evals: &Vec<F>,
-    c_evals: &Vec<F>,
+    q_mimc_evals: &[F],
+    w_evals: &[F],
+    c_evals: &[F],
     dummy: F,
     domain_size: usize,
 ) {
@@ -20,7 +20,7 @@ pub fn mimc<F: PrimeField>(
         };
 
         let result =
-            q_mimc_evals[i] * (w_next_i - (w_evals[i] + key + c_evals[i]).pow(&[7, 0, 0, 0]));
+            q_mimc_evals[i] * (w_next_i - (w_evals[i] + key + c_evals[i]).pow([7, 0, 0, 0]));
 
         assert_eq!(result, F::zero());
     }
@@ -136,9 +136,9 @@ pub fn gate_7_key_col<F: PrimeField>(
  * L_i * (PI - w2_next_n1)
  */
 pub fn gate_8_nullifier_hash_col<F: PrimeField>(
-    l_evals: &Vec<F>,
-    pi_evals: &Vec<F>,
-    w2_evals: &Vec<F>,
+    l_evals: &[F],
+    pi_evals: &[F],
+    w2_evals: &[F],
     dummy: F,
     domain_size: usize,
     n_rounds: usize,
@@ -161,9 +161,9 @@ pub fn gate_8_nullifier_hash_col<F: PrimeField>(
  * L_i * (PI - w2)
  */
 pub fn gate_9<F: PrimeField>(
-    l_evals: &Vec<F>,
-    pi_evals: &Vec<F>,
-    w2_evals: &Vec<F>,
+    l_evals: &[F],
+    pi_evals: &[F],
+    w2_evals: &[F],
     dummy: F,
     domain_size: usize,
 ) {
@@ -184,8 +184,8 @@ pub fn gate_9<F: PrimeField>(
  * q_key_evals * (key - key_next)
  */
 pub fn gate_10_key_constant<F: PrimeField>(
-    q_key_evals: &Vec<F>,
-    key_evals: &Vec<F>,
+    q_key_evals: &[F],
+    key_evals: &[F],
     dummy: F,
     domain_size: usize,
 ) {

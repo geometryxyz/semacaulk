@@ -1,3 +1,4 @@
+use super::utils::compute_lagrange_basis_commitments;
 use crate::keccak_tree::KeccakTree;
 use ark_ec::{AffineCurve, PairingEngine, ProjectiveCurve};
 use ark_ff::{PrimeField, ToBytes};
@@ -5,7 +6,6 @@ use ethers::core::utils::keccak256;
 use ethers::types::U256;
 use serde::{Deserialize, Serialize};
 use std::ops::Add;
-use super::utils::compute_lagrange_basis_commitments;
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct Accumulator<E: PairingEngine> {
@@ -16,11 +16,10 @@ pub struct Accumulator<E: PairingEngine> {
 
 pub fn compute_empty_accumulator<E: PairingEngine>(
     zero: E::Fr,
-    lagrange_comms: &Vec<E::G1Affine>,
+    lagrange_comms: &[E::G1Affine],
 ) -> E::G1Affine {
     let mut c = lagrange_comms[0].mul(zero).into_affine();
-    for i in 1..lagrange_comms.len() {
-        let l_i = lagrange_comms[i];
+    for l_i in lagrange_comms.iter().skip(1) {
         c = c.add(l_i.mul(zero).into_affine());
     }
 
@@ -28,24 +27,24 @@ pub fn compute_empty_accumulator<E: PairingEngine>(
 }
 
 impl<E: PairingEngine> Accumulator<E> {
-    pub fn new(zero: E::Fr, lagrange_comms: &Vec<E::G1Affine>) -> Self {
-        let point = compute_empty_accumulator::<E>(zero, &lagrange_comms);
+    pub fn new(zero: E::Fr, lagrange_comms: &[E::G1Affine]) -> Self {
+        let point = compute_empty_accumulator::<E>(zero, lagrange_comms);
 
         Self {
-            lagrange_comms: lagrange_comms.clone(),
+            lagrange_comms: lagrange_comms.to_owned(),
             point,
             zero,
         }
     }
 
     pub fn update(&mut self, index: usize, value: E::Fr) {
-        assert_eq!(index < self.lagrange_comms.len(), true);
+        assert!(index < self.lagrange_comms.len());
 
         // C + (v - zero) * li_comm
         let v_minus_zero = value - self.zero;
         let v_minus_zero_mul_li_comm = self.lagrange_comms[index].mul(v_minus_zero);
         let p = self.point + v_minus_zero_mul_li_comm.into_affine();
-        self.point = p.clone()
+        self.point = p
     }
 }
 
@@ -74,9 +73,7 @@ pub fn compute_zero_leaf<F: PrimeField>() -> F {
     let mut z = [0u8; 32];
     hash.to_big_endian(&mut z);
 
-    let zero_bigint = F::from_be_bytes_mod_order(&z);
-
-    zero_bigint
+    F::from_be_bytes_mod_order(&z)
 }
 
 pub fn commit_to_lagrange_bases<E: PairingEngine>(

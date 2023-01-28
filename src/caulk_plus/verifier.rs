@@ -45,7 +45,7 @@ fn batch_evaluation_proof_pairings<E: PairingEngine>(
     u: E::Fr,
     u_first: E::Fr, // Do not start with u^0 by default, maybe there are pre-batched checks
 ) -> (E::G1Affine, E::G1Affine) {
-    let powers_of_u = iter::successors(Some(u_first), |u_pow| Some(u_pow.clone() * u));
+    let powers_of_u = iter::successors(Some(u_first), |u_pow| Some(*u_pow * u));
 
     let mut lhs = E::G1Projective::zero();
     let mut rhs = E::G1Projective::zero();
@@ -53,20 +53,20 @@ fn batch_evaluation_proof_pairings<E: PairingEngine>(
     // TODO: mul by u at the end
     for (eval_proof, u_pow) in evaluation_proofs.iter().zip(powers_of_u) {
         let u_pow_rep = u_pow.into_repr();
-        lhs = lhs + eval_proof.q.mul(u_pow_rep.clone());
+        lhs += eval_proof.q.mul(u_pow_rep);
 
         let rhs_i = {
             let q_part = eval_proof
                 .q
                 .mul((eval_proof.opening_challenge * u_pow).into_repr());
-            let p_part = eval_proof.p.mul(u_pow_rep.clone());
+            let p_part = eval_proof.p.mul(u_pow_rep);
             let y_part = E::G1Affine::prime_subgroup_generator()
                 .mul((eval_proof.opening * u_pow).into_repr());
 
             q_part + p_part - y_part
         };
 
-        rhs = rhs + rhs_i
+        rhs += rhs_i
     }
 
     (lhs.into_affine(), rhs.into_affine())

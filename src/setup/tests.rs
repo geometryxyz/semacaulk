@@ -23,5 +23,5 @@ pub fn test_load_hex() {
 
 #[test]
 pub fn test_setup() {
-    //let pk = setup(11, "./powersOfTau28_hez_final_12_g1_g2.hex");
+    let pk = setup(11, "./11.hex");
 }

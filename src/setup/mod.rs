@@ -7,6 +7,7 @@ use crate::prover::ProvingKey;
 use crate::bn_solidity_utils::f_to_hex;
 use crate::accumulator::commit_to_lagrange_bases;
 
+#[cfg(test)]
 pub mod tests;
 
 pub fn setup(

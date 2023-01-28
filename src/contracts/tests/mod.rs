@@ -1,10 +1,13 @@
-use ethers::middleware::SignerMiddleware;
-use std::{convert::TryFrom, sync::Arc, time::Duration};
 use ethers::core::k256::ecdsa::SigningKey;
+use ethers::middleware::SignerMiddleware;
 use ethers::providers::{Http, Provider};
-use ethers::utils::AnvilInstance;
 use ethers::signers::Signer;
-use ethers::{prelude::{Wallet, LocalWallet}, utils::Anvil};
+use ethers::utils::AnvilInstance;
+use ethers::{
+    prelude::{LocalWallet, Wallet},
+    utils::Anvil,
+};
+use std::{convert::TryFrom, sync::Arc, time::Duration};
 
 #[cfg(test)]
 pub mod semacaulk;

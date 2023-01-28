@@ -1,8 +1,8 @@
+use crate::bn_solidity_utils::f_to_u256;
+use crate::multiopen::MultiopenProof as RustMultiopenProof;
+use crate::prover::{Commitments as RustCommitments, Openings as RustOpenings, Proof as RustProof};
+use ark_bn254::{Bn254, G1Affine, G2Affine};
 use ethers::prelude::abigen;
-use crate::prover::{Proof as RustProof, Commitments as RustCommitments, Openings as RustOpenings};
-use crate::multiopen::{MultiopenProof as RustMultiopenProof};
-use crate::bn_solidity_utils::{f_to_u256};
-use ark_bn254::{G1Affine, G2Affine, Bn254};
 
 abigen!(Verifier, "./src/contracts/out/Verifier.sol/Verifier.json");
 
@@ -83,4 +83,3 @@ pub fn format_proof(proof: &RustProof<Bn254>) -> Proof {
         openings: format_openings(&proof.openings),
     }
 }
-

@@ -177,8 +177,8 @@ mod caulk_plus_tests {
         let a_commitment = commit(&srs_g1, &a).into_affine();
 
         let common_input = CommonInput::<Bn254> {
-            domain_h: domain_h.clone(),
-            domain_v: domain_v.clone(),
+            domain_h,
+            domain_v,
             c_commitment,
             a_commitment,
             rotation: 5,
@@ -217,6 +217,6 @@ mod caulk_plus_tests {
             a_opening_at_rotation,
             &mut fs_rng,
         );
-        assert_eq!(res.is_ok(), true);
+        assert!(res.is_ok());
     }
 }
