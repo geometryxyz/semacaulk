@@ -4,8 +4,9 @@ Semacaulk is a custom prover and verifier of set membership proofs which uses
 an on-chain polynomial commitment to enable cheap insertions, and techniques
 which make verification no more expensive than verifying a Groth16 proof.
 
-For a detailed specification, please refer to
-[https://hackmd.io/@akinovak/SyE1Z3fLs](this document.)
+For more information, please refer to [this
+document](https://hackmd.io/@kwj-geometry/B1I5Ik-hi). More documentation will
+be written and released soon.
 
 ## Quick start
 
