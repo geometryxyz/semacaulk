@@ -35,3 +35,37 @@ cargo test
 ```
 
 ## Demo
+
+The setup files `11.hex` and `lagrangeComms_11` are already in the repository.
+To run a demo of Semacaulk with a maximum capacity of `2 ^ 11 = 2048`, first
+build the demo executable:
+
+```bash
+cargo build --release
+```
+
+Run the demo:
+
+```bash
+./target/release/demo 11 11.hex lagrangeComms_11
+```
+
+To run a demo with a different maximum capacity, first generate the `.hex` file
+with
+[export-ptau-points](https://github.com/geometryresearch/export-ptau-points),
+then use the `setup` executable to generate the `lagrangeComms_n` file. For
+example for a maximum capacity of `2 ^ 12`:
+
+```bash
+./target/release/demo 12 12.hex lagrangeComms_12
+```
+
+Now, run:
+
+```bash
+./target/release/demo 12 12.hex lagrangeComms_12
+```
+
+A future release will integrate implement the functionality of
+`export-ptau-points` into the `setup` executable, so a separate step will not
+be needed.

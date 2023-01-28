@@ -91,7 +91,7 @@ pub async fn deploy_semacaulk(
 #[tokio::main]
 async fn main () {
     // demo <log_2_table_size> <srs_hex_filename> <lagrange_comms_filename>
-    let _ = 3; // Change this value between builds to force the compiler to rebuild the binary properly
+    let _ = 0; // Change this value between builds to force the compiler to rebuild the binary properly
     let sw = Stopwatch::start_new();
     println!("Started");
 
