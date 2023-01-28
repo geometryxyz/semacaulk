@@ -227,24 +227,24 @@ async fn main() {
 
     println!("{}", is_valid);
 
-    //let result = semacaulk_contract
-        //.broadcast_signal(
-            //ethers::types::Bytes::from(String::from(signal).as_bytes().to_vec()),
-            //p_to_p(&format_proof(&proof)),
-            //f_to_u256(nullifier_hash),
-            //f_to_u256(external_nullifier),
-        //)
-        //.send()
-        //.await
-        //.unwrap()
-        //.await
-        //.unwrap()
-        //.expect("no receipt found");
+    let result = semacaulk_contract
+        .broadcast_signal(
+            ethers::types::Bytes::from(String::from(signal).as_bytes().to_vec()),
+            p_to_p(&format_proof(&proof)),
+            f_to_u256(nullifier_hash),
+            f_to_u256(external_nullifier),
+        )
+        .send()
+        .await
+        .unwrap()
+        .await
+        .unwrap()
+        .expect("no receipt found");
 
-    //println!(
-        //"Gas used by broadcastSignal(): {:?}",
-        //result.gas_used.unwrap()
-    //);
+    println!(
+        "Gas used by broadcastSignal(): {:?}",
+        result.gas_used.unwrap()
+    );
 
     drop(anvil);
 }
