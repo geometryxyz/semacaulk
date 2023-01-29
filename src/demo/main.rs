@@ -23,7 +23,7 @@ use semacaulk::setup::{load_lagrange_comms_from_file, load_srs_from_hex};
 use semacaulk::verifier::Verifier as SemacaulkVerifier;
 use semacaulk::{
     bn_solidity_utils::{f_to_u256, u256_to_f},
-    keccak_tree::flatten_proof,
+    keccak_tree::{flatten_proof, KeccakTree},
 };
 
 abigen!(
@@ -47,6 +47,7 @@ pub async fn deploy_semacaulk(
     Accumulator<Bn254>,
     Vec<G1Affine>,
     Vec<G2Affine>,
+    KeccakTree,
 ) {
     let zero = compute_zero_leaf::<Fr>();
 
@@ -54,11 +55,14 @@ pub async fn deploy_semacaulk(
     // If you change this file, use `cargo run setup <table_size> <hex_filename> <lagrange_comms_out>` to regenerate the lagrangeCommsX file. Also remember to update Constants.sol.
     let sw = Stopwatch::start_new();
     let (srs_g1, srs_g2) = load_srs_from_hex(srs_hex_filename);
-    println!("load_srs_from_hex() took {}ms", sw.elapsed_ms());
+    println!("\tload_srs_from_hex() took {}ms", sw.elapsed_ms());
 
     let sw = Stopwatch::start_new();
     let lagrange_comms = load_lagrange_comms_from_file(lagrange_comms_filename);
-    println!("load_lagrange_comms_from_file() took {}ms", sw.elapsed_ms());
+    println!(
+        "\tload_lagrange_comms_from_file() took {}ms",
+        sw.elapsed_ms()
+    );
 
     let acc = Accumulator::<Bn254>::new(zero, &lagrange_comms);
     let empty_accumulator_x = f_to_u256::<Fq>(acc.point.x);
@@ -67,7 +71,7 @@ pub async fn deploy_semacaulk(
     let sw = Stopwatch::start_new();
     // Construct the tree of commitments to the Lagrange bases
     let tree = compute_lagrange_tree::<Bn254>(&lagrange_comms);
-    println!("compute_lagrange_tree() took {}ms", sw.elapsed_ms());
+    println!("\tcompute_lagrange_tree() took {}ms", sw.elapsed_ms());
     let root = tree.root();
 
     // Deploy contract
@@ -78,7 +82,7 @@ pub async fn deploy_semacaulk(
             .await
             .unwrap();
 
-    (semacaulk_contract, acc, srs_g1, srs_g2)
+    (semacaulk_contract, acc, srs_g1, srs_g2, tree)
 }
 
 #[tokio::main]
@@ -110,11 +114,9 @@ async fn main() {
     let mut acc = r.1;
     let srs_g1 = r.2;
     let srs_g2 = r.3;
+    let tree = r.4;
 
     let zero = compute_zero_leaf::<Fr>();
-    let sw = Stopwatch::start_new();
-    let tree = compute_lagrange_tree::<Bn254>(&acc.lagrange_comms);
-    println!("compute_lagrange_tree() took {}ms", sw.elapsed_ms());
     let mut identity_nullifiers = Vec::<Fr>::new();
     let mut identity_trapdoors = Vec::<Fr>::new();
     let mut identity_commitments: Vec<Fr> = vec![zero; table_size];
@@ -225,7 +227,7 @@ async fn main() {
         &public_input,
     );
 
-    println!("{}", is_valid);
+    println!("is_valid(): {}", is_valid);
 
     let result = semacaulk_contract
         .broadcast_signal(

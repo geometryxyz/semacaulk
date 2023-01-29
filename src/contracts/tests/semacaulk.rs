@@ -11,7 +11,7 @@ use crate::setup::{load_lagrange_comms_from_file, load_srs_from_hex};
 use crate::verifier::Verifier as SemacaulkVerifier;
 use crate::{
     bn_solidity_utils::{f_to_u256, u256_to_f},
-    keccak_tree::flatten_proof,
+    keccak_tree::{flatten_proof, KeccakTree},
 };
 use ark_bn254::{Bn254, Fq, Fr, G1Affine, G2Affine};
 use ark_ec::ProjectiveCurve;
@@ -47,6 +47,7 @@ pub async fn deploy_semacaulk(
     Accumulator<Bn254>,
     Vec<G1Affine>,
     Vec<G2Affine>,
+    KeccakTree,
 ) {
     let zero = compute_zero_leaf::<Fr>();
 
@@ -72,7 +73,7 @@ pub async fn deploy_semacaulk(
             .await
             .unwrap();
 
-    (semacaulk_contract, acc, srs_g1, srs_g2)
+    (semacaulk_contract, acc, srs_g1, srs_g2, tree)
 }
 
 #[tokio::test]
@@ -91,10 +92,10 @@ pub async fn test_semacaulk_insert_and_broadcast() {
     let mut acc = r.1;
     let srs_g1 = r.2;
     let srs_g2 = r.3;
+    let tree = r.4;
 
     let mimc7 = init_mimc7::<Fr>();
     let zero = compute_zero_leaf::<Fr>();
-    let tree = compute_lagrange_tree::<Bn254>(&acc.lagrange_comms);
     let mut identity_nullifiers = Vec::<Fr>::new();
     let mut identity_trapdoors = Vec::<Fr>::new();
     let mut identity_commitments: Vec<Fr> = vec![zero; table_size];
