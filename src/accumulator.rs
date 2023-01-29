@@ -40,7 +40,7 @@ impl<E: PairingEngine> Accumulator<E> {
     pub fn update(&mut self, index: usize, value: E::Fr) {
         assert!(index < self.lagrange_comms.len());
 
-        // C - (v - zero) * li_comm
+        // C + (v - zero) * li_comm
         let v_minus_zero = value - self.zero;
         let v_minus_zero_mul_li_comm = self.lagrange_comms[index].mul(v_minus_zero);
         let p = self.point + v_minus_zero_mul_li_comm.into_affine();
@@ -77,10 +77,10 @@ pub fn compute_zero_leaf<F: PrimeField>() -> F {
 }
 
 pub fn commit_to_lagrange_bases<E: PairingEngine>(
-    domain_size: usize,
+    table_size: usize,
     srs_g1: &[E::G1Affine],
 ) -> Vec<E::G1Affine> {
-    let tau_powers: Vec<E::G1Affine> = srs_g1.iter().take(domain_size).copied().collect();
+    let tau_powers: Vec<E::G1Affine> = srs_g1.iter().take(table_size).copied().collect();
 
     compute_lagrange_basis_commitments(tau_powers)
 }
@@ -155,12 +155,12 @@ mod tests {
 
     #[test]
     fn test_accumulator() {
-        let domain_size = 8;
+        let table_size = 8;
         let mut rng = test_rng();
 
-        let srs_g1 = unsafe_setup_g1::<Bn254, StdRng>(domain_size, &mut rng);
+        let srs_g1 = unsafe_setup_g1::<Bn254, StdRng>(table_size, &mut rng);
         let zero = compute_zero_leaf::<Fr>();
-        let lagrange_comms = commit_to_lagrange_bases::<Bn254>(domain_size, &srs_g1);
+        let lagrange_comms = commit_to_lagrange_bases::<Bn254>(table_size, &srs_g1);
 
         let mut acc = Accumulator::<Bn254>::new(zero, &lagrange_comms);
 
