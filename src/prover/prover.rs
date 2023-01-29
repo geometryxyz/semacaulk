@@ -16,9 +16,7 @@ use crate::{
     gates::{ExternalNullifierGate, KeyCopyGate, KeyEquality, Mimc7RoundGate, NullifierGate},
     kzg::commit,
     layouter::Assignment,
-    multiopen::{
-        prover::Prover as MultiopenProver, MultiopenProof,
-    },
+    multiopen::{prover::Prover as MultiopenProver, MultiopenProof},
     transcript::Transcript,
     utils::construct_lagrange_basis,
     utils::shift_dense_poly,
@@ -199,85 +197,85 @@ impl Prover {
 
         //// Sanity check multiopen_proof
         //if cfg!(debug_assertions) {
-            //let mut transcript = Transcript::new_transcript();
-            //transcript.update_with_u256(public_input.external_nullifier);
-            //transcript.update_with_u256(public_input.nullifier_hash);
-            //transcript.update_with_u256(public_input.signal_hash);
-            //transcript.update_with_g1(&w0);
-            //transcript.update_with_g1(&key);
-            //transcript.update_with_g1(&w1);
-            //transcript.update_with_g1(&w2);
-            //let _v = transcript.get_challenge();
-            //transcript.update_with_g1(&quotient);
-            //transcript.update_with_g1(&zi);
-            //transcript.update_with_g1(&ci);
-            //transcript.update_with_g1(&u_prime);
-            //let _hi_1 = transcript.get_challenge();
-            //let _hi_2 = transcript.get_challenge();
-            //transcript.update_with_g2(&w);
-            //transcript.update_with_g1(&h);
-            //let alpha = transcript.get_challenge();
-            //transcript.update_with_u256(w0_openings_0);
-            //transcript.update_with_u256(w0_openings_1);
-            //transcript.update_with_u256(w0_openings_2);
+        //let mut transcript = Transcript::new_transcript();
+        //transcript.update_with_u256(public_input.external_nullifier);
+        //transcript.update_with_u256(public_input.nullifier_hash);
+        //transcript.update_with_u256(public_input.signal_hash);
+        //transcript.update_with_g1(&w0);
+        //transcript.update_with_g1(&key);
+        //transcript.update_with_g1(&w1);
+        //transcript.update_with_g1(&w2);
+        //let _v = transcript.get_challenge();
+        //transcript.update_with_g1(&quotient);
+        //transcript.update_with_g1(&zi);
+        //transcript.update_with_g1(&ci);
+        //transcript.update_with_g1(&u_prime);
+        //let _hi_1 = transcript.get_challenge();
+        //let _hi_2 = transcript.get_challenge();
+        //transcript.update_with_g2(&w);
+        //transcript.update_with_g1(&h);
+        //let alpha = transcript.get_challenge();
+        //transcript.update_with_u256(w0_openings_0);
+        //transcript.update_with_u256(w0_openings_1);
+        //transcript.update_with_u256(w0_openings_2);
 
-            //transcript.update_with_u256(w1_openings_0);
-            //transcript.update_with_u256(w1_openings_1);
-            //transcript.update_with_u256(w1_openings_2);
+        //transcript.update_with_u256(w1_openings_0);
+        //transcript.update_with_u256(w1_openings_1);
+        //transcript.update_with_u256(w1_openings_2);
 
-            //transcript.update_with_u256(w2_openings_0);
-            //transcript.update_with_u256(w2_openings_1);
-            //transcript.update_with_u256(w2_openings_2);
+        //transcript.update_with_u256(w2_openings_0);
+        //transcript.update_with_u256(w2_openings_1);
+        //transcript.update_with_u256(w2_openings_2);
 
-            //transcript.update_with_u256(key_openings_0);
-            //transcript.update_with_u256(key_openings_1);
+        //transcript.update_with_u256(key_openings_0);
+        //transcript.update_with_u256(key_openings_1);
 
-            //transcript.update_with_u256(q_mimc_opening);
-            //transcript.update_with_u256(c_opening);
-            //transcript.update_with_u256(quotient_opening);
+        //transcript.update_with_u256(q_mimc_opening);
+        //transcript.update_with_u256(c_opening);
+        //transcript.update_with_u256(quotient_opening);
 
-            //transcript.update_with_u256(u_prime_opening);
-            //transcript.update_with_u256(p1_opening);
-            //transcript.update_with_u256(p2_opening);
+        //transcript.update_with_u256(u_prime_opening);
+        //transcript.update_with_u256(p1_opening);
+        //transcript.update_with_u256(p2_opening);
 
-            //let n = SUBGROUP_SIZE;
-            //let domain = GeneralEvaluationDomain::new(n).unwrap();
+        //let n = SUBGROUP_SIZE;
+        //let domain = GeneralEvaluationDomain::new(n).unwrap();
 
-            //let omega: Fr = domain.element(1);
-            //let omega_n = domain.element(NUMBER_OF_MIMC_ROUNDS);
-            //let omega_alpha = omega * alpha;
-            //let omega_n_alpha = omega_n * alpha;
+        //let omega: Fr = domain.element(1);
+        //let omega_n = domain.element(NUMBER_OF_MIMC_ROUNDS);
+        //let omega_alpha = omega * alpha;
+        //let omega_n_alpha = omega_n * alpha;
 
-            //let is_multiopen_proof_valid = MultiopenVerifier::verify(
-                //&mut transcript,
-                //&multiopen_proof,
-                //&w0,
-                //&[w0_openings_0, w0_openings_1, w0_openings_2],
-                //&w1,
-                //&[w1_openings_0, w1_openings_1, w1_openings_2],
-                //&w2,
-                //&[w2_openings_0, w2_openings_1, w2_openings_2],
-                //&key,
-                //&[key_openings_0, key_openings_1],
-                //&q_mimc,
-                //q_mimc_opening,
-                //&c,
-                //c_opening,
-                //&quotient,
-                //quotient_opening,
-                //&u_prime,
-                //u_prime_opening,
-                //&p1,
-                //p1_opening,
-                //&p2,
-                //p2_opening,
-                //u_prime_opening, //v,
-                //alpha,
-                //omega_alpha,
-                //omega_n_alpha,
-                //pk.srs_g2[1],
-            //);
-            //assert!(is_multiopen_proof_valid);
+        //let is_multiopen_proof_valid = MultiopenVerifier::verify(
+        //&mut transcript,
+        //&multiopen_proof,
+        //&w0,
+        //&[w0_openings_0, w0_openings_1, w0_openings_2],
+        //&w1,
+        //&[w1_openings_0, w1_openings_1, w1_openings_2],
+        //&w2,
+        //&[w2_openings_0, w2_openings_1, w2_openings_2],
+        //&key,
+        //&[key_openings_0, key_openings_1],
+        //&q_mimc,
+        //q_mimc_opening,
+        //&c,
+        //c_opening,
+        //&quotient,
+        //quotient_opening,
+        //&u_prime,
+        //u_prime_opening,
+        //&p1,
+        //p1_opening,
+        //&p2,
+        //p2_opening,
+        //u_prime_opening, //v,
+        //alpha,
+        //omega_alpha,
+        //omega_n_alpha,
+        //pk.srs_g2[1],
+        //);
+        //assert!(is_multiopen_proof_valid);
         //}
 
         let q_mimc = commit(&state.proving_key.srs_g1, &state.precomputed.q_mimc).into_affine();
