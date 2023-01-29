@@ -1,6 +1,5 @@
 pub mod accumulator;
 pub mod bn_solidity_utils;
-pub mod caulk_plus;
 pub mod constants;
 pub mod contracts;
 pub mod error;
