@@ -35,6 +35,7 @@ cd semacaulk
 cargo test
 ```
 
+<<<<<<< HEAD
 ## Demo
 
 The setup files `11.hex` and `lagrangeComms_11` are already in the repository.
@@ -70,3 +71,12 @@ Now, run:
 A future release will integrate implement the functionality of
 `export-ptau-points` into the `setup` executable, so a separate step will not
 be needed.
+
+## Documentation
+
+We use `mdbook` v0.4.25 for documentation To build the documentation, navigate
+to the `docs` directory and run:
+
+```bash
+mdbook serve
+```
