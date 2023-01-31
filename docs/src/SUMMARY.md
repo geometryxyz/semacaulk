@@ -4,7 +4,7 @@
 - [Quick start](./quick_start.md)
 - [Trusted Setup](./trusted_setup.md)
 - [Cryptographic Specification](./cryptographic_specification.md)
-    - [Setup](./setup.md)
+    - [System invariants](./system_invariants.md)
     - [Insertion](./insertion.md)
     - [Precomputation and updates](./precomputation_and_updates.md)
     - [Proof generation](./proof_generation.md)
