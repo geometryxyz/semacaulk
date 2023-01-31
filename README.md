@@ -35,7 +35,20 @@ cd semacaulk
 cargo test
 ```
 
-<<<<<<< HEAD
+## Documentation
+
+We use `mdbook` v0.4.25 for documentation.
+
+Install `mdbook` using [these
+instructions](https://rust-lang.github.io/mdBook/guide/installation.html).
+
+To build the Semacaulk documentation, run this in the Semacaulk project root:
+
+```bash
+mdbook serve ./docs
+```
+
+>>>>>>> 56f3e4f (more crypto specs in docs)
 ## Demo
 
 The setup files `11.hex` and `lagrangeComms_11` are already in the repository.

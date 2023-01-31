@@ -117,6 +117,7 @@ mod util_tests {
     use ark_bn254::Fr as F;
     use ark_ff::Zero;
     use ark_poly::{
+        Polynomial,
         univariate::DensePolynomial, EvaluationDomain, GeneralEvaluationDomain, UVPolynomial,
     };
 
@@ -152,6 +153,20 @@ mod util_tests {
 
         assert_eq!(f_from_bases, f_from_ifft);
     }
+
+    //#[test]
+    //fn test_lagrange_basis_polynomials() {
+        //let domain_size = 4;
+        //let domain = GeneralEvaluationDomain::<F>::new(domain_size).unwrap();
+
+        //let elems: Vec<F> = domain.elements().collect();
+        //let bases = construct_lagrange_basis(&elems);
+        
+        //// L_i is the polynomial such that L_i(u[i - 1]) = 1 and L_i(u[j]) = 0 for all j != i
+        //let r = bases[1].evaluate(&elems[0]);
+        //println!("{}", r);
+
+    //}
 
     //#[test]
     //fn test_lagrange_bases_speed() {
