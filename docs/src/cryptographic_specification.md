@@ -4,6 +4,15 @@ Some of the terminology, symbols, and language has been borrowed from and
 inspired by the [Halo2 Book](https://zcash.github.io/halo2) and the [MACI 1.0
 Audit Specification](https://hackmd.io/AP6zPSgtThWxx6pjXY7R8A).
 
+## Notation
+
+- Accumulator: an elliptic curve point which is a commitment to \\(t\\) field
+  elements.
+- \\(t\\): the maximum capacity of the accumulator.
+- Zero value: the nothing-up-my-sleeve value (see 2).
+- Elliptic curve multiplication: in this specification, we use the dot operator
+  \\(\cdot\\) to denote scalar multiplication of an elliptic curve point.
+
 ## Cryptographic primitives
 
 ### 1. The BN254 curve
@@ -146,9 +155,9 @@ Given a polynomial \\(\phi\\) with \\(l\\) coefficients
 can use \\(\mathsf{srs\\_g1}\\) to
 produce a commitment in the form of a \\(\mathbb{G}_1\\) point, or
 \\(\mathsf{srs\\_g2}\\) to produce a commitment in the form of a
-\\(\mathsf{G}_2\\) point.
+\\(\mathbb{G}_2\\) point.
 
-\\(\mathsf{commit}(\phi, \mathsf{srs}) = \sum_{i=0}^{l-1} \mathsf{srs}[i] \cdot \phi_i \\)
+\\(\mathsf{commit}(\phi, \mathsf{srs}) = \sum_{i=1}^{l} \mathsf{srs}[i] \cdot \phi_i \\)
 
 
 ### 6. Lagrange basis polynomials
@@ -201,8 +210,34 @@ technique](https://alinush.github.io/2021/06/17/Feist-Khovratovich-technique-for
 
 ### 7. The accumulator
 
+The *accumulator* is a single \\(\mathbb{G}_1\\) point that is a commitment to
+a vector of \\(t\\) \\(\mathbb{F}_r\\) elements where \\(t\\) is the maximum
+capacity of the instance of Semacaulk in question. These elements are ordered
+with the users' identity commitments followed by nothing-up-my-sleeve values.
 
-### The Keccak256 hash
+An *empty accumulator* is simply a commitment to \\(t\\) nothing-up-my-sleeve
+values.
+
+Given the vector of values \\([v_0, ..., v_t]\\), the accumulator \\(C\\) is computed
+as such:
+
+\\(\sum_{i=1}^{t} \mathsf{commit}(L_i, \mathsf{srs\\_g1}) \cdot v_i\\)
+
+#### 7.1 Updating the accumulator
+
+To replace a value at \\(w_i\\) with \\(v_i\\) at index \\(i\\):
+
+\\(C_{\mathsf{new}} = C - L \cdot w_i + L \cdot v_i\\)
+
+\\(= C + L \cdot (v_i - w_i)\\)
+
+where \\(L = \mathsf{commit}(L_i, \mathsf{srs\\_g1})\\)
+
+This can be done on-chain at a low cost because the only expensive operations
+required are an elliptic curve scalar multiplication and a elliptic curve
+addition.
+
+### 8. The Keccak256 hash
 
 The Keccak256 hash function is defined in [*The Keccak SHA-3
 submission*](https://keccak.team/files/Keccak-submission-3.pdf) by Bertoni et
