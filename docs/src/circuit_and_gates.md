@@ -1,0 +1,84 @@
+# The Circuit and Gates
+
+Semacaulk uses a custom Plonk-style proof system where a prover must convince a
+verifier that it knows of some private *witness* values which are the result of
+the correct execution of predefined logical operations upon public inputs and
+fixed data. In other terms, there is a *circuit* which represents some program.
+In proof systems like Groth16, circuits are represented in the form of a Rank-1
+Constraint System (R1CS), and compilers like [circom](https://iden3.io/circom)
+can be used to easily compile circuits to this format. Semacaulk, by contrast,
+uses a set of custom gates on a set of data columns to represent its
+logic.
+
+## Private inputs (witness)
+
+- \\(\mathsf{id\\_nul}\\): the identity nullifier.
+- \\(\mathsf{id\\_trap}\\): the identity trapdoor.
+- \\(i\\): the index of the prover's identity commitment in the accumulator.
+
+## Public inputs
+
+- \\(\mathsf{ext\\_nul}\\): the extenal nullifier.
+- \\(\mathsf{id\\_comm}\\): the identity commitment, which is the MiMC7
+  `multi_hash` of \\([\mathsf{id\\_nul}, \mathsf{id\\_trap}]\\).
+- \\(\mathsf{nul\\_hash}\\): the nullifier hash, which is the MiMC7
+  `multi_hash` of \\([\mathsf{id\\_nul}, \mathsf{ext\\_nul}]\\).
+
+## Columns
+
+| Row | \\(\mathsf{w}_0\\) | \\(\mathsf{w}_1\\) | \\(\mathsf{w}_2\\) | \\(\mathsf{key}\\) | \\(\mathsf{c}\\) | \\(\mathsf{q\\_mimc}\\) |
+|-|-|-|-|-|-|-|
+|0| \\(\mathsf{id\\_nul}\\) | \\(\mathsf{id\\_trap}\\) | \\(\mathsf{ext\\_nul}\\) | \\(\mathsf{w}_0[n] + \mathsf{w}_0[0] \\) | \\(\mathsf{cts}[0]\\) | 1 |
+|1| \\((\mathsf{w}_0[0] + \mathsf{c}[0]) ^ 7\\) | \\((\mathsf{w}_1[0] + \mathsf{key}[0] + \mathsf{c}[0]) ^ 7\\) | \\((\mathsf{w}_2[0] + \mathsf{key}[0] + \mathsf{c}[0]) ^ 7\\)| \\(\mathsf{w}_0[n] + \mathsf{w}_0[0] \\) | \\(\mathsf{cts}[1]\\) | 1 |
+|...|...|...|...|...|...|...|
+| \\(n\\) | \\((\mathsf{w}_0[n - 1] + \mathsf{c}[n - 1]) ^ 7\\) | \\((\mathsf{w}_1[n - 1] + \mathsf{key}[n - 1] + \mathsf{c}[n - 1]) ^ 7\\) | \\((\mathsf{w}_2[n - 1] + \mathsf{key}[n - 1] + \mathsf{c}[n - 1]) ^ 7\\)| \\(\mathsf{w}_0[n] + \mathsf{w}_0[0] \\) | \\(\mathsf{dummy}\\) | 0 |
+| 128 | \\(\mathsf{b}\\) | \\(\mathsf{b}\\) | \\(\mathsf{b}\\) | \\(\mathsf{b}\\) | \\(\mathsf{b}\\) | \\(\mathsf{b}\\)
+
+Notes:
+
+- The 0th row contains the \\(\mathsf{id\\_nul}\\), \\(\mathsf{id\\_trap}\\), etc
+  values. They are not table headers.
+- \\(n\\) is the constant value (91) defined in [4. The MiMC7 hash
+function](./cryptographic_specification.html#4-the-mimc7-hash-function).
+- \\(\mathsf{dummy}\\) can be any value as it will not be used by any of the gates.
+- \\(\mathsf{q\\_mimc}\\) is a selector column. As will be explained below, it 
+- \\(\mathsf{c}\\) is a fixed column.
+- \\(\mathsf{b}\\) are random values used to blind the columns, in order to
+  make it computationally infeasible to brute-force their polynomial commitments.
+
+## Gates
+
+To understand how the logic of the circuit is encoded, consider each row of the
+table as inputs to the linear combination of the following gates, which must
+evaluate to 0 for a valid proof to be generated. In effect:
+
+\\(\mathsf{gate}_0(r) + ... + \mathsf{gate}_n(r) = 0\\) must be true.
+
+Each and every gate must evaluate to 0. It is not possible for the prover to
+cheat by having some gates evaluate to some value such that the total evaluates
+to 0, since the prover will be forced to separate each gate with a challenge
+that they cannot control. Internally, the equation is actually:
+
+\\(\mathsf{gate}_0(r) * v_0 + ... + \mathsf{gate}_n(r) * v_n = 0\\) must be true.
+
+where the \\(v\\) values are successive powers of the hash of the public
+inputs. The prover would have to break a strong hash function to choose the
+public inputs and \\(v\\) values in order to cheat.
+
+### 0. `Mimc7RoundGate`
+
+The equation is:
+
+\\(\mathsf{q\\_mimc}[i] * (\mathsf{w}_0[i] + \mathsf{key}[i] + \mathsf{c}[i]) ^ 7\\)
+
+This makes each row from 1 to $n$ contain part the MiMC7 `hash` of the
+\\(\mathsf{id_nul}\\), minus the key. This is useful as it computes the first
+part of the `multi_hash` algorithm for ........TODO
+
+### 1. 
+
+### 2. 
+
+### 3. 
+
+### 4. 

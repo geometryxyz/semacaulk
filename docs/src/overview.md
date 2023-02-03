@@ -22,7 +22,7 @@ accumulating identity commitments in a Merkle tree, it updates a KZG
 commitment. This operations involves BN254 point multiplication and addition,
 rather than expensive zk-friendly hash operations. Secondly, the underlying
 proof system is a polynomial interactive oracle proof that combines [Caulk+
-lookups](https://eprint.iacr.org/2022/957) and [multipoint opening
+lookups](https://eprint.iacr.org/2022/957) and a [multipoint opening
 argument](https://zcash.github.io/halo2/design/proving-system/multipoint-opening.html).
 
 Thanks to these techniques, on-chain insertions are far cheaper in Semacaulk

@@ -136,7 +136,7 @@ To hash a single field element \\(x\\), we use the `hash()` algorithm. The input
 \\(\mathsf{rd}[i] = (\mathsf{rd}[i - 1] + \mathsf{cts}[i] + k) ^ 7\\)
 3. Return \\(\mathsf{rd}[n - 1] + k\\).
 
-#### 4.3. The MiMC7 `multihash` algorithm
+#### 4.3. The MiMC7 `multi_hash` algorithm
 To hash multiple field elements \\(x_0, ..., x_n\\), we use the `multi_hash()`
 algorithm. The inputs to `multi_hash()` are the array of said field elements
 and a key \\(k\\).

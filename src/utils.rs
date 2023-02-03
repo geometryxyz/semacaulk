@@ -116,10 +116,15 @@ mod util_tests {
     use super::construct_lagrange_basis;
     use ark_bn254::Fr as F;
     use ark_ff::Zero;
+    use ark_bn254::Bn254;
+    use rand::rngs::StdRng;
+    use ark_std::test_rng;
+    use ark_ec::{AffineCurve, ProjectiveCurve};
     use ark_poly::{
         Polynomial,
         univariate::DensePolynomial, EvaluationDomain, GeneralEvaluationDomain, UVPolynomial,
     };
+    use crate::kzg::{commit, unsafe_setup_g1};
 
     #[test]
     fn test_lagrange_bases() {
@@ -154,19 +159,31 @@ mod util_tests {
         assert_eq!(f_from_bases, f_from_ifft);
     }
 
-    //#[test]
-    //fn test_lagrange_basis_polynomials() {
-        //let domain_size = 4;
-        //let domain = GeneralEvaluationDomain::<F>::new(domain_size).unwrap();
+    #[test]
+    fn test_lagrange_basis_polynomials() {
+        let domain_size = 4;
+        let domain = GeneralEvaluationDomain::<F>::new(domain_size).unwrap();
 
-        //let elems: Vec<F> = domain.elements().collect();
-        //let bases = construct_lagrange_basis(&elems);
+        let mut rng = test_rng();
+        let srs_g1 = unsafe_setup_g1::<Bn254, StdRng>(domain_size, &mut rng);
+
+        let elems: Vec<F> = domain.elements().collect();
+        let bases = construct_lagrange_basis(&elems);
         
-        //// L_i is the polynomial such that L_i(u[i - 1]) = 1 and L_i(u[j]) = 0 for all j != i
+        // L_i is the polynomial such that L_i(u[i - 1]) = 1 and L_i(u[j]) = 0 for all j != i
         //let r = bases[1].evaluate(&elems[0]);
         //println!("{}", r);
 
-    //}
+        let two = F::from(2);
+        let l0 = bases[0].clone();
+        let l0_mul_2 = l0.naive_mul(&DensePolynomial::from_coefficients_slice(&[two]));
+
+        let l0_commm = commit(&srs_g1, &l0).into_affine();
+        let l0_mul_2_commm = commit(&srs_g1, &l0_mul_2);
+
+        println!("{}", l0_commm.mul(two).into_affine());
+        println!("{}", l0_mul_2_commm);
+    }
 
     //#[test]
     //fn test_lagrange_bases_speed() {
