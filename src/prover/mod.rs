@@ -172,14 +172,13 @@ impl Prover {
 
         let (w0, key, w1, w2) = Self::assignment_round(&mut state);
 
-        transcript.round_1(
-            [&w0, &key, &w1, &w2],
-            [
-                public_input.external_nullifier,
-                public_input.nullifier_hash,
-                public_input.signal_hash,
-            ],
-        );
+        transcript.round_0_public_inputs([
+            public_input.external_nullifier,
+            public_input.nullifier_hash,
+            public_input.signal_hash,
+        ]);
+
+        transcript.round_1([&w0, &key, &w1, &w2]);
 
         let v = transcript.get_challenge();
 
