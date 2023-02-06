@@ -42,8 +42,6 @@ impl<F: PrimeField> Mimc7<F> {
             cts: Self::initialize_constants(seed, n_rounds),
         }
     }
-    /*
-     */
 
     pub fn multi_hash(&self, arr: &[F], key: F) -> F {
         let mut r = key;
@@ -58,9 +56,9 @@ impl<F: PrimeField> Mimc7<F> {
     pub fn multi_hash_two(&self, arr: &[F], key: F) -> F {
         assert_eq!(arr.len(), 2);
         let mut r = key;
-        let h0 = self.hash(arr[0], r);
+        let h0 = self.hash(arr[0], r); // n round functions, then add key
         r += arr[0] + h0;
-        let h1 = self.hash(arr[1], r);
+        let h1 = self.hash(arr[1], r); // n round functions, then add arr[0] + h0
         r += arr[1] + h1;
         r
     }

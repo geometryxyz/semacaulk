@@ -160,9 +160,9 @@ Given inputs \\(a\\) and \\(b\\):
 
 1. Set \\(r\\) as 0.
 2. Set \\(h_0 = \mathsf{hash}(a, r)\\).
-3. Set \\(r = a + h_0\\).
+3. Set \\(r = r + a + h_0\\).
 4. Set \\(h_1 = \mathsf{hash}(b, r)\\).
-5. Return \\(b + h_1\\).
+5. Return \\(r + b + h_1\\).
 
 Note that in step 4, the key is \\(a + h_0 = \mathsf{hash}(a, 0)\\). This fact
 is crucial to understanding how the circuit construction works.

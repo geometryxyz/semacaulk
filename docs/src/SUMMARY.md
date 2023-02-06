@@ -6,7 +6,7 @@
 - [Cryptographic Specification](./cryptographic_specification.md)
     - [System invariants](./system_invariants.md)
     - [Insertion](./insertion.md)
-    - [The Circuit and Gates (TODO)](./circuit_and_gates.md)
+    - [The Circuit and Gates](./circuit_and_gates.md)
     - [Precomputation and updates (TODO)](./precomputation_and_updates.md)
     - [Proof generation (TODO)](./proof_generation.md)
     - [Proof verification (TODO)](./verification.md)

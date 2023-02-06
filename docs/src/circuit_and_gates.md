@@ -38,11 +38,12 @@ Notes:
 
 - The 0th row contains the \\(\mathsf{id\\_nul}\\), \\(\mathsf{id\\_trap}\\), etc
   values. They are not table headers.
-- \\(n\\) is the constant value (91) defined in [4. The MiMC7 hash
-function](./cryptographic_specification.html#4-the-mimc7-hash-function).
+- \\(n\\) is the constant (91) defined in
+  [4](./cryptographic_specification.html#4-the-mimc7-hash-function).
 - \\(\mathsf{dummy}\\) can be any value as it will not be used by any of the gates.
-- \\(\mathsf{q\\_mimc}\\) is a selector column. As will be explained below, it 
-- \\(\mathsf{c}\\) is a fixed column.
+- \\(\mathsf{q\\_mimc}\\) is a selector column. It is a vector starting with
+  \\(n\\) 1 values followed by zeros.
+- \\(\mathsf{c}\\) is a fixed column starting with \\(n\\) MiMC7 round constants.
 - \\(b\\) are random values used to blind the columns, in order to
   make it computationally infeasible to brute-force their polynomial commitments.
 
@@ -59,7 +60,7 @@ cheat by having some gates evaluate to some value such that the total evaluates
 to 0, since the prover will be forced to separate each gate with a challenge
 that they cannot control. Internally, the equation is actually:
 
-\\(\mathsf{gate}_0(r) * v_0 + ... + \mathsf{gate}_n(r) * v_n = 0\\) must be true.
+\\(\mathsf{gate}_0(r) \cdot v_0 + ... + \mathsf{gate}_n(r) \cdot v_n = 0\\) must be true.
 
 where the \\(v\\) values are successive powers of the hash of the public
 inputs. The prover would have to break a strong hash function to choose the
@@ -69,15 +70,10 @@ public inputs and \\(v\\) values in order to cheat.
 
 The equation is:
 
-\\(\mathsf{q\\_mimc}[i] * (\mathsf{w}_0[i] + 0 + \mathsf{c}[i]) ^ 7\\)
+\\(\mathsf{q\\_mimc}[i] \cdot (\mathsf{w}_0[i] + 0 + \mathsf{c}[i]) ^ 7\\)
 
-This makes each row from 1 to \\(n\\) contain part the MiMC7 `hash` of the
-\\(\mathsf{id\\_nul}\\), minus the key. This is useful as it computes the first
-part of the `multi_hash` algorithm to calculate the identity commitment and the
-nullifier hash. Recall from
-[5.1](./mechanism_of_operation.html#51-user-identities):
-
-\\(\mathsf{id\\_comm} = \mathsf{multi\\_hash}([\mathsf{id\\_nul}, \mathsf{id\\_trap}])\\)
+This makes each row from 1 to \\(n\\) contain the successive outputs of the
+MiMC7 round function over \\(\mathsf{id\\_nul}\\). 
 
 The key is set to 0 for all rows.
 
@@ -85,7 +81,7 @@ The key is set to 0 for all rows.
 
 The equation is:
 
-\\(\mathsf{q\\_mimc}[i] * (\mathsf{w}_1[i] + \mathsf{key}[i] + \mathsf{c}[i]) ^ 7\\)
+\\(\mathsf{q\\_mimc}[i] \cdot (\mathsf{w}_1[i] + \mathsf{key}[i] + \mathsf{c}[i]) ^ 7\\)
 
 To understand this, first note that gate 4 (`KeyCopyGate`) and gate 3
 (`KeyEqualityGate`) ensure that the \\(\mathsf{key}\\) values are all the MiMC7
@@ -96,7 +92,9 @@ As described in
 this means that the key for step 4 of the `multi_hash` function on two inputs
 is the value in any row of \\(key\\) from 0 to \\(n\\). As such, this gate
 represents the circuit logic for step 4 of `multi_hash`, which brings it us
-closer to computing the identity commitment. Again, recall:
+closer to computing the identity commitment.
+
+Recall from [5.1](./mechanism_of_operation.html#51-user-identities):
 
 \\(\mathsf{id\\_comm} = \mathsf{multi\\_hash}([\mathsf{id\\_nul}, \mathsf{id\\_trap}])\\)
 
@@ -104,7 +102,7 @@ closer to computing the identity commitment. Again, recall:
 
 The equation is:
 
-\\(\mathsf{q\\_mimc}[i] * (\mathsf{w}_2[i] + \mathsf{key}[i] + \mathsf{c}[i]) ^ 7\\)
+\\(\mathsf{q\\_mimc}[i] \cdot (\mathsf{w}_2[i] + \mathsf{key}[i] + \mathsf{c}[i]) ^ 7\\)
 
 Recall that:
 
@@ -117,17 +115,67 @@ gate brings us closer to compuing the nullifier hash.
 
 The equation is:
 
-\\(\mathsf{q\\_mimc}[i] * (\mathsf{key}[i] + \mathsf{key}[n])\\) 
+\\(\mathsf{q\\_mimc}[i] \cdot (\mathsf{key}[i] + \mathsf{key}[n])\\) 
 
-This gate ensures that every row of \\(key\\) from 0 to \\(n\\) contains the
+This gate ensures that every row of \\(\mathsf{key}\\) from 0 to \\(n\\) contains the
 same value.
 
 ### 4. `KeyCopyGate`
 
 The equation is:
-        <!--l0[omega_i] * (key[omega_i] - nullifier[omega_i] - nullifier_pow_n)-->
-TODO
+
+\\(L_0(\omega_i) \cdot (\mathsf{key}[i] - \mathsf{w}_0[i] - \mathsf{w}_0[n])\\)
+
+This gate ensures that the first row in the \\(\mathsf{key}\\) column is equal
+to \\(\mathsf{id\\_nul}\\) plus the \\(n\\)th iteration of the MiMC7 round
+function on \\(\mathsf{id\\_nul}\\).
+
+\\(L_0\\) is a precomputed polynomial in the multiplicative subgroup which
+evaluates to 1 at \\(\omega_i\\), and 0 at all other roots of unity.
+Effectively, it acts as a selector without the overhead of a selector column.
 
 ### 5. `NullifierHashGate`
 
+The equation is:
+
+\\(L_0(\omega_i) \cdot (\mathsf{nul\\_hash} - \mathsf{w}_2[n] - (2 \cdot \mathsf{key}[i]) - \mathsf{w}_2[i])\\)
+
+This gate ensures that the \\(\mathsf{nul\\_hash}\\) public input is equal to:
+
+\\(\mathsf{w}_2[n] + (2 \cdot \mathsf{key}[0]) + \mathsf{w}_2[0])\\)
+
+To understand why, let us trace the computation of \\(\mathsf{nul\\_hash}\\):
+
+Given inputs \\(\mathsf{id\\_nul}\\) and \\(\mathsf{ext\\_nul}\\):
+
+1. Set \\(r\\) as 0.
+2. Set \\(h_0 = \mathsf{hash}(\mathsf{id\\_nul}, r)\\).
+3. Set \\(r = r + \mathsf{id\\_nul} + h_0\\).
+4. Set \\(h_1 = \mathsf{hash}(\mathsf{ext\\_nul}, r)\\).
+5. Return \\(r + \mathsf{ext\\_nul} + h_1\\).
+
+Hence, \\(\mathsf{nul\\_hash}\\) equals:
+
+\\(r + \mathsf{ext\\_nul} + h_1 =\\)
+
+\\(\mathsf{id\\_nul} + h_0 + \mathsf{ext\\_nul} + h_1 =\\)
+
+\\(\mathsf{id\\_nul} + \mathsf{hash}(\mathsf{id\\_nul}, 0) + \mathsf{ext\\_nul} + \mathsf{hash}(\mathsf{ext\\_nul}, \mathsf{id\\_nul} + \mathsf{hash}(\mathsf{id\\_nul}, 0)) =\\)
+
+\\(\mathsf{key} + \mathsf{ext\\_nul} + \mathsf{hash}(\mathsf{ext\\_nul}, \mathsf{key})\\)
+
+Since \\(\mathsf{hash}(x, k)\\) equal \\(n\\) round digests of \\(x\\) plus
+\\(k\\), the above equals:
+
+\\(\mathsf{key} + \mathsf{w}_2[0] + \mathsf{w}_2[n] + \mathsf{key} =\\)
+
+\\(\mathsf{w}_2[n] + (2 \cdot \mathsf{key}[0]) + \mathsf{w}_2[0])\\)
+
 ### 6. `ExternalNullifierGate`
+
+The equation is:
+
+\\(L_0(\omega_i) \cdot (\mathsf{w}_2[i] - \mathsf{ext\\_nul})\\)
+
+This gate ensures that the \\(\mathsf{ext\\_nul}\\) public input is equal to
+\\(\mathsf{w}_2[0]\\).
