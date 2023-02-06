@@ -114,17 +114,17 @@ pub fn is_pow_2(x: usize) -> bool {
 #[cfg(test)]
 mod util_tests {
     use super::construct_lagrange_basis;
-    use ark_bn254::Fr as F;
-    use ark_ff::Zero;
-    use ark_bn254::Bn254;
-    use rand::rngs::StdRng;
-    use ark_std::test_rng;
-    use ark_ec::{AffineCurve, ProjectiveCurve};
-    use ark_poly::{
-        Polynomial,
-        univariate::DensePolynomial, EvaluationDomain, GeneralEvaluationDomain, UVPolynomial,
-    };
     use crate::kzg::{commit, unsafe_setup_g1};
+    use ark_bn254::Bn254;
+    use ark_bn254::Fr as F;
+    use ark_ec::{AffineCurve, ProjectiveCurve};
+    use ark_ff::Zero;
+    use ark_poly::{
+        univariate::DensePolynomial, EvaluationDomain, GeneralEvaluationDomain, Polynomial,
+        UVPolynomial,
+    };
+    use ark_std::test_rng;
+    use rand::rngs::StdRng;
 
     #[test]
     fn test_lagrange_bases() {
@@ -169,7 +169,7 @@ mod util_tests {
 
         let elems: Vec<F> = domain.elements().collect();
         let bases = construct_lagrange_basis(&elems);
-        
+
         // L_i is the polynomial such that L_i(u[i - 1]) = 1 and L_i(u[j]) = 0 for all j != i
         //let r = bases[1].evaluate(&elems[0]);
         //println!("{}", r);

@@ -13,7 +13,9 @@ use rand::RngCore;
 
 use crate::{
     constants::{EXTENDED_DOMAIN_FACTOR, NUMBER_OF_MIMC_ROUNDS, SUBGROUP_SIZE},
-    gates::{ExternalNullifierGate, KeyCopyGate, KeyEquality, Mimc7RoundGate, NullifierGate},
+    gates::{
+        ExternalNullifierGate, KeyCopyGate, KeyEqualityGate, Mimc7RoundGate, NullifierHashGate,
+    },
     kzg::commit,
     layouter::Assignment,
     multiopen::{prover::Prover as MultiopenProver, MultiopenProof},
@@ -423,7 +425,7 @@ impl Prover {
 
             // Gate 3:
             numerator_coset_evals[i] += v_powers[3]
-                * KeyEquality::compute_in_coset(
+                * KeyEqualityGate::compute_in_coset(
                     i,
                     &key_coset_evals,
                     &state.precomputed.q_mimc_coset_evals,
@@ -440,7 +442,7 @@ impl Prover {
 
             // Gate 5:
             numerator_coset_evals[i] += v_powers[5]
-                * NullifierGate::compute_in_coset(
+                * NullifierHashGate::compute_in_coset(
                     i,
                     &w2_coset_evals,
                     &key_coset_evals,

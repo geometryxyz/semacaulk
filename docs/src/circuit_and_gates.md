@@ -32,7 +32,7 @@ logic.
 |1| \\((\mathsf{w}_0[0] + \mathsf{c}[0]) ^ 7\\) | \\((\mathsf{w}_1[0] + \mathsf{key}[0] + \mathsf{c}[0]) ^ 7\\) | \\((\mathsf{w}_2[0] + \mathsf{key}[0] + \mathsf{c}[0]) ^ 7\\)| \\(\mathsf{w}_0[n] + \mathsf{w}_0[0] \\) | \\(\mathsf{cts}[1]\\) | 1 |
 |...|...|...|...|...|...|...|
 | \\(n\\) | \\((\mathsf{w}_0[n - 1] + \mathsf{c}[n - 1]) ^ 7\\) | \\((\mathsf{w}_1[n - 1] + \mathsf{key}[n - 1] + \mathsf{c}[n - 1]) ^ 7\\) | \\((\mathsf{w}_2[n - 1] + \mathsf{key}[n - 1] + \mathsf{c}[n - 1]) ^ 7\\)| \\(\mathsf{w}_0[n] + \mathsf{w}_0[0] \\) | \\(\mathsf{dummy}\\) | 0 |
-| 128 | \\(\mathsf{b}\\) | \\(\mathsf{b}\\) | \\(\mathsf{b}\\) | \\(\mathsf{b}\\) | \\(\mathsf{b}\\) | \\(\mathsf{b}\\)
+| 128 | \\(b\\) | \\(b\\) | \\(b\\) | \\(b\\) | \\(b\\) | \\(b\\)
 
 Notes:
 
@@ -43,7 +43,7 @@ function](./cryptographic_specification.html#4-the-mimc7-hash-function).
 - \\(\mathsf{dummy}\\) can be any value as it will not be used by any of the gates.
 - \\(\mathsf{q\\_mimc}\\) is a selector column. As will be explained below, it 
 - \\(\mathsf{c}\\) is a fixed column.
-- \\(\mathsf{b}\\) are random values used to blind the columns, in order to
+- \\(b\\) are random values used to blind the columns, in order to
   make it computationally infeasible to brute-force their polynomial commitments.
 
 ## Gates
@@ -69,16 +69,65 @@ public inputs and \\(v\\) values in order to cheat.
 
 The equation is:
 
-\\(\mathsf{q\\_mimc}[i] * (\mathsf{w}_0[i] + \mathsf{key}[i] + \mathsf{c}[i]) ^ 7\\)
+\\(\mathsf{q\\_mimc}[i] * (\mathsf{w}_0[i] + 0 + \mathsf{c}[i]) ^ 7\\)
 
-This makes each row from 1 to $n$ contain part the MiMC7 `hash` of the
-\\(\mathsf{id_nul}\\), minus the key. This is useful as it computes the first
-part of the `multi_hash` algorithm for ........TODO
+This makes each row from 1 to \\(n\\) contain part the MiMC7 `hash` of the
+\\(\mathsf{id\\_nul}\\), minus the key. This is useful as it computes the first
+part of the `multi_hash` algorithm to calculate the identity commitment and the
+nullifier hash. Recall from
+[5.1](./mechanism_of_operation.html#51-user-identities):
 
-### 1. 
+\\(\mathsf{id\\_comm} = \mathsf{multi\\_hash}([\mathsf{id\\_nul}, \mathsf{id\\_trap}])\\)
 
-### 2. 
+The key is set to 0 for all rows.
 
-### 3. 
+### 1. `Mimc7RoundGate` for the identity commitment
 
-### 4. 
+The equation is:
+
+\\(\mathsf{q\\_mimc}[i] * (\mathsf{w}_1[i] + \mathsf{key}[i] + \mathsf{c}[i]) ^ 7\\)
+
+To understand this, first note that gate 4 (`KeyCopyGate`) and gate 3
+(`KeyEqualityGate`) ensure that the \\(\mathsf{key}\\) values are all the MiMC7
+`hash` of \\(\mathsf{id\\_nul}\\) plus \\(\mathsf{id\\_nul}\\).
+
+As described in
+[4.3.1](./cryptographic_specification.html#431-multi_hash-with-two-field-elements),
+this means that the key for step 4 of the `multi_hash` function on two inputs
+is the value in any row of \\(key\\) from 0 to \\(n\\). As such, this gate
+represents the circuit logic for step 4 of `multi_hash`, which brings it us
+closer to computing the identity commitment. Again, recall:
+
+\\(\mathsf{id\\_comm} = \mathsf{multi\\_hash}([\mathsf{id\\_nul}, \mathsf{id\\_trap}])\\)
+
+### 2. `Mimc7RoundGate` for the nullifier hash
+
+The equation is:
+
+\\(\mathsf{q\\_mimc}[i] * (\mathsf{w}_2[i] + \mathsf{key}[i] + \mathsf{c}[i]) ^ 7\\)
+
+Recall that:
+
+\\(\mathsf{nul\\_hash} = \mathsf{multi\\_hash}([\mathsf{id\\_nul}, \mathsf{ext\\_nul}])\\)
+
+By the same logic behind the `Mimc7RoundGate` for the identity commitment, this
+gate brings us closer to compuing the nullifier hash.
+
+### 3. `KeyEqualityGate`
+
+The equation is:
+
+\\(\mathsf{q\\_mimc}[i] * (\mathsf{key}[i] + \mathsf{key}[n])\\) 
+
+This gate ensures that every row of \\(key\\) from 0 to \\(n\\) contains the
+same value.
+
+### 4. `KeyCopyGate`
+
+The equation is:
+        <!--l0[omega_i] * (key[omega_i] - nullifier[omega_i] - nullifier_pow_n)-->
+TODO
+
+### 5. `NullifierHashGate`
+
+### 6. `ExternalNullifierGate`

@@ -25,11 +25,11 @@ impl<F: PrimeField> Mimc7RoundGate<F> {
     }
 }
 
-pub struct KeyEquality<F: PrimeField> {
+pub struct KeyEqualityGate<F: PrimeField> {
     _f: PhantomData<F>,
 }
 
-impl<F: PrimeField> KeyEquality<F> {
+impl<F: PrimeField> KeyEqualityGate<F> {
     pub fn compute_in_coset(omega_i: usize, key: &[F], q_mimc: &[F]) -> F {
         let key_next = positive_rotation_in_coset(key, omega_i, 1, EXTENDED_DOMAIN_FACTOR);
         q_mimc[omega_i] * (key[omega_i] - key_next)
@@ -52,11 +52,11 @@ impl<F: PrimeField> KeyCopyGate<F> {
     }
 }
 
-pub struct NullifierGate<F: PrimeField> {
+pub struct NullifierHashGate<F: PrimeField> {
     _f: PhantomData<F>,
 }
 
-impl<F: PrimeField> NullifierGate<F> {
+impl<F: PrimeField> NullifierHashGate<F> {
     pub fn compute_in_coset(
         omega_i: usize,
         nullifier_external: &[F], // rename to w2?

@@ -10,6 +10,7 @@
     - [Precomputation and updates (TODO)](./precomputation_and_updates.md)
     - [Proof generation (TODO)](./proof_generation.md)
     - [Proof verification (TODO)](./verification.md)
+- [Mechanism of Operation](./mechanism_of_operation.md)
 - [Ethereum contracts (TODO)](./ethereum_contracts.md)
     - [Gas costs](./gas_costs.md)
 - [Performance and Benchmarks](./performance_benchmarks.md)

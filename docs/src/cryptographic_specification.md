@@ -142,8 +142,30 @@ algorithm. The inputs to `multi_hash()` are the array of said field elements
 and a key \\(k\\).
 
 1. Initialise \\(r\\) to equal \\(k\\).
-2. For each \\(x_i\\), set \\(h = \mathsf{hash}(x_i, r)\\) and \\(r = x + h\\).
+2. For each \\(x_i\\):
+
+    a. Set \\(h_i = \mathsf{hash}(x_i, r)\\).
+
+    b. Set \\(r = x_i + h_i\\).
+
 3. Return \\(r\\).
+
+##### 4.3.1 `multi_hash` with two field elements
+
+It is useful to describe the `multi_hash` algorithm for two input elements in
+individual steps because the Semacaulk circuit construction (see [The Circuit
+and Gates](./circuit_and_gates.html)) makes use of its intermediate states.
+
+Given inputs \\(a\\) and \\(b\\):
+
+1. Set \\(r\\) as 0.
+2. Set \\(h_0 = \mathsf{hash}(a, r)\\).
+3. Set \\(r = a + h_0\\).
+4. Set \\(h_1 = \mathsf{hash}(b, r)\\).
+5. Return \\(b + h_1\\).
+
+Note that in step 4, the key is \\(a + h_0 = \mathsf{hash}(a, 0)\\). This fact
+is crucial to understanding how the circuit construction works.
 
 ### 5. KZG commitments
 
