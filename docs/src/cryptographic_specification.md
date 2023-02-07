@@ -275,3 +275,11 @@ following sources:
 - The Rust [`tiny-keccak` library's
   `v256`](https://docs.rs/tiny-keccak/latest/tiny_keccak/struct.Keccak.html)
   function.
+
+### 9. Evaluation domains
+
+#### 9.1. The subgroup domain
+
+#### 9.2. The extended coset domain
+
+#### 9.3. The table domain

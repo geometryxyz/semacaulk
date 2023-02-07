@@ -160,14 +160,17 @@ Hence, \\(\mathsf{nul\\_hash}\\) equals:
 
 \\(\mathsf{id\\_nul} + h_0 + \mathsf{ext\\_nul} + h_1 =\\)
 
-\\(\mathsf{id\\_nul} + \mathsf{hash}(\mathsf{id\\_nul}, 0) + \mathsf{ext\\_nul} + \mathsf{hash}(\mathsf{ext\\_nul}, \mathsf{id\\_nul} + \mathsf{hash}(\mathsf{id\\_nul}, 0)) =\\)
+\\(\mathsf{id\\_nul} + \mathsf{hash}(\mathsf{id\\_nul}, 0) + \mathsf{ext\\_nul} + \mathsf{hash}(\mathsf{ext\\_nul}, \mathsf{id\\_nul} + \mathsf{hash}(\mathsf{id\\_nul}, 0))\\)
 
-\\(\mathsf{key} + \mathsf{ext\\_nul} + \mathsf{hash}(\mathsf{ext\\_nul}, \mathsf{key})\\)
+Since the value \\(r\\) from step 3 is used as the key in step 4, the above is
+equal to:
 
-Since \\(\mathsf{hash}(x, k)\\) equal \\(n\\) round digests of \\(x\\) plus
+\\(\mathsf{key}[0] + \mathsf{ext\\_nul} + \mathsf{hash}(\mathsf{ext\\_nul}, \mathsf{key}[0])\\)
+
+Since \\(\mathsf{hash}(x, k)\\) equals \\(n\\) round digests of \\(x\\) plus
 \\(k\\), the above equals:
 
-\\(\mathsf{key} + \mathsf{w}_2[0] + \mathsf{w}_2[n] + \mathsf{key} =\\)
+\\(\mathsf{key}[0] + \mathsf{w}_2[0] + \mathsf{w}_2[n] + \mathsf{key}[0] =\\)
 
 \\(\mathsf{w}_2[n] + (2 \cdot \mathsf{key}[0]) + \mathsf{w}_2[0])\\)
 
