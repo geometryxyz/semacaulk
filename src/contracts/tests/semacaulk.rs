@@ -274,7 +274,7 @@ fn p_to_p(p: &ProofForSemacaulk) -> Proof {
 
     let o = Openings {
         q_mimc: p.openings.q_mimc,
-        c: p.openings.c,
+        mimc_cts: p.openings.mimc_cts,
         quotient: p.openings.quotient,
         u_prime: p.openings.u_prime,
         p_1: p.openings.p_1,
@@ -309,9 +309,9 @@ fn p_to_p(p: &ProofForSemacaulk) -> Proof {
             x: p.commitments.key.x,
             y: p.commitments.key.y,
         },
-        c: G1Point {
-            x: p.commitments.c.x,
-            y: p.commitments.c.y,
+        mimc_cts: G1Point {
+            x: p.commitments.mimc_cts.x,
+            y: p.commitments.mimc_cts.y,
         },
         quotient: G1Point {
             x: p.commitments.quotient.x,

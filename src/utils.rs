@@ -120,8 +120,7 @@ mod util_tests {
     use ark_ec::{AffineCurve, ProjectiveCurve};
     use ark_ff::Zero;
     use ark_poly::{
-        univariate::DensePolynomial, EvaluationDomain, GeneralEvaluationDomain,
-        UVPolynomial,
+        univariate::DensePolynomial, EvaluationDomain, GeneralEvaluationDomain, UVPolynomial,
     };
     use ark_std::test_rng;
     use rand::rngs::StdRng;

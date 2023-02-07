@@ -63,7 +63,7 @@ impl Verifier {
         let key_openings = [proof.openings.key_0, proof.openings.key_1];
 
         let q_mimc_opening = proof.openings.q_mimc;
-        let c_opening = proof.openings.c;
+        let mimc_cts_opening = proof.openings.mimc_cts;
         let w0_openings = [
             proof.openings.w0_0,
             proof.openings.w0_1,
@@ -94,17 +94,18 @@ impl Verifier {
         // combination of the gate evaluations should equal
         let pow_7 = |x: Fr| x.pow([7, 0, 0, 0]);
 
-        // Gate 0: q_mimc_opening * ((w0_openings[0] + c_opening) ^ 7 - w0_openings[1])
-        let gate_0_eval = q_mimc_opening * (pow_7(w0_openings[0] + c_opening) - w0_openings[1]);
+        // Gate 0: q_mimc_opening * ((w0_openings[0] + mimc_cts_opening) ^ 7 - w0_openings[1])
+        let gate_0_eval =
+            q_mimc_opening * (pow_7(w0_openings[0] + mimc_cts_opening) - w0_openings[1]);
 
-        // Gate 1: q_mimc_opening * ((w1_openings[0] + key_openings[0] + c_opening) ^ 7 - w1_openings[1])
-        let gate_1_eval =
-            q_mimc_opening * (pow_7(w1_openings[0] + key_openings[0] + c_opening) - w1_openings[1]);
+        // Gate 1: q_mimc_opening * ((w1_openings[0] + key_openings[0] + mimc_cts_opening) ^ 7 - w1_openings[1])
+        let gate_1_eval = q_mimc_opening
+            * (pow_7(w1_openings[0] + key_openings[0] + mimc_cts_opening) - w1_openings[1]);
 
         // Gate 2:
-        // q_mimc_opening * ((w2_openings[0] + key_openings[0] + c_opening) ^ 7 - w2_openings[1])
-        let gate_2_eval =
-            q_mimc_opening * (pow_7(w2_openings[0] + key_openings[0] + c_opening) - w2_openings[1]);
+        // q_mimc_opening * ((w2_openings[0] + key_openings[0] + mimc_cts_opening) ^ 7 - w2_openings[1])
+        let gate_2_eval = q_mimc_opening
+            * (pow_7(w2_openings[0] + key_openings[0] + mimc_cts_opening) - w2_openings[1]);
 
         // Gate 3:
         // q_mimc_opening * (key_openings[0] - key_openings[1])
@@ -158,7 +159,7 @@ impl Verifier {
             proof.openings.key_0,
             proof.openings.key_1,
             q_mimc_opening,
-            c_opening,
+            mimc_cts_opening,
             proof.openings.quotient,
             proof.openings.u_prime,
             proof.openings.p1,
@@ -190,8 +191,8 @@ impl Verifier {
             &[proof.openings.key_0, proof.openings.key_1],
             &proof.commitments.q_mimc,
             q_mimc_opening,
-            &proof.commitments.c,
-            c_opening,
+            &proof.commitments.mimc_cts,
+            mimc_cts_opening,
             &proof.commitments.quotient,
             quotient_opening,
             &proof.commitments.u_prime,

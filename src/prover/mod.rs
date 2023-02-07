@@ -29,7 +29,7 @@ pub struct Proof<E: PairingEngine> {
 #[derive(CanonicalSerialize, CanonicalDeserialize, Clone, Debug)]
 pub struct Openings<E: PairingEngine> {
     pub(crate) q_mimc: E::Fr,
-    pub(crate) c: E::Fr,
+    pub(crate) mimc_cts: E::Fr,
     pub(crate) quotient: E::Fr,
     pub(crate) u_prime: E::Fr,
     pub(crate) p1: E::Fr,
@@ -53,7 +53,7 @@ pub struct Commitments<E: PairingEngine> {
     pub(crate) w1: E::G1Affine,
     pub(crate) w2: E::G1Affine,
     pub(crate) key: E::G1Affine,
-    pub(crate) c: E::G1Affine,
+    pub(crate) mimc_cts: E::G1Affine,
     pub(crate) quotient: E::G1Affine,
     pub(crate) u_prime: E::G1Affine,
     pub(crate) zi: E::G1Affine,
@@ -67,8 +67,8 @@ pub struct Commitments<E: PairingEngine> {
 
 #[derive(CanonicalSerialize, CanonicalDeserialize, Clone, Debug)]
 pub struct ProverPrecomputedData<E: PairingEngine> {
-    pub(crate) c: DensePolynomial<E::Fr>, // mimc round constants poly
-    pub(crate) c_coset_evals: Vec<E::Fr>, // evaluations of mimc round constants over coset
+    pub(crate) mimc_cts: DensePolynomial<E::Fr>, // mimc round constants poly
+    pub(crate) mimc_cts_coset_evals: Vec<E::Fr>, // evaluations of mimc round constants over coset
     pub(crate) zh_inverse_coset_evals: Vec<E::Fr>, // evaluations of vanishing poly over coset
     pub(crate) q_mimc: DensePolynomial<E::Fr>,
     pub(crate) q_mimc_coset_evals: Vec<E::Fr>,
@@ -93,16 +93,16 @@ impl<E: PairingEngine> ProverPrecomputedData<E> {
             compute_vanishing_poly_over_coset(extended_coset_domain, domain.size() as u64);
         ark_ff::batch_inversion(&mut zh_inverse_coset_evals);
 
-        // Compute c coset evals
+        // Compute mimc_cts coset evals
         assert_eq!(mimc_round_constants.len(), NUMBER_OF_MIMC_ROUNDS);
-        let mut c_evals = mimc_round_constants[..].to_vec();
+        let mut mimc_cts_evals = mimc_round_constants[..].to_vec();
         let mut to_append: Vec<E::Fr> = iter::repeat(E::Fr::from(DUMMY_VALUE))
-            .take(SUBGROUP_SIZE - c_evals.len())
+            .take(SUBGROUP_SIZE - mimc_cts_evals.len())
             .collect();
-        c_evals.append(&mut to_append);
+        mimc_cts_evals.append(&mut to_append);
 
-        let c_poly = DensePolynomial::from_coefficients_slice(&domain.ifft(&c_evals));
-        let c_coset_evals = extended_coset_domain.coset_fft(&c_poly);
+        let mimc_cts_poly = DensePolynomial::from_coefficients_slice(&domain.ifft(&mimc_cts_evals));
+        let mimc_cts_coset_evals = extended_coset_domain.coset_fft(&mimc_cts_poly);
 
         // Compute q_mimc coset evals
         let mut q_mimc_evals: Vec<E::Fr> = iter::repeat(E::Fr::one())
@@ -130,8 +130,8 @@ impl<E: PairingEngine> ProverPrecomputedData<E> {
         precomputed.precompute_w2(&pk.srs_g2, &[index], &domain_t);
 
         Self {
-            c: c_poly,
-            c_coset_evals,
+            mimc_cts: mimc_cts_poly,
+            mimc_cts_coset_evals,
             zh_inverse_coset_evals,
             q_mimc,
             q_mimc_coset_evals,

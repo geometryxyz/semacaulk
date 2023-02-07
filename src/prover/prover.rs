@@ -188,7 +188,7 @@ impl Prover {
             key_openings_0,
             key_openings_1,
             q_mimc_opening,
-            c_opening,
+            mimc_cts_opening,
             quotient_opening,
             u_prime_opening,
             p1_opening,
@@ -233,7 +233,7 @@ impl Prover {
         //transcript.update_with_u256(key_openings_1);
 
         //transcript.update_with_u256(q_mimc_opening);
-        //transcript.update_with_u256(c_opening);
+        //transcript.update_with_u256(mimc_cts_opening);
         //transcript.update_with_u256(quotient_opening);
 
         //transcript.update_with_u256(u_prime_opening);
@@ -262,7 +262,7 @@ impl Prover {
         //&q_mimc,
         //q_mimc_opening,
         //&c,
-        //c_opening,
+        //mimc_cts_opening,
         //&quotient,
         //quotient_opening,
         //&u_prime,
@@ -281,7 +281,7 @@ impl Prover {
         //}
 
         let q_mimc = commit(&state.proving_key.srs_g1, &state.precomputed.q_mimc).into_affine();
-        let c = commit(&state.proving_key.srs_g1, &state.precomputed.c).into_affine();
+        let mimc_cts = commit(&state.proving_key.srs_g1, &state.precomputed.mimc_cts).into_affine();
         let p1 = commit(&state.proving_key.srs_g1, &p1).into_affine();
         let p2 = commit(&state.proving_key.srs_g1, &p2).into_affine();
 
@@ -290,7 +290,7 @@ impl Prover {
             w1,
             w2,
             key,
-            c,
+            mimc_cts,
             quotient,
             u_prime,
             zi,
@@ -304,7 +304,7 @@ impl Prover {
 
         let openings = Openings {
             q_mimc: q_mimc_opening,
-            c: c_opening,
+            mimc_cts: mimc_cts_opening,
             quotient: quotient_opening,
             u_prime: u_prime_opening,
             p1: p1_opening,
@@ -399,7 +399,7 @@ impl Prover {
                     i,
                     &w0_coset_evals,
                     &zeroes,
-                    &state.precomputed.c_coset_evals,
+                    &state.precomputed.mimc_cts_coset_evals,
                     &state.precomputed.q_mimc_coset_evals,
                 );
 
@@ -409,7 +409,7 @@ impl Prover {
                     i,
                     &w1_coset_evals,
                     &key_coset_evals,
-                    &state.precomputed.c_coset_evals,
+                    &state.precomputed.mimc_cts_coset_evals,
                     &state.precomputed.q_mimc_coset_evals,
                 );
 
@@ -419,7 +419,7 @@ impl Prover {
                     i,
                     &w2_coset_evals,
                     &key_coset_evals,
-                    &state.precomputed.c_coset_evals,
+                    &state.precomputed.mimc_cts_coset_evals,
                     &state.precomputed.q_mimc_coset_evals,
                 );
 
@@ -671,7 +671,7 @@ impl Prover {
         let key = state.key.as_ref().unwrap();
         let quotient = state.quotient.as_ref().unwrap();
 
-        let c = &state.precomputed.c;
+        let mimc_cts = &state.precomputed.mimc_cts;
         let q_mimc = &state.precomputed.q_mimc;
 
         let zi = state.zi.as_ref().unwrap();
@@ -724,7 +724,7 @@ impl Prover {
         let key_openings = [key.evaluate(&alpha), key.evaluate(&omega_alpha)];
 
         let q_mimc_opening = q_mimc.evaluate(&alpha);
-        let c_opening = c.evaluate(&alpha);
+        let mimc_cts_opening = mimc_cts.evaluate(&alpha);
         let quotient_opening = quotient.evaluate(&alpha);
         let u_prime_opening = v;
         let p1_opening = p1.evaluate(&v);
@@ -745,7 +745,7 @@ impl Prover {
             key_openings[0],
             key_openings[1],
             q_mimc_opening,
-            c_opening,
+            mimc_cts_opening,
             quotient_opening,
             u_prime_opening,
             p1_opening,
@@ -760,7 +760,7 @@ impl Prover {
             w2,
             key,
             q_mimc,
-            c,
+            mimc_cts,
             quotient,
             u_prime,
             &p1,
@@ -786,7 +786,7 @@ impl Prover {
             key_openings[0],
             key_openings[1],
             q_mimc_opening,
-            c_opening,
+            mimc_cts_opening,
             quotient_opening,
             u_prime_opening,
             p1_opening,

@@ -119,7 +119,7 @@ library TranscriptLibrary {
         TranscriptLibrary.updateWithU256(transcript, proof.openings.key_0);
         TranscriptLibrary.updateWithU256(transcript, proof.openings.key_1);
         TranscriptLibrary.updateWithU256(transcript, proof.openings.q_mimc);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.c);
+        TranscriptLibrary.updateWithU256(transcript, proof.openings.mimc_cts);
         TranscriptLibrary.updateWithU256(transcript, proof.openings.quotient);
         TranscriptLibrary.updateWithU256(transcript, proof.openings.u_prime);
         TranscriptLibrary.updateWithU256(transcript, proof.openings.p1);
