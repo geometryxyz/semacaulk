@@ -61,12 +61,12 @@ pub async fn test_transcript() {
 
     let mut transcript = Transcript::new_transcript();
 
-    transcript.update_with_u256(u1);
+    transcript.update_with_f(u1);
     transcript.update_with_g1(&g1);
 
     let challenge_1 = transcript.get_challenge();
 
-    transcript.update_with_u256(u2);
+    transcript.update_with_f(u2);
     transcript.update_with_g2(&g2);
 
     let challenge_2 = transcript.get_challenge();

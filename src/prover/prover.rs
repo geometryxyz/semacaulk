@@ -200,9 +200,9 @@ impl Prover {
         //// Sanity check multiopen_proof
         //if cfg!(debug_assertions) {
         //let mut transcript = Transcript::new_transcript();
-        //transcript.update_with_u256(public_input.external_nullifier);
-        //transcript.update_with_u256(public_input.nullifier_hash);
-        //transcript.update_with_u256(public_input.signal_hash);
+        //transcript.update_with_f(public_input.external_nullifier);
+        //transcript.update_with_f(public_input.nullifier_hash);
+        //transcript.update_with_f(public_input.signal_hash);
         //transcript.update_with_g1(&w0);
         //transcript.update_with_g1(&key);
         //transcript.update_with_g1(&w1);
@@ -217,28 +217,28 @@ impl Prover {
         //transcript.update_with_g2(&w);
         //transcript.update_with_g1(&h);
         //let alpha = transcript.get_challenge();
-        //transcript.update_with_u256(w0_openings_0);
-        //transcript.update_with_u256(w0_openings_1);
-        //transcript.update_with_u256(w0_openings_2);
+        //transcript.update_with_f(w0_openings_0);
+        //transcript.update_with_f(w0_openings_1);
+        //transcript.update_with_f(w0_openings_2);
 
-        //transcript.update_with_u256(w1_openings_0);
-        //transcript.update_with_u256(w1_openings_1);
-        //transcript.update_with_u256(w1_openings_2);
+        //transcript.update_with_f(w1_openings_0);
+        //transcript.update_with_f(w1_openings_1);
+        //transcript.update_with_f(w1_openings_2);
 
-        //transcript.update_with_u256(w2_openings_0);
-        //transcript.update_with_u256(w2_openings_1);
-        //transcript.update_with_u256(w2_openings_2);
+        //transcript.update_with_f(w2_openings_0);
+        //transcript.update_with_f(w2_openings_1);
+        //transcript.update_with_f(w2_openings_2);
 
-        //transcript.update_with_u256(key_openings_0);
-        //transcript.update_with_u256(key_openings_1);
+        //transcript.update_with_f(key_openings_0);
+        //transcript.update_with_f(key_openings_1);
 
-        //transcript.update_with_u256(q_mimc_opening);
-        //transcript.update_with_u256(mimc_cts_opening);
-        //transcript.update_with_u256(quotient_opening);
+        //transcript.update_with_f(q_mimc_opening);
+        //transcript.update_with_f(mimc_cts_opening);
+        //transcript.update_with_f(quotient_opening);
 
-        //transcript.update_with_u256(u_prime_opening);
-        //transcript.update_with_u256(p1_opening);
-        //transcript.update_with_u256(p2_opening);
+        //transcript.update_with_f(u_prime_opening);
+        //transcript.update_with_f(p1_opening);
+        //transcript.update_with_f(p2_opening);
 
         //let n = SUBGROUP_SIZE;
         //let domain = GeneralEvaluationDomain::new(n).unwrap();
