@@ -1,23 +1,9 @@
-use std::ops::Neg;
-use ark_poly::{EvaluationDomain, GeneralEvaluationDomain};
-use ark_bn254::{Bn254, Fq12, Fr, G1Affine, G2Affine};
+use ark_bn254::{Fr, G1Affine, G2Affine};
 use ark_ec::AffineCurve;
-use ark_ec::PairingEngine;
-use ark_ec::ProjectiveCurve;
-use ark_ff::BigInteger256;
-use ark_ff::Field;
-use ark_ff::One;
-use ark_ff::Zero;
-use ark_ff::{PrimeField, UniformRand};
-use ark_std::test_rng;
 use ethers::contract::abigen;
-use ethers::types::U256;
-use tokio::test;
 use super::setup_eth_backend;
 use crate::transcript::Transcript;
-use crate::{
-    bn_solidity_utils::{f_to_u256, format_g1, format_g2},
-};
+use crate::bn_solidity_utils::f_to_u256;
 
 abigen!(
     TestTranscript,
