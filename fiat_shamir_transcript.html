@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Trusted Setup - Semacaulk</title>
+        <title>The Fiat-Shamir Transcript - Semacaulk</title>
 
 
         <!-- Custom HTML head -->
@@ -82,7 +82,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="overview.html"><strong aria-hidden="true">1.</strong> Overview</a></li><li class="chapter-item expanded "><a href="quick_start.html"><strong aria-hidden="true">2.</strong> Quick start</a></li><li class="chapter-item expanded "><a href="trusted_setup.html" class="active"><strong aria-hidden="true">3.</strong> Trusted Setup</a></li><li class="chapter-item expanded "><a href="cryptographic_specification.html"><strong aria-hidden="true">4.</strong> Cryptographic Specification</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="system_invariants.html"><strong aria-hidden="true">4.1.</strong> System invariants</a></li><li class="chapter-item expanded "><a href="insertion.html"><strong aria-hidden="true">4.2.</strong> Insertion</a></li><li class="chapter-item expanded "><a href="circuit_and_gates.html"><strong aria-hidden="true">4.3.</strong> The Circuit and Gates</a></li><li class="chapter-item expanded "><a href="precomputation_and_updates.html"><strong aria-hidden="true">4.4.</strong> Precomputation and updates (TODO)</a></li><li class="chapter-item expanded "><a href="fiat_shamir_transcript.html"><strong aria-hidden="true">4.5.</strong> The Fiat-Shamir Transcript</a></li><li class="chapter-item expanded "><a href="proof_generation.html"><strong aria-hidden="true">4.6.</strong> Proof generation (TODO)</a></li><li class="chapter-item expanded "><a href="verification.html"><strong aria-hidden="true">4.7.</strong> Proof verification (TODO)</a></li></ol></li><li class="chapter-item expanded "><a href="mechanism_of_operation.html"><strong aria-hidden="true">5.</strong> Mechanism of Operation</a></li><li class="chapter-item expanded "><a href="ethereum_contracts.html"><strong aria-hidden="true">6.</strong> Ethereum contracts (TODO)</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="gas_costs.html"><strong aria-hidden="true">6.1.</strong> Gas costs</a></li></ol></li><li class="chapter-item expanded "><a href="performance_benchmarks.html"><strong aria-hidden="true">7.</strong> Performance and Benchmarks</a></li><li class="chapter-item expanded "><a href="credits.html"><strong aria-hidden="true">8.</strong> Credits</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="overview.html"><strong aria-hidden="true">1.</strong> Overview</a></li><li class="chapter-item expanded "><a href="quick_start.html"><strong aria-hidden="true">2.</strong> Quick start</a></li><li class="chapter-item expanded "><a href="trusted_setup.html"><strong aria-hidden="true">3.</strong> Trusted Setup</a></li><li class="chapter-item expanded "><a href="cryptographic_specification.html"><strong aria-hidden="true">4.</strong> Cryptographic Specification</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="system_invariants.html"><strong aria-hidden="true">4.1.</strong> System invariants</a></li><li class="chapter-item expanded "><a href="insertion.html"><strong aria-hidden="true">4.2.</strong> Insertion</a></li><li class="chapter-item expanded "><a href="circuit_and_gates.html"><strong aria-hidden="true">4.3.</strong> The Circuit and Gates</a></li><li class="chapter-item expanded "><a href="precomputation_and_updates.html"><strong aria-hidden="true">4.4.</strong> Precomputation and updates (TODO)</a></li><li class="chapter-item expanded "><a href="fiat_shamir_transcript.html" class="active"><strong aria-hidden="true">4.5.</strong> The Fiat-Shamir Transcript</a></li><li class="chapter-item expanded "><a href="proof_generation.html"><strong aria-hidden="true">4.6.</strong> Proof generation (TODO)</a></li><li class="chapter-item expanded "><a href="verification.html"><strong aria-hidden="true">4.7.</strong> Proof verification (TODO)</a></li></ol></li><li class="chapter-item expanded "><a href="mechanism_of_operation.html"><strong aria-hidden="true">5.</strong> Mechanism of Operation</a></li><li class="chapter-item expanded "><a href="ethereum_contracts.html"><strong aria-hidden="true">6.</strong> Ethereum contracts (TODO)</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="gas_costs.html"><strong aria-hidden="true">6.1.</strong> Gas costs</a></li></ol></li><li class="chapter-item expanded "><a href="performance_benchmarks.html"><strong aria-hidden="true">7.</strong> Performance and Benchmarks</a></li><li class="chapter-item expanded "><a href="credits.html"><strong aria-hidden="true">8.</strong> Credits</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -143,63 +143,42 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="trusted-setup"><a class="header" href="#trusted-setup">Trusted Setup</a></h1>
-<p>Semacaulk requires a <a href="https://eprint.iacr.org/2017/1050.pdf">securely run trusted
-setup</a>. Specifically, for a capacity of
-\(2^n\) elements, it requires \(2^n + 1\) \({g_1}^{\tau}\) points and
-\(2^n\) \({g_2}^{\tau}\) points where \(\tau\) is highly unlikely to be
-known but \({g_1}^{\tau}\) and \({g_2}^{\tau}\) can be generated via a
-multi-party ceremony. As long as one participant does not reveal and destroys
-the secret so-called toxic waste that they  use, the entire ceremony is secure.</p>
-<p>For compatibility with Ethereum, Semacaulk is built on the BN254 curve. As
-such, the output of the <a href="https://github.com/privacy-scaling-explorations/perpetualpowersoftau">Perpetual Powers of
-Tau</a>
-ceremony can be used. The outputs of this ceremony include up to \(2^{28}\)
-\({g_1}^{\tau}\) and \({g_2}^{\tau}\) points. If Semacaulk is to be used on
-a different elliptic curve, a different trusted setup must be used.</p>
-<p>For the sake of convenience, we recommend the trusted setup output from Hermez
-Network, which consist of the 54th contribution of Perpetual Powers of Tau (PPOT) with
-a random beacon. These files can be downloaded from <a href="https://github.com/iden3/snarkjs#7-prepare-phase-2">this
-page</a>. (You may also use
-the latest contribution to PPOT, but at the time of writing, a tool to parse
-and convert it has not yet been written.)</p>
-<p>Note that the <a href="https://github.com/AztecProtocol/ignition-verification/blob/master/Transcript_spec.md">Aztec Ignition ceremony
-output</a>
-is not sufficient for Semacaulk as only provides 1 <code>tauG2</code> point, while
-Semacaulk requires as many <code>tauG2</code> points as the maximum desired capacity of
-the accumulator. </p>
-<h2 id="processing-the-points"><a class="header" href="#processing-the-points">Processing the points</a></h2>
-<p>Semacaulk's <code>demo</code> binary requires two inputs: a <code>.hex</code> file containing the
-trusted setup outputs, and another file containing the KZG commitments to the
-Lagrange basis polynomials generated using said trusted setup outputs.</p>
-<p>To produce the former, use the
-<a href="https://github.com/geometryresearch/export-ptau-points">export-ptau-points</a>
-tool. First, download Hermez Network <code>.ptau</code> file with at least \(2^{11}\)
-points. In this example, we choose \(2^{11}\) for a maximum capacity of 2048:</p>
-<pre><code class="language-bash">wget https://hermez.s3-eu-west-1.amazonaws.com/powersOfTau28_hez_final_11.ptau
-</code></pre>
-<p>In <code>export-ptau-points</code>, run:</p>
-<pre><code>npm i &amp;&amp; npm run build &amp;&amp; \
-node build/index.js -p powersOfTau28_hez_final_11.ptau -o ./11.hex --num-g1 2049 --num-g2 2048
-</code></pre>
-<p>Build and run the <code>setup</code> binary from the Semacaulk repository:</p>
-<pre><code class="language-bash">cargo build --release
-</code></pre>
-<p>To produce the latter, run the <code>setup</code> binary:</p>
-<pre><code class="language-bash">./target/release/setup 11 ./path/to/11.hex lagrangeComms_11
-</code></pre>
-<p>You are now ready to run the demo according to the instructions in <a href="./quick_start.html">the quick start
-page</a>.</p>
+                        <h1 id="the-fiat-shamir-transcript"><a class="header" href="#the-fiat-shamir-transcript">The Fiat-Shamir Transcript</a></h1>
+<p>A transcript is an abstraction over the <a href="https://en.wikipedia.org/wiki/Fiat%E2%80%93Shamir_heuristic">Fiat-Shamir
+heuristic</a>. Both
+the prover and verifier use the transcript to deterministically generate
+<em>challenge variables</em> based on the public inputs and proof data.</p>
+<p>Another way to think about the transcript is as a state machine where the state
+is a single data buffer. Every time a challenge is requested, it hashes the
+buffer replaces the contents of the buffer with the hash, and returns a value
+derived from the hash. The transcript can also be updated with abitrary data by
+appending the update to the buffer.</p>
+<p>Our transcript implements this concept with the following functions:</p>
+<ul>
+<li><code>new_transcript</code>: returns a new transcript whose buffer is 32 bytes of <code>0</code>
+values.</li>
+<li><code>update_with_f</code>: accepts a single \(\mathbb{F}_r\) value, converts it to a
+big-endian byte array, and appends it to the buffer.</li>
+<li><code>update_with_g1</code>: accepts a single \(\mathbb{G}_1\) point, converts its
+\(x\) and \(y\) points to big-endian byte arrays, and appends them to the
+buffer in the aforementioned order.</li>
+<li><code>update_with_g2</code>: accepts a single \(\mathbb{G}_2\) point, converts its
+\(x_0\), \(x_1\), \(y_0\), and \(y_1\) points into big-endian byte
+arrays, and appends them to the buffer in the aforementioned order.</li>
+<li><code>get_challenge</code>: hashes the buffer with Keccak256, replaces the buffer with
+the hash, converts the hash into a \(\mathbb{F}_r\) element (treating it
+as a big-endian buffer), and returns the \(\mathbb{F}_r\) element.</li>
+</ul>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="quick_start.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="precomputation_and_updates.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next" href="cryptographic_specification.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next" href="proof_generation.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -209,11 +188,11 @@ page</a>.</p>
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="quick_start.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="precomputation_and_updates.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next" href="cryptographic_specification.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next" href="proof_generation.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

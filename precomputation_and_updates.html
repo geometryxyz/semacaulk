@@ -82,7 +82,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="overview.html"><strong aria-hidden="true">1.</strong> Overview</a></li><li class="chapter-item expanded "><a href="quick_start.html"><strong aria-hidden="true">2.</strong> Quick start</a></li><li class="chapter-item expanded "><a href="trusted_setup.html"><strong aria-hidden="true">3.</strong> Trusted Setup</a></li><li class="chapter-item expanded "><a href="cryptographic_specification.html"><strong aria-hidden="true">4.</strong> Cryptographic Specification</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="system_invariants.html"><strong aria-hidden="true">4.1.</strong> System invariants</a></li><li class="chapter-item expanded "><a href="insertion.html"><strong aria-hidden="true">4.2.</strong> Insertion</a></li><li class="chapter-item expanded "><a href="circuit_and_gates.html"><strong aria-hidden="true">4.3.</strong> The Circuit and Gates</a></li><li class="chapter-item expanded "><a href="precomputation_and_updates.html" class="active"><strong aria-hidden="true">4.4.</strong> Precomputation and updates (TODO)</a></li><li class="chapter-item expanded "><a href="proof_generation.html"><strong aria-hidden="true">4.5.</strong> Proof generation (TODO)</a></li><li class="chapter-item expanded "><a href="verification.html"><strong aria-hidden="true">4.6.</strong> Proof verification (TODO)</a></li></ol></li><li class="chapter-item expanded "><a href="mechanism_of_operation.html"><strong aria-hidden="true">5.</strong> Mechanism of Operation</a></li><li class="chapter-item expanded "><a href="ethereum_contracts.html"><strong aria-hidden="true">6.</strong> Ethereum contracts (TODO)</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="gas_costs.html"><strong aria-hidden="true">6.1.</strong> Gas costs</a></li></ol></li><li class="chapter-item expanded "><a href="performance_benchmarks.html"><strong aria-hidden="true">7.</strong> Performance and Benchmarks</a></li><li class="chapter-item expanded "><a href="credits.html"><strong aria-hidden="true">8.</strong> Credits</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="overview.html"><strong aria-hidden="true">1.</strong> Overview</a></li><li class="chapter-item expanded "><a href="quick_start.html"><strong aria-hidden="true">2.</strong> Quick start</a></li><li class="chapter-item expanded "><a href="trusted_setup.html"><strong aria-hidden="true">3.</strong> Trusted Setup</a></li><li class="chapter-item expanded "><a href="cryptographic_specification.html"><strong aria-hidden="true">4.</strong> Cryptographic Specification</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="system_invariants.html"><strong aria-hidden="true">4.1.</strong> System invariants</a></li><li class="chapter-item expanded "><a href="insertion.html"><strong aria-hidden="true">4.2.</strong> Insertion</a></li><li class="chapter-item expanded "><a href="circuit_and_gates.html"><strong aria-hidden="true">4.3.</strong> The Circuit and Gates</a></li><li class="chapter-item expanded "><a href="precomputation_and_updates.html" class="active"><strong aria-hidden="true">4.4.</strong> Precomputation and updates (TODO)</a></li><li class="chapter-item expanded "><a href="fiat_shamir_transcript.html"><strong aria-hidden="true">4.5.</strong> The Fiat-Shamir Transcript</a></li><li class="chapter-item expanded "><a href="proof_generation.html"><strong aria-hidden="true">4.6.</strong> Proof generation (TODO)</a></li><li class="chapter-item expanded "><a href="verification.html"><strong aria-hidden="true">4.7.</strong> Proof verification (TODO)</a></li></ol></li><li class="chapter-item expanded "><a href="mechanism_of_operation.html"><strong aria-hidden="true">5.</strong> Mechanism of Operation</a></li><li class="chapter-item expanded "><a href="ethereum_contracts.html"><strong aria-hidden="true">6.</strong> Ethereum contracts (TODO)</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="gas_costs.html"><strong aria-hidden="true">6.1.</strong> Gas costs</a></li></ol></li><li class="chapter-item expanded "><a href="performance_benchmarks.html"><strong aria-hidden="true">7.</strong> Performance and Benchmarks</a></li><li class="chapter-item expanded "><a href="credits.html"><strong aria-hidden="true">8.</strong> Credits</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -163,15 +163,19 @@ precomputation.</p>
 <h2 id="precomputed-data"><a class="header" href="#precomputed-data">Precomputed data</a></h2>
 <p>Precomputed data consists of the following:</p>
 <ol>
-<li>\(\mathsf{mimc\_cts}\):</li>
+<li>\(\mathsf{mimc\_cts}\)</li>
 <li>\(\mathsf{mimc\_cts\_coset\_evals}\)</li>
 <li>\(\mathsf{zh\_inverse\_coset\_evals}\)</li>
 <li>\(\mathsf{q\_mimc}\) </li>
 <li>\(\mathsf{q\_mimc\_coset\_evals}\) </li>
 <li>\(\mathsf{l0\_coset\_evals}\) </li>
 <li>\(\mathsf{w_1\_mapping}\) </li>
-<li>\(\mathsf{w_2\_mapping}\) </li>
+<li>\({\mathsf{W}_1}^{i}\) </li>
+<li>\({\mathsf{W}_2}^{i}\) </li>
 </ol>
+<p>\({\mathsf{W}_1}^{i}\) and \({\mathsf{W}_2}^{i}\) are precomputed for the 
+index \(i\), which denotes the secret position of the prover's identity
+commitment in the accumulator.</p>
 <h3 id="mathsfmimc_cts"><a class="header" href="#mathsfmimc_cts">\(\mathsf{mimc\_cts}\)</a></h3>
 <p>A polynomial over the multiplicative subgroup which evaluates to the MiMC7
 round constants at each root of unity. The subgroup size is the number of MiMC7
@@ -181,15 +185,22 @@ rounds defined in
 <p>A vector of \(\mathbb{F}_r\) elements that are the evaluations of the MiMC7
 round constants over the extended coset (TODO: define what a coset is)</p>
 <h3 id="mathsfzh_inverse_coset_evals"><a class="header" href="#mathsfzh_inverse_coset_evals">\(\mathsf{zh\_inverse\_coset\_evals}\)</a></h3>
-<p>A polynomial over the extended coset domain which ... (TODO)</p>
+<p>A vector of \(\mathbb{F}_r\) elements that are the field inversions of the
+(coefficients of the vanishing polynomial over the coset??? TODO)</p>
 <h3 id="mathsfq_mimc"><a class="header" href="#mathsfq_mimc">\(\mathsf{q\_mimc}\)</a></h3>
 <p>A polynomial whose evaluations at the roots of unity over the subgroup domain
 of size 128 are \(n = 91\) <code>1</code> values, followed by zeroes. It represents the
 \(\mathsf{q\_mimc}\) <a href="./circuit_and_gates.html">selector column</a>.</p>
 <h3 id="mathsfq_mimc_coset_evals"><a class="header" href="#mathsfq_mimc_coset_evals">\(\mathsf{q\_mimc\_coset\_evals}\)</a></h3>
+<p>A vector of \(\mathbb{F}_r\) elements that are the evaluations of the
+\(\mathsf{q\_mimc}\) polynomial coefficients over the coset?? (TODO) </p>
 <h3 id="mathsfl0_coset_evals"><a class="header" href="#mathsfl0_coset_evals">\(\mathsf{l0\_coset\_evals}\)</a></h3>
-<h3 id="mathsfw_1_mapping"><a class="header" href="#mathsfw_1_mapping">\(\mathsf{w_1\_mapping}\)</a></h3>
-<h3 id="mathsfw_2_mapping"><a class="header" href="#mathsfw_2_mapping">\(\mathsf{w_2\_mapping}\)</a></h3>
+<p>Where \(L_0\) is the 0th Lagrange basis polynomial over the subgroup
+evaluation domain, this is a vector of its evaluations over the coset (?? TODO)</p>
+<h3 id="mathsfw_1i"><a class="header" href="#mathsfw_1i">\({\mathsf{W}_1}^{i}\)</a></h3>
+<p>As defined in the <a href="https://eprint.iacr.org/2022/957.pdf">Caulk+ paper, section 3</a>.</p>
+<h3 id="mathsfw_2i"><a class="header" href="#mathsfw_2i">\({\mathsf{W}_2}^{i}\)</a></h3>
+<p>As defined in the <a href="https://eprint.iacr.org/2022/957.pdf">Caulk+ paper, section 3</a>.</p>
 
                     </main>
 
@@ -199,7 +210,7 @@ of size 128 are \(n = 91\) <code>1</code> values, followed by zeroes. It represe
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next" href="proof_generation.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next" href="fiat_shamir_transcript.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -213,7 +224,7 @@ of size 128 are \(n = 91\) <code>1</code> values, followed by zeroes. It represe
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next" href="proof_generation.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next" href="fiat_shamir_transcript.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

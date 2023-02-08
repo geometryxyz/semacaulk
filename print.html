@@ -83,7 +83,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="overview.html"><strong aria-hidden="true">1.</strong> Overview</a></li><li class="chapter-item expanded "><a href="quick_start.html"><strong aria-hidden="true">2.</strong> Quick start</a></li><li class="chapter-item expanded "><a href="trusted_setup.html"><strong aria-hidden="true">3.</strong> Trusted Setup</a></li><li class="chapter-item expanded "><a href="cryptographic_specification.html"><strong aria-hidden="true">4.</strong> Cryptographic Specification</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="system_invariants.html"><strong aria-hidden="true">4.1.</strong> System invariants</a></li><li class="chapter-item expanded "><a href="insertion.html"><strong aria-hidden="true">4.2.</strong> Insertion</a></li><li class="chapter-item expanded "><a href="circuit_and_gates.html"><strong aria-hidden="true">4.3.</strong> The Circuit and Gates</a></li><li class="chapter-item expanded "><a href="precomputation_and_updates.html"><strong aria-hidden="true">4.4.</strong> Precomputation and updates (TODO)</a></li><li class="chapter-item expanded "><a href="proof_generation.html"><strong aria-hidden="true">4.5.</strong> Proof generation (TODO)</a></li><li class="chapter-item expanded "><a href="verification.html"><strong aria-hidden="true">4.6.</strong> Proof verification (TODO)</a></li></ol></li><li class="chapter-item expanded "><a href="mechanism_of_operation.html"><strong aria-hidden="true">5.</strong> Mechanism of Operation</a></li><li class="chapter-item expanded "><a href="ethereum_contracts.html"><strong aria-hidden="true">6.</strong> Ethereum contracts (TODO)</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="gas_costs.html"><strong aria-hidden="true">6.1.</strong> Gas costs</a></li></ol></li><li class="chapter-item expanded "><a href="performance_benchmarks.html"><strong aria-hidden="true">7.</strong> Performance and Benchmarks</a></li><li class="chapter-item expanded "><a href="credits.html"><strong aria-hidden="true">8.</strong> Credits</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="overview.html"><strong aria-hidden="true">1.</strong> Overview</a></li><li class="chapter-item expanded "><a href="quick_start.html"><strong aria-hidden="true">2.</strong> Quick start</a></li><li class="chapter-item expanded "><a href="trusted_setup.html"><strong aria-hidden="true">3.</strong> Trusted Setup</a></li><li class="chapter-item expanded "><a href="cryptographic_specification.html"><strong aria-hidden="true">4.</strong> Cryptographic Specification</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="system_invariants.html"><strong aria-hidden="true">4.1.</strong> System invariants</a></li><li class="chapter-item expanded "><a href="insertion.html"><strong aria-hidden="true">4.2.</strong> Insertion</a></li><li class="chapter-item expanded "><a href="circuit_and_gates.html"><strong aria-hidden="true">4.3.</strong> The Circuit and Gates</a></li><li class="chapter-item expanded "><a href="precomputation_and_updates.html"><strong aria-hidden="true">4.4.</strong> Precomputation and updates (TODO)</a></li><li class="chapter-item expanded "><a href="fiat_shamir_transcript.html"><strong aria-hidden="true">4.5.</strong> The Fiat-Shamir Transcript</a></li><li class="chapter-item expanded "><a href="proof_generation.html"><strong aria-hidden="true">4.6.</strong> Proof generation (TODO)</a></li><li class="chapter-item expanded "><a href="verification.html"><strong aria-hidden="true">4.7.</strong> Proof verification (TODO)</a></li></ol></li><li class="chapter-item expanded "><a href="mechanism_of_operation.html"><strong aria-hidden="true">5.</strong> Mechanism of Operation</a></li><li class="chapter-item expanded "><a href="ethereum_contracts.html"><strong aria-hidden="true">6.</strong> Ethereum contracts (TODO)</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="gas_costs.html"><strong aria-hidden="true">6.1.</strong> Gas costs</a></li></ol></li><li class="chapter-item expanded "><a href="performance_benchmarks.html"><strong aria-hidden="true">7.</strong> Performance and Benchmarks</a></li><li class="chapter-item expanded "><a href="credits.html"><strong aria-hidden="true">8.</strong> Credits</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -338,8 +338,8 @@ generated using a <a href="https://eprint.iacr.org/2017/1050.pdf">securely run t
 setup</a>.</p>
 <p>These points are defined as such:</p>
 <ul>
-<li>\(\mathsf{srs\_g1}\): \([g_1, g_1^{\tau}, ..., g_1^{\tau^{n + 1}}]\)</li>
-<li>\(\mathsf{srs\_g2}\): \([g_2, g_2^{\tau}, ..., g_2^{\tau^{n + 1}}]\)</li>
+<li>\(\mathsf{srs\_g1}\): \([g_1, g_1 \cdot {\tau}, \ldots, g_1 \cdot {\tau \cdot {n + 1}}]\)</li>
+<li>\(\mathsf{srs\_g2}\): \([g_2, g_2 \cdot {\tau}, \ldots, g_2 \cdot {\tau \cdot {n + 1}}]\)</li>
 </ul>
 <p>Where \(g_1\) is defined in 1.3 and \(g_2\) is defined in 1.4.</p>
 <h3 id="4-the-mimc7-hash-function"><a class="header" href="#4-the-mimc7-hash-function">4. The MiMC7 hash function</a></h3>
@@ -379,7 +379,7 @@ modulo the field order of \(\mathbb{F}_r\).</li>
 <li>Return \(\mathsf{rd}[n - 1] + k\).</li>
 </ol>
 <h4 id="43-the-mimc7-multi_hash-algorithm"><a class="header" href="#43-the-mimc7-multi_hash-algorithm">4.3. The MiMC7 <code>multi_hash</code> algorithm</a></h4>
-<p>To hash multiple field elements \(x_0, ..., x_n\), we use the <code>multi_hash()</code>
+<p>To hash multiple field elements \(x_0, \ldots, x_n\), we use the <code>multi_hash()</code>
 algorithm. The inputs to <code>multi_hash()</code> are the array of said field elements
 and a key \(k\).</p>
 <ol>
@@ -413,12 +413,15 @@ is crucial to understanding how the circuit construction works.</p>
 <p>Semcaulk uses the KZG commitment scheme described in
 <a href="https://www.iacr.org/archive/asiacrypt2010/6477178/6477178.pdf">KZG10</a>.</p>
 <p>Given a polynomial \(\phi\) with \(l\) coefficients 
-\([\phi_0, ..., \phi_{l - 1}]\), one
+\([\phi_0, \ldots, \phi_{l - 1}]\), one
 can use \(\mathsf{srs\_g1}\) to
 produce a commitment in the form of a \(\mathbb{G}_1\) point, or
 \(\mathsf{srs\_g2}\) to produce a commitment in the form of a
 \(\mathbb{G}_2\) point.</p>
 <p>\(\mathsf{commit}(\phi, \mathsf{srs}) = \sum_{i=1}^{l} \mathsf{srs}[i] \cdot \phi_i \)</p>
+<p>An alternative notation for \(\mathsf{commit}\) is:</p>
+<p>\([\phi]_1\) where the commitment is a \(\mathbb{G}_1\) point or
+\([\phi]_2\) where the commitment is a \(\mathbb{G}_2\) point.</p>
 <h3 id="6-lagrange-basis-polynomials"><a class="header" href="#6-lagrange-basis-polynomials">6. Lagrange basis polynomials</a></h3>
 <p>Lagrange basis polynomials are an important concept and are used in several
 parts of the protocol. To understand them, we must first define roots of unity
@@ -433,11 +436,11 @@ order \(p\) are field elements where for each element \(x\), \(x^n = 1\).</p>
 0x0000000000000000B3C4D79D41A91758CB49C3517C4604A520CFF123608FC9CB
 </code></pre>
 <p>Another name for the \(n\) roots of unity is the evaluation domain of size \(n\)
-for a given finite field. They are commonly denoted as \(\{1, \omega, ...,
+for a given finite field. They are commonly denoted as \(\{1, \omega, \ldots,
 \omega^{n-1}\}\).</p>
 <h4 id="62-lagrange-basis-polynomials"><a class="header" href="#62-lagrange-basis-polynomials">6.2. Lagrange basis polynomials</a></h4>
 <p>Given an evaluation domain of size \(n\), the Lagrange basis polynomials of
-this domain are the \(n\) polynomials \([L_0, ..., L_n]\) such that
+this domain are the \(n\) polynomials \([L_0, \ldots, L_n]\) such that
 \(L_i(\omega^{i - 1} = 1)\) and \(L_i(\omega^{j} = 0)\) for all
 \(j \neq i - 1\). For example:</p>
 <ul>
@@ -463,7 +466,7 @@ capacity of the instance of Semacaulk in question. These elements are ordered
 with the users' identity commitments followed by nothing-up-my-sleeve values.</p>
 <p>An <em>empty accumulator</em> is simply a commitment to \(t\) nothing-up-my-sleeve
 values.</p>
-<p>Given the vector of values \([v_0, ..., v_t]\), the accumulator \(C\) is computed
+<p>Given the vector of values \([v_0, \ldots, v_t]\), the accumulator \(C\) is computed
 as such:</p>
 <p>\(\sum_{i=1}^{t} \mathsf{commit}(L_i, \mathsf{srs\_g1}) \cdot v_i\)</p>
 <h4 id="71-updating-the-accumulator"><a class="header" href="#71-updating-the-accumulator">7.1 Updating the accumulator</a></h4>
@@ -492,8 +495,14 @@ function.</li>
 </ul>
 <h3 id="9-evaluation-domains"><a class="header" href="#9-evaluation-domains">9. Evaluation domains</a></h3>
 <h4 id="91-the-subgroup-domain"><a class="header" href="#91-the-subgroup-domain">9.1. The subgroup domain</a></h4>
+<p>An evaluation domain with size 128. We denote this constant as
+\(\mathsf{SUBGROUP\_SIZE}\).</p>
 <h4 id="92-the-extended-coset-domain"><a class="header" href="#92-the-extended-coset-domain">9.2. The extended coset domain</a></h4>
+<p>An evaluation domain with size 8 * 128. We denote this as
+\(\mathsf{EXTENDED\_DOMAIN\_FACTOR} * \mathsf{SUBGROUP\_SIZE} = 1024\).</p>
 <h4 id="93-the-table-domain"><a class="header" href="#93-the-table-domain">9.3. The table domain</a></h4>
+<p>An evaluation domain with a size of at least 1024. This is the upper limit on
+the number of elements that the accumulator can hold.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="system-invariants"><a class="header" href="#system-invariants">System invariants</a></h1>
 <p>An <a href="https://mathworld.wolfram.com/Invariant.html">invariant</a> is a property of a
 system which remains unmodified even after operations or transformations are
@@ -562,7 +571,7 @@ logic.</p>
 <div class="table-wrapper"><table><thead><tr><th>Row</th><th>\(\mathsf{w}_0\)</th><th>\(\mathsf{w}_1\)</th><th>\(\mathsf{w}_2\)</th><th>\(\mathsf{key}\)</th><th>\(\mathsf{c}\)</th><th>\(\mathsf{q\_mimc}\)</th></tr></thead><tbody>
 <tr><td>0</td><td>\(\mathsf{id\_nul}\)</td><td>\(\mathsf{id\_trap}\)</td><td>\(\mathsf{ext\_nul}\)</td><td>\(\mathsf{w}_0[n] + \mathsf{w}_0[0] \)</td><td>\(\mathsf{cts}[0]\)</td><td>1</td></tr>
 <tr><td>1</td><td>\((\mathsf{w}_0[0] + \mathsf{c}[0]) ^ 7\)</td><td>\((\mathsf{w}_1[0] + \mathsf{key}[0] + \mathsf{c}[0]) ^ 7\)</td><td>\((\mathsf{w}_2[0] + \mathsf{key}[0] + \mathsf{c}[0]) ^ 7\)</td><td>\(\mathsf{w}_0[n] + \mathsf{w}_0[0] \)</td><td>\(\mathsf{cts}[1]\)</td><td>1</td></tr>
-<tr><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td></tr>
+<tr><td>\ldots</td><td>\ldots</td><td>\ldots</td><td>\ldots</td><td>\ldots</td><td>\ldots</td><td>\ldots</td></tr>
 <tr><td>\(n\)</td><td>\((\mathsf{w}_0[n - 1] + \mathsf{c}[n - 1]) ^ 7\)</td><td>\((\mathsf{w}_1[n - 1] + \mathsf{key}[n - 1] + \mathsf{c}[n - 1]) ^ 7\)</td><td>\((\mathsf{w}_2[n - 1] + \mathsf{key}[n - 1] + \mathsf{c}[n - 1]) ^ 7\)</td><td>\(\mathsf{w}_0[n] + \mathsf{w}_0[0] \)</td><td>\(\mathsf{dummy}\)</td><td>0</td></tr>
 <tr><td>128</td><td>\(b\)</td><td>\(b\)</td><td>\(b\)</td><td>\(b\)</td><td>\(b\)</td><td>\(b\)</td></tr>
 </tbody></table>
@@ -584,12 +593,12 @@ make it computationally infeasible to brute-force their polynomial commitments.<
 <p>To understand how the logic of the circuit is encoded, consider each row of the
 table as inputs to the linear combination of the following gates, which must
 evaluate to 0 for a valid proof to be generated. In effect:</p>
-<p>\(\mathsf{gate}_0(r) + ... + \mathsf{gate}_n(r) = 0\) must be true.</p>
+<p>\(\mathsf{gate}_0(r) + \ldots + \mathsf{gate}_n(r) = 0\) must be true.</p>
 <p>Each and every gate must evaluate to 0. It is not possible for the prover to
 cheat by having some gates evaluate to some value such that the total evaluates
 to 0, since the prover will be forced to separate each gate with a challenge
 that they cannot control. Internally, the equation is actually:</p>
-<p>\(\mathsf{gate}_0(r) \cdot v_0 + ... + \mathsf{gate}_n(r) \cdot v_n = 0\) must be true.</p>
+<p>\(\mathsf{gate}_0(r) \cdot v_0 + \ldots + \mathsf{gate}_n(r) \cdot v_n = 0\) must be true.</p>
 <p>where the \(v\) values are successive powers of the hash of the public
 inputs. The prover would have to break a strong hash function to choose the
 public inputs and \(v\) values in order to cheat.</p>
@@ -684,15 +693,19 @@ precomputation.</p>
 <h2 id="precomputed-data"><a class="header" href="#precomputed-data">Precomputed data</a></h2>
 <p>Precomputed data consists of the following:</p>
 <ol>
-<li>\(\mathsf{mimc\_cts}\):</li>
+<li>\(\mathsf{mimc\_cts}\)</li>
 <li>\(\mathsf{mimc\_cts\_coset\_evals}\)</li>
 <li>\(\mathsf{zh\_inverse\_coset\_evals}\)</li>
 <li>\(\mathsf{q\_mimc}\) </li>
 <li>\(\mathsf{q\_mimc\_coset\_evals}\) </li>
 <li>\(\mathsf{l0\_coset\_evals}\) </li>
 <li>\(\mathsf{w_1\_mapping}\) </li>
-<li>\(\mathsf{w_2\_mapping}\) </li>
+<li>\({\mathsf{W}_1}^{i}\) </li>
+<li>\({\mathsf{W}_2}^{i}\) </li>
 </ol>
+<p>\({\mathsf{W}_1}^{i}\) and \({\mathsf{W}_2}^{i}\) are precomputed for the 
+index \(i\), which denotes the secret position of the prover's identity
+commitment in the accumulator.</p>
 <h3 id="mathsfmimc_cts"><a class="header" href="#mathsfmimc_cts">\(\mathsf{mimc\_cts}\)</a></h3>
 <p>A polynomial over the multiplicative subgroup which evaluates to the MiMC7
 round constants at each root of unity. The subgroup size is the number of MiMC7
@@ -702,16 +715,70 @@ rounds defined in
 <p>A vector of \(\mathbb{F}_r\) elements that are the evaluations of the MiMC7
 round constants over the extended coset (TODO: define what a coset is)</p>
 <h3 id="mathsfzh_inverse_coset_evals"><a class="header" href="#mathsfzh_inverse_coset_evals">\(\mathsf{zh\_inverse\_coset\_evals}\)</a></h3>
-<p>A polynomial over the extended coset domain which ... (TODO)</p>
+<p>A vector of \(\mathbb{F}_r\) elements that are the field inversions of the
+(coefficients of the vanishing polynomial over the coset??? TODO)</p>
 <h3 id="mathsfq_mimc"><a class="header" href="#mathsfq_mimc">\(\mathsf{q\_mimc}\)</a></h3>
 <p>A polynomial whose evaluations at the roots of unity over the subgroup domain
 of size 128 are \(n = 91\) <code>1</code> values, followed by zeroes. It represents the
 \(\mathsf{q\_mimc}\) <a href="./circuit_and_gates.html">selector column</a>.</p>
 <h3 id="mathsfq_mimc_coset_evals"><a class="header" href="#mathsfq_mimc_coset_evals">\(\mathsf{q\_mimc\_coset\_evals}\)</a></h3>
+<p>A vector of \(\mathbb{F}_r\) elements that are the evaluations of the
+\(\mathsf{q\_mimc}\) polynomial coefficients over the coset?? (TODO) </p>
 <h3 id="mathsfl0_coset_evals"><a class="header" href="#mathsfl0_coset_evals">\(\mathsf{l0\_coset\_evals}\)</a></h3>
-<h3 id="mathsfw_1_mapping"><a class="header" href="#mathsfw_1_mapping">\(\mathsf{w_1\_mapping}\)</a></h3>
-<h3 id="mathsfw_2_mapping"><a class="header" href="#mathsfw_2_mapping">\(\mathsf{w_2\_mapping}\)</a></h3>
+<p>Where \(L_0\) is the 0th Lagrange basis polynomial over the subgroup
+evaluation domain, this is a vector of its evaluations over the coset (?? TODO)</p>
+<h3 id="mathsfw_1i"><a class="header" href="#mathsfw_1i">\({\mathsf{W}_1}^{i}\)</a></h3>
+<p>As defined in the <a href="https://eprint.iacr.org/2022/957.pdf">Caulk+ paper, section 3</a>.</p>
+<h3 id="mathsfw_2i"><a class="header" href="#mathsfw_2i">\({\mathsf{W}_2}^{i}\)</a></h3>
+<p>As defined in the <a href="https://eprint.iacr.org/2022/957.pdf">Caulk+ paper, section 3</a>.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="the-fiat-shamir-transcript"><a class="header" href="#the-fiat-shamir-transcript">The Fiat-Shamir Transcript</a></h1>
+<p>A transcript is an abstraction over the <a href="https://en.wikipedia.org/wiki/Fiat%E2%80%93Shamir_heuristic">Fiat-Shamir
+heuristic</a>. Both
+the prover and verifier use the transcript to deterministically generate
+<em>challenge variables</em> based on the public inputs and proof data.</p>
+<p>Another way to think about the transcript is as a state machine where the state
+is a single data buffer. Every time a challenge is requested, it hashes the
+buffer replaces the contents of the buffer with the hash, and returns a value
+derived from the hash. The transcript can also be updated with abitrary data by
+appending the update to the buffer.</p>
+<p>Our transcript implements this concept with the following functions:</p>
+<ul>
+<li><code>new_transcript</code>: returns a new transcript whose buffer is 32 bytes of <code>0</code>
+values.</li>
+<li><code>update_with_f</code>: accepts a single \(\mathbb{F}_r\) value, converts it to a
+big-endian byte array, and appends it to the buffer.</li>
+<li><code>update_with_g1</code>: accepts a single \(\mathbb{G}_1\) point, converts its
+\(x\) and \(y\) points to big-endian byte arrays, and appends them to the
+buffer in the aforementioned order.</li>
+<li><code>update_with_g2</code>: accepts a single \(\mathbb{G}_2\) point, converts its
+\(x_0\), \(x_1\), \(y_0\), and \(y_1\) points into big-endian byte
+arrays, and appends them to the buffer in the aforementioned order.</li>
+<li><code>get_challenge</code>: hashes the buffer with Keccak256, replaces the buffer with
+the hash, converts the hash into a \(\mathbb{F}_r\) element (treating it
+as a big-endian buffer), and returns the \(\mathbb{F}_r\) element.</li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="proof-generation"><a class="header" href="#proof-generation">Proof generation</a></h1>
+<h2 id="1-assignment-round"><a class="header" href="#1-assignment-round">1. Assignment Round</a></h2>
+<p>Given the public and private inputs, the prover generates the assignment table
+(see <a href="./circuit_and_gates.html">4.3</a>). Each column is represented as a
+polynomial over the multiplicative subgroup generated via Lagrange
+interpolation of each row value as a coefficient (TODO: check this language).</p>
+<ul>
+<li>\(\mathsf{w}_0\)</li>
+<li>\(\mathsf{w}_1\)</li>
+<li>\(\mathsf{w}_2\)</li>
+<li>\(\mathsf{key}\)</li>
+</ul>
+<p>The prover then computes KZG commitments to each of the above polynomials:</p>
+<ul>
+<li>\([\mathsf{w}_0]_1\)</li>
+<li>\([\mathsf{w}_1]_1\)</li>
+<li>\([\mathsf{w}_2]_1\)</li>
+<li>\([\mathsf{key}]_1\)</li>
+</ul>
+<p>The prover also computes:</p>
+<p>\(A = \mathsf{w}_1 + \mathsf{w}_1(\gamma^{91}X) + 2 \cdot \mathsf{key}\)</p>
+<p>where \(\mathsf{w}_1(\gamma^{91}X)\) is .... TODO</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="proof-verification"><a class="header" href="#proof-verification">Proof verification</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="mechanism-of-operation"><a class="header" href="#mechanism-of-operation">Mechanism of Operation</a></h1>
 <p>The goal of Semaphore is to enable users to:</p>
