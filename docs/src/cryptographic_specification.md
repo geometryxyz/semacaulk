@@ -89,8 +89,8 @@ setup](https://eprint.iacr.org/2017/1050.pdf).
 
 These points are defined as such:
 
-- \\(\mathsf{srs\\_g1}\\): \\([g_1, g_1^{\tau}, ..., g_1^{\tau^{n + 1}}]\\)
-- \\(\mathsf{srs\\_g2}\\): \\([g_2, g_2^{\tau}, ..., g_2^{\tau^{n + 1}}]\\)
+- \\(\mathsf{srs\\_g1}\\): \\([g_1, g_1 \cdot {\tau}, \ldots, g_1 \cdot {\tau \cdot {n + 1}}]\\)
+- \\(\mathsf{srs\\_g2}\\): \\([g_2, g_2 \cdot {\tau}, \ldots, g_2 \cdot {\tau \cdot {n + 1}}]\\)
 
 Where \\(g_1\\) is defined in 1.3 and \\(g_2\\) is defined in 1.4.
 
@@ -137,7 +137,7 @@ To hash a single field element \\(x\\), we use the `hash()` algorithm. The input
 3. Return \\(\mathsf{rd}[n - 1] + k\\).
 
 #### 4.3. The MiMC7 `multi_hash` algorithm
-To hash multiple field elements \\(x_0, ..., x_n\\), we use the `multi_hash()`
+To hash multiple field elements \\(x_0, \ldots, x_n\\), we use the `multi_hash()`
 algorithm. The inputs to `multi_hash()` are the array of said field elements
 and a key \\(k\\).
 
@@ -173,7 +173,7 @@ Semcaulk uses the KZG commitment scheme described in
 [KZG10](https://www.iacr.org/archive/asiacrypt2010/6477178/6477178.pdf).
 
 Given a polynomial \\(\phi\\) with \\(l\\) coefficients 
-\\([\phi_0, ..., \phi_{l - 1}]\\), one
+\\([\phi_0, \ldots, \phi_{l - 1}]\\), one
 can use \\(\mathsf{srs\\_g1}\\) to
 produce a commitment in the form of a \\(\mathbb{G}_1\\) point, or
 \\(\mathsf{srs\\_g2}\\) to produce a commitment in the form of a
@@ -181,6 +181,10 @@ produce a commitment in the form of a \\(\mathbb{G}_1\\) point, or
 
 \\(\mathsf{commit}(\phi, \mathsf{srs}) = \sum_{i=1}^{l} \mathsf{srs}[i] \cdot \phi_i \\)
 
+An alternative notation for \\(\mathsf{commit}\\) is:
+
+\\([\phi\]_1\\) where the commitment is a \\(\mathbb{G}_1\\) point or
+\\([\phi\]_2\\) where the commitment is a \\(\mathbb{G}_2\\) point.
 
 ### 6. Lagrange basis polynomials
 
@@ -203,13 +207,13 @@ For example, the 4th roots of unity of the BN254 scalar field (see 1.1) are:
 ```
 
 Another name for the \\(n\\) roots of unity is the evaluation domain of size \\(n\\)
-for a given finite field. They are commonly denoted as \\(\\{1, \omega, ...,
+for a given finite field. They are commonly denoted as \\(\\{1, \omega, \ldots,
 \omega^{n-1}\\}\\).
 
 #### 6.2. Lagrange basis polynomials
 
 Given an evaluation domain of size \\(n\\), the Lagrange basis polynomials of
-this domain are the \\(n\\) polynomials \\([L_0, ..., L_n]\\) such that
+this domain are the \\(n\\) polynomials \\([L_0, \ldots, L_n]\\) such that
 \\(L_i(\omega^{i - 1} = 1)\\) and \\(L_i(\omega^{j} = 0)\\) for all
 \\(j \neq i - 1\\). For example:
 
@@ -240,7 +244,7 @@ with the users' identity commitments followed by nothing-up-my-sleeve values.
 An *empty accumulator* is simply a commitment to \\(t\\) nothing-up-my-sleeve
 values.
 
-Given the vector of values \\([v_0, ..., v_t]\\), the accumulator \\(C\\) is computed
+Given the vector of values \\([v_0, \ldots, v_t]\\), the accumulator \\(C\\) is computed
 as such:
 
 \\(\sum_{i=1}^{t} \mathsf{commit}(L_i, \mathsf{srs\\_g1}) \cdot v_i\\)
@@ -280,6 +284,15 @@ following sources:
 
 #### 9.1. The subgroup domain
 
+An evaluation domain with size 128. We denote this constant as
+\\(\mathsf{SUBGROUP\\_SIZE}\\).
+
 #### 9.2. The extended coset domain
 
+An evaluation domain with size 8 * 128. We denote this as
+\\(\mathsf{EXTENDED\\_DOMAIN\\_FACTOR} * \mathsf{SUBGROUP\\_SIZE} = 1024\\).
+
 #### 9.3. The table domain
+
+An evaluation domain with a size of at least 1024. This is the upper limit on
+the number of elements that the accumulator can hold.

@@ -23,14 +23,19 @@ precomputation.
 
 Precomputed data consists of the following:
 
-1. \\(\mathsf{mimc\\_cts}\\):
+1. \\(\mathsf{mimc\\_cts}\\)
 2. \\(\mathsf{mimc\\_cts\\_coset\\_evals}\\)
 3. \\(\mathsf{zh\\_inverse\\_coset\\_evals}\\)
 4. \\(\mathsf{q\\_mimc}\\) 
 5. \\(\mathsf{q\\_mimc\\_coset\\_evals}\\) 
 6. \\(\mathsf{l0\\_coset\\_evals}\\) 
 7. \\(\mathsf{w_1\\_mapping}\\) 
-8. \\(\mathsf{w_2\\_mapping}\\) 
+7. \\({\mathsf{W}_1}^{i}\\) 
+8. \\({\mathsf{W}_2}^{i}\\) 
+
+\\({\mathsf{W}_1}^{i}\\) and \\({\mathsf{W}_2}^{i}\\) are precomputed for the 
+index \\(i\\), which denotes the secret position of the prover's identity
+commitment in the accumulator.
 
 ### \\(\mathsf{mimc\\_cts}\\)
 
@@ -46,7 +51,8 @@ round constants over the extended coset (TODO: define what a coset is)
 
 ### \\(\mathsf{zh\\_inverse\\_coset\\_evals}\\)
 
-A polynomial over the extended coset domain which ... (TODO)
+A vector of \\(\mathbb{F}_r\\) elements that are the field inversions of the
+(coefficients of the vanishing polynomial over the coset??? TODO)
 
 ### \\(\mathsf{q\\_mimc}\\) 
 
@@ -56,8 +62,18 @@ of size 128 are \\(n = 91\\) `1` values, followed by zeroes. It represents the
 
 ### \\(\mathsf{q\\_mimc\\_coset\\_evals}\\) 
 
+A vector of \\(\mathbb{F}_r\\) elements that are the evaluations of the
+\\(\\mathsf{q\\_mimc}\\) polynomial coefficients over the coset?? (TODO) 
+
 ### \\(\mathsf{l0\\_coset\\_evals}\\) 
 
-### \\(\mathsf{w_1\\_mapping}\\) 
+Where \\(L_0\\) is the 0th Lagrange basis polynomial over the subgroup
+evaluation domain, this is a vector of its evaluations over the coset (?? TODO)
 
-### \\(\mathsf{w_2\\_mapping}\\) 
+### \\({\mathsf{W}_1}^{i}\\) 
+
+As defined in the [Caulk+ paper, section 3](https://eprint.iacr.org/2022/957.pdf).
+
+### \\({\mathsf{W}_2}^{i}\\) 
+
+As defined in the [Caulk+ paper, section 3](https://eprint.iacr.org/2022/957.pdf).

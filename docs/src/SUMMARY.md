@@ -8,6 +8,7 @@
     - [Insertion](./insertion.md)
     - [The Circuit and Gates](./circuit_and_gates.md)
     - [Precomputation and updates (TODO)](./precomputation_and_updates.md)
+    - [The Fiat-Shamir Transcript](./fiat_shamir_transcript.md)
     - [Proof generation (TODO)](./proof_generation.md)
     - [Proof verification (TODO)](./verification.md)
 - [Mechanism of Operation](./mechanism_of_operation.md)

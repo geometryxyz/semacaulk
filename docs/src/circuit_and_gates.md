@@ -30,7 +30,7 @@ logic.
 |-|-|-|-|-|-|-|
 |0| \\(\mathsf{id\\_nul}\\) | \\(\mathsf{id\\_trap}\\) | \\(\mathsf{ext\\_nul}\\) | \\(\mathsf{w}_0[n] + \mathsf{w}_0[0] \\) | \\(\mathsf{cts}[0]\\) | 1 |
 |1| \\((\mathsf{w}_0[0] + \mathsf{c}[0]) ^ 7\\) | \\((\mathsf{w}_1[0] + \mathsf{key}[0] + \mathsf{c}[0]) ^ 7\\) | \\((\mathsf{w}_2[0] + \mathsf{key}[0] + \mathsf{c}[0]) ^ 7\\)| \\(\mathsf{w}_0[n] + \mathsf{w}_0[0] \\) | \\(\mathsf{cts}[1]\\) | 1 |
-|...|...|...|...|...|...|...|
+|\ldots|\ldots|\ldots|\ldots|\ldots|\ldots|\ldots|
 | \\(n\\) | \\((\mathsf{w}_0[n - 1] + \mathsf{c}[n - 1]) ^ 7\\) | \\((\mathsf{w}_1[n - 1] + \mathsf{key}[n - 1] + \mathsf{c}[n - 1]) ^ 7\\) | \\((\mathsf{w}_2[n - 1] + \mathsf{key}[n - 1] + \mathsf{c}[n - 1]) ^ 7\\)| \\(\mathsf{w}_0[n] + \mathsf{w}_0[0] \\) | \\(\mathsf{dummy}\\) | 0 |
 | 128 | \\(b\\) | \\(b\\) | \\(b\\) | \\(b\\) | \\(b\\) | \\(b\\)
 
@@ -53,14 +53,14 @@ To understand how the logic of the circuit is encoded, consider each row of the
 table as inputs to the linear combination of the following gates, which must
 evaluate to 0 for a valid proof to be generated. In effect:
 
-\\(\mathsf{gate}_0(r) + ... + \mathsf{gate}_n(r) = 0\\) must be true.
+\\(\mathsf{gate}_0(r) + \ldots + \mathsf{gate}_n(r) = 0\\) must be true.
 
 Each and every gate must evaluate to 0. It is not possible for the prover to
 cheat by having some gates evaluate to some value such that the total evaluates
 to 0, since the prover will be forced to separate each gate with a challenge
 that they cannot control. Internally, the equation is actually:
 
-\\(\mathsf{gate}_0(r) \cdot v_0 + ... + \mathsf{gate}_n(r) \cdot v_n = 0\\) must be true.
+\\(\mathsf{gate}_0(r) \cdot v_0 + \ldots + \mathsf{gate}_n(r) \cdot v_n = 0\\) must be true.
 
 where the \\(v\\) values are successive powers of the hash of the public
 inputs. The prover would have to break a strong hash function to choose the
