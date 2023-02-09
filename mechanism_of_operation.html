@@ -34,6 +34,7 @@
         <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     </head>
     <body>
+    <div id="body-container">
         <!-- Provide site root to javascript -->
         <script>
             var path_to_root = "";
@@ -174,8 +175,12 @@ of the Semacaulk smart contract.</p>
 <p>When a user <em>broadcasts a signal</em>, they generate a proof that they know the
 secret identity nullifier and identity trapdoor behind their identity
 commitment, and then submit said proof to the Semacaulk smart contract's
-<code>broadcastSignal()</code> function. Tied to this proof is the hash of a <em>signal</em> and
-the user's desired external nullifier.</p>
+<code>broadcastSignal()</code> function.</p>
+<p>Tied to this proof is the hash of a <em>signal</em> and the user's desired external
+nullifier. The contract (not the user) hashes the user-provided signal using
+Keccak256 and right-shifts the result by 8 bits to derive
+\(\mathsf{sig\_hash}\), which is used as one of the public inputs to the
+verifier.</p>
 <h3 id="56-preventing-double-signalling"><a class="header" href="#56-preventing-double-signalling">5.6. Preventing double-signalling</a></h3>
 <p>The Semacaulk smart contract maintains a mapping of nullifier hashes. Each
 nullifier hash is unique to the user and an external nullifier. If the
@@ -230,5 +235,6 @@ it rejects the transaction, thus preventing double-signalling.</p>
         <!-- Custom JS scripts -->
 
 
+    </div>
     </body>
 </html>

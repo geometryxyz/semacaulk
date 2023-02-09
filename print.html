@@ -35,6 +35,7 @@
         <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     </head>
     <body>
+    <div id="body-container">
         <!-- Provide site root to javascript -->
         <script>
             var path_to_root = "";
@@ -510,14 +511,13 @@ applied to it. The authors of Semacaulk intend the following to be the
 invariants of Semacaulk:</p>
 <ol>
 <li>
-<p><strong>Privacy</strong>: No-one but the user who knows the value of the identity nullifier and
-identity trapdoor behind an identity commitment may generate a valid proof
-of set membership of the identity commitment in the accumulator.</p>
+<p><strong>Privacy</strong>: No-one but the user who knows the value of the identity
+nullifier and identity trapdoor behind an identity commitment may generate a
+valid proof of set membership of the identity commitment in the accumulator.</p>
 </li>
 <li>
 <p><strong>Safe NUMS value</strong>: No-one should be able to produce a valid proof of set
-membership for an element of the set that is set to the default
-nothing-up-my-sleeve value.</p>
+membership for the default nothing-up-my-sleeve value.</p>
 </li>
 <li>
 <p><strong>Proof non-malleability</strong>: Proofs are visible once submitted to the mempool,
@@ -526,11 +526,39 @@ it is associated with a different signal, and remain valid.</p>
 </li>
 <li>
 <p><strong>Zero-knowledge</strong>: given a valid proof, no-one should be able to determine
-the index of the identity commitment of which the prover knows the preimage.</p>
+the index of the identity commitment the identity nullifier, or the identity
+trapdor associated with the proof.</p>
 </li>
-<li></li>
 </ol>
-<p>TODO: add more invariants</p>
+<p>Other invariants which have to do with the internal consistency and correctness
+of the system are:</p>
+<ol start="5">
+<li>
+<p>All identity commitments must be less than the BN254 scalar field size.</p>
+</li>
+<li>
+<p>Every identity commitment in the accumulator must have been added at some
+point in the past, except for the NUMS values.</p>
+</li>
+<li>
+<p>Any identity commitment besides the NUMS value may be added to the
+accumulator, unless it is full.</p>
+</li>
+<li>
+<p>The NUMS value cannot be added to the accumulator.</p>
+</li>
+<li>
+<p>There can be no valid proof associated with a NUMS value as the identity
+commitment.</p>
+</li>
+<li>
+<p>All nullifier hashes must be less than the BN254 scalar field size.</p>
+</li>
+<li>
+<p>It should only be possible to generate a proof for a valid user, and
+impossible to generate a proof for an invalid user.</p>
+</li>
+</ol>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="insertion"><a class="header" href="#insertion">Insertion</a></h1>
 <p>As described in the <a href="./cryptographic_specification.html#7-the-accumulator">Cryptographic
 Specification</a>,
@@ -758,7 +786,7 @@ the hash, converts the hash into a \(\mathbb{F}_r\) element (treating it
 as a big-endian buffer), and returns the \(\mathbb{F}_r\) element.</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="proof-generation"><a class="header" href="#proof-generation">Proof generation</a></h1>
-<h2 id="1-assignment-round"><a class="header" href="#1-assignment-round">1. Assignment Round</a></h2>
+<h2 id="461-assignment-round"><a class="header" href="#461-assignment-round">4.6.1. Assignment Round</a></h2>
 <p>Given the public and private inputs, the prover generates the assignment table
 (see <a href="./circuit_and_gates.html">4.3</a>). Each column is represented as a
 polynomial over the multiplicative subgroup generated via Lagrange
@@ -778,7 +806,59 @@ interpolation of each row value as a coefficient (TODO: check this language).</p
 </ul>
 <p>The prover also computes:</p>
 <p>\(A = \mathsf{w}_1 + \mathsf{w}_1(\gamma^{91}X) + 2 \cdot \mathsf{key}\)</p>
-<p>where \(\mathsf{w}_1(\gamma^{91}X)\) is .... TODO</p>
+<!--let omega_pow_rotation = state.domain_h.element(NUMBER_OF_MIMC_ROUNDS);-->
+<!--let w1_shifted_n = shift_dense_poly(&w1, &omega_pow_rotation);-->
+<!--let a: DensePolynomial<_> = &w1_shifted_n + &w1 + &key * E::Fr::from(2u64);-->
+<p>where \(\mathsf{w}_1(\gamma^{91}X)\) is \(\mathsf{w}_1\) shifted by the
+\(n\)th root of unity in the subgroup domain
+(<a href="cryptographic_specification.html#91-the-subgroup-domain">9.1</a>).</p>
+<p>Next, the prover adds the public inputs to the transcript in this order:</p>
+<ol>
+<li>\(\mathsf{ext\_nul}\)</li>
+<li>\(\mathsf{nul\_hash}\)</li>
+<li>\(\mathsf{sig\_hash}\)</li>
+</ol>
+<p>The prover then extracts the challenge \(v\).</p>
+<h2 id="462-quotient-round"><a class="header" href="#462-quotient-round">4.6.2. Quotient round</a></h2>
+<p>The prover generates a quotient polynomial \(q\) by dividing
+a numerator — a challenge-separated linear combination of gate polynomials —
+with the vanishing polynomial \(Z_H\).</p>
+<p>\(q(X) = \mathsf{numerator} / Z_H\) where</p>
+<p>\(\mathsf{numerator} =\)</p>
+<p>\(\mathsf{q\_mimc}((\mathsf{w}_0 + \mathsf{cts})^7 - \mathsf{w}_0(\gamma X)) + \)</p>
+<p>\(v \cdot \mathsf{q\_mimc}((w_1 + \mathsf{key} + \mathsf{cts})^7 - w_1(\gamma X)) +\)</p>
+<p>\(v^2 \cdot \mathsf{q\_mimc}((\mathsf{w}_2 + \mathsf{key} + \mathsf{cts})^7 - \mathsf{w}_2(\gamma X)) +\)</p>
+<p>\(v^3 \cdot \mathsf{q\_mimc}(\mathsf{key} - \mathsf{key}(\gamma X)) +\)</p>
+<p>\(v^4 \cdot L_0(\mathsf{key} - \mathsf{w}_0 - \mathsf{w}_0(\gamma ^{91}X)) +\)</p>
+<p>\(v^5 \cdot L_0(\mathsf{nul\_hash} - \mathsf{w}_2 - \mathsf{w}_2(\gamma ^{91}X) - 2 \cdot \mathsf{key}) +\)</p>
+<p>\(v^6 \cdot L_0 \cdot (\mathsf{w}_2 - \mathsf{ext\_nul})\)</p>
+<p>These equations correspond to the gates defined in
+<a href="circuit_and_gates.html#gates">4.3</a>.</p>
+<p>\(\mathsf{w}_0(\gamma X)\) refers to \(\mathsf{w}_0\) shifted (or
+&quot;rotated&quot;) forward by one.</p>
+<p>\(\mathsf{w}_0(\gamma ^{91}X)\) refers to \(\mathsf{w}_0\) shifted forward
+by 91, which is the number of MiMC7 rounds defined in
+<a href="./cryptographic_specification.html#41-the-mimc7-round-constants">4.1</a>.</p>
+<p>The prover then commits to \(q\) to obtain \([q]_1\).</p>
+<h2 id="463-first-caulk-round"><a class="header" href="#463-first-caulk-round">4.6.3. First Caulk+ round</a></h2>
+<p>The prover computes:</p>
+<ul>
+<li>\([z_I]_1\)</li>
+<li>\([c_I]_1\)</li>
+<li>\([u]_1\)</li>
+</ul>
+<p>according to <a href="https://eprint.iacr.org/2022/957.pdf">page 6 of the Caulk+
+paper</a>.</p>
+<p>The prover then updates the transcript with \([q]_1\) and the above values,
+and extracts the challenge values \(\chi_1\) and \(\chi_2\).</p>
+<h2 id="464-second-caulk-round"><a class="header" href="#464-second-caulk-round">4.6.4. Second Caulk+ round</a></h2>
+<p>The prover computes:</p>
+<p>\(H(X) = (Z_I'(U'(X)) + \chi_1 (C_I'(U'(X)) - A(X)) / Z_V(X)\)</p>
+<p>which is a modification of the Round 2 steps from <a href="https://eprint.iacr.org/2022/957.pdf">page 6 of the Caulk+
+paper</a>.</p>
+<h2 id="465-opening-round"><a class="header" href="#465-opening-round">4.6.5. Opening round</a></h2>
+<p>This section is a work in progress; in the meantime, see <a href="https://hackmd.io/D-bL6-oNSbSej7Ao_-9PLA">this
+document</a> for the multiopen argument.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="proof-verification"><a class="header" href="#proof-verification">Proof verification</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="mechanism-of-operation"><a class="header" href="#mechanism-of-operation">Mechanism of Operation</a></h1>
 <p>The goal of Semaphore is to enable users to:</p>
@@ -811,8 +891,12 @@ of the Semacaulk smart contract.</p>
 <p>When a user <em>broadcasts a signal</em>, they generate a proof that they know the
 secret identity nullifier and identity trapdoor behind their identity
 commitment, and then submit said proof to the Semacaulk smart contract's
-<code>broadcastSignal()</code> function. Tied to this proof is the hash of a <em>signal</em> and
-the user's desired external nullifier.</p>
+<code>broadcastSignal()</code> function.</p>
+<p>Tied to this proof is the hash of a <em>signal</em> and the user's desired external
+nullifier. The contract (not the user) hashes the user-provided signal using
+Keccak256 and right-shifts the result by 8 bits to derive
+\(\mathsf{sig\_hash}\), which is used as one of the public inputs to the
+verifier.</p>
 <h3 id="56-preventing-double-signalling"><a class="header" href="#56-preventing-double-signalling">5.6. Preventing double-signalling</a></h3>
 <p>The Semacaulk smart contract maintains a mapping of nullifier hashes. Each
 nullifier hash is unique to the user and an external nullifier. If the
@@ -860,6 +944,12 @@ machine with 24 GB RAM. They represent the time taken for a native Rust binary
 <li>Nicolas Mohnblatt (<a href="mailto:nico@geometry.xyz">nico@geometry.xyz </a>)</li>
 <li>Tom Walton-Pocock (<a href="mailto:tom@geometry.xyz">tom@geometry.xyz</a>)</li>
 </ul>
+<p>Last but not least, we would also like to thank:</p>
+<ul>
+<li>Jon Stephens from <a href="https://veridise.com/">Veridise</a> and Andy Guzman from
+<a href="https://semaphore.appliedzkp.org/">Sempahore</a> for sharing
+information about Semaphore's invariants used in their formal audit.</li>
+</ul>
 
                     </main>
 
@@ -904,5 +994,6 @@ machine with 24 GB RAM. They represent the time taken for a native Rust binary
         });
         </script>
 
+    </div>
     </body>
 </html>

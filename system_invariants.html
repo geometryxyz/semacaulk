@@ -34,6 +34,7 @@
         <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     </head>
     <body>
+    <div id="body-container">
         <!-- Provide site root to javascript -->
         <script>
             var path_to_root = "";
@@ -150,14 +151,13 @@ applied to it. The authors of Semacaulk intend the following to be the
 invariants of Semacaulk:</p>
 <ol>
 <li>
-<p><strong>Privacy</strong>: No-one but the user who knows the value of the identity nullifier and
-identity trapdoor behind an identity commitment may generate a valid proof
-of set membership of the identity commitment in the accumulator.</p>
+<p><strong>Privacy</strong>: No-one but the user who knows the value of the identity
+nullifier and identity trapdoor behind an identity commitment may generate a
+valid proof of set membership of the identity commitment in the accumulator.</p>
 </li>
 <li>
 <p><strong>Safe NUMS value</strong>: No-one should be able to produce a valid proof of set
-membership for an element of the set that is set to the default
-nothing-up-my-sleeve value.</p>
+membership for the default nothing-up-my-sleeve value.</p>
 </li>
 <li>
 <p><strong>Proof non-malleability</strong>: Proofs are visible once submitted to the mempool,
@@ -166,11 +166,39 @@ it is associated with a different signal, and remain valid.</p>
 </li>
 <li>
 <p><strong>Zero-knowledge</strong>: given a valid proof, no-one should be able to determine
-the index of the identity commitment of which the prover knows the preimage.</p>
+the index of the identity commitment the identity nullifier, or the identity
+trapdor associated with the proof.</p>
 </li>
-<li></li>
 </ol>
-<p>TODO: add more invariants</p>
+<p>Other invariants which have to do with the internal consistency and correctness
+of the system are:</p>
+<ol start="5">
+<li>
+<p>All identity commitments must be less than the BN254 scalar field size.</p>
+</li>
+<li>
+<p>Every identity commitment in the accumulator must have been added at some
+point in the past, except for the NUMS values.</p>
+</li>
+<li>
+<p>Any identity commitment besides the NUMS value may be added to the
+accumulator, unless it is full.</p>
+</li>
+<li>
+<p>The NUMS value cannot be added to the accumulator.</p>
+</li>
+<li>
+<p>There can be no valid proof associated with a NUMS value as the identity
+commitment.</p>
+</li>
+<li>
+<p>All nullifier hashes must be less than the BN254 scalar field size.</p>
+</li>
+<li>
+<p>It should only be possible to generate a proof for a valid user, and
+impossible to generate a proof for an invalid user.</p>
+</li>
+</ol>
 
                     </main>
 
@@ -220,5 +248,6 @@ the index of the identity commitment of which the prover knows the preimage.</p>
         <!-- Custom JS scripts -->
 
 
+    </div>
     </body>
 </html>
