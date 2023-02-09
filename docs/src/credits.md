@@ -10,3 +10,9 @@ Special thanks to these contributors for their feedback and support:
 
 - Nicolas Mohnblatt ([nico@geometry.xyz ](mailto:nico@geometry.xyz))
 - Tom Walton-Pocock ([tom@geometry.xyz](mailto:tom@geometry.xyz))
+
+Last but not least, we would also like to thank:
+
+- Jon Stephens from [Veridise](https://veridise.com/) and Andy Guzman from
+  [Sempahore](https://semaphore.appliedzkp.org/) for sharing
+  information about Semaphore's invariants used in their formal audit.

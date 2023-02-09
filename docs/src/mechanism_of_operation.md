@@ -42,8 +42,13 @@ of the Semacaulk smart contract.
 When a user *broadcasts a signal*, they generate a proof that they know the
 secret identity nullifier and identity trapdoor behind their identity
 commitment, and then submit said proof to the Semacaulk smart contract's
-`broadcastSignal()` function. Tied to this proof is the hash of a *signal* and
-the user's desired external nullifier.
+`broadcastSignal()` function.
+
+Tied to this proof is the hash of a *signal* and the user's desired external
+nullifier. The contract (not the user) hashes the user-provided signal using
+Keccak256 and right-shifts the result by 8 bits to derive
+\\(\\mathsf{sig\\_hash}\\), which is used as one of the public inputs to the
+verifier.
 
 ### 5.6. Preventing double-signalling
 
