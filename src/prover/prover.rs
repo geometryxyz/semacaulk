@@ -700,7 +700,7 @@ impl Prover {
         };
 
         // compute all evaluations
-        let v = u_prime.evaluate(&alpha);
+        let u_prime_opening = u_prime.evaluate(&alpha);
 
         // compute all openings
         let w0_openings = [
@@ -726,8 +726,7 @@ impl Prover {
         let q_mimc_opening = q_mimc.evaluate(&alpha);
         let mimc_cts_opening = mimc_cts.evaluate(&alpha);
         let quotient_opening = quotient.evaluate(&alpha);
-        let u_prime_opening = v;
-        let p1_opening = p1.evaluate(&v);
+        let p1_opening = p1.evaluate(&u_prime_opening);
         let p2_opening = p2.evaluate(&alpha);
 
         assert_eq!(p2_opening, Fr::zero());
@@ -752,7 +751,7 @@ impl Prover {
             p2_opening,
         ]);
 
-        // compute proof
+        // Compute the multiopen proof
         let m = MultiopenProver::prove(
             &state.proving_key.srs_g1,
             w0,
@@ -765,7 +764,7 @@ impl Prover {
             u_prime,
             &p1,
             &p2,
-            v,
+            u_prime_opening,
             alpha,
             omega_alpha,
             omega_n_alpha,
