@@ -24,14 +24,14 @@ impl Prover {
         w2: &DensePolynomial<Fr>,
         key: &DensePolynomial<Fr>,
         q_mimc: &DensePolynomial<Fr>,
-        c: &DensePolynomial<Fr>,
+        mimc_cts: &DensePolynomial<Fr>,
         quotient: &DensePolynomial<Fr>,
         // caulk+ related polys
         u_prime: &DensePolynomial<Fr>,
         p1: &DensePolynomial<Fr>,
         p2: &DensePolynomial<Fr>,
         // proof specific information
-        v: Fr,
+        u_prime_opening: Fr,
         alpha: Fr,
         omega_alpha: Fr,
         omega_n_alpha: Fr,
@@ -50,7 +50,7 @@ impl Prover {
         // define qi-s
         let q1 = p1.clone();
         let q2 = q_mimc
-            + &(c * x1_powers[0])
+            + &(mimc_cts * x1_powers[0])
             + (quotient * x1_powers[1])
             + (u_prime * x1_powers[2])
             + (p2 * x1_powers[3]);
@@ -58,7 +58,7 @@ impl Prover {
         let q4 = w0 + &(w1 * x1_powers[0]) + (w2 * x1_powers[1]);
 
         // prepare vanishing polys
-        let z1 = DensePolynomial::from_coefficients_slice(&[-v, Fr::one()]);
+        let z1 = DensePolynomial::from_coefficients_slice(&[-u_prime_opening, Fr::one()]);
         let z2 = DensePolynomial::from_coefficients_slice(&[-alpha, Fr::one()]);
         let z3 = &z2 * &DensePolynomial::from_coefficients_slice(&[-omega_alpha, Fr::one()]);
         let z4 = &z3 * &DensePolynomial::from_coefficients_slice(&[-omega_n_alpha, Fr::one()]);

@@ -81,7 +81,7 @@ It follows that no-one knows the MiMC7 preimage to the NUMS value.
 
 Semacaulk's structured reference string (SRS) consists of an ordered list of
 \\(2^n + 1\\) \\(\mathbb{G}_1\\) points and \\(2^n\\) \\(\mathbb{G}_2\\)
-points, where the maximum capacity of the accumulator is \\(2^n\\).
+points, where the maximum capacity of the accumulator is \\(2^n = t\\).
 
 We assume the existence of a secret and unknown value \\(\tau\\) which can be
 generated using a [securely run trusted
@@ -89,8 +89,8 @@ setup](https://eprint.iacr.org/2017/1050.pdf).
 
 These points are defined as such:
 
-- \\(\mathsf{srs\\_g1}\\): \\([g_1, g_1 \cdot {\tau}, \ldots, g_1 \cdot {\tau \cdot {n + 1}}]\\)
-- \\(\mathsf{srs\\_g2}\\): \\([g_2, g_2 \cdot {\tau}, \ldots, g_2 \cdot {\tau \cdot {n + 1}}]\\)
+- \\(\mathsf{srs\\_g1}\\): \\([g_1, g_1 \cdot {\tau}, \ldots, g_1 \cdot {\tau \cdot {t + 1}}]\\)
+- \\(\mathsf{srs\\_g2}\\): \\([g_2, g_2 \cdot {\tau}, \ldots, g_2 \cdot {\tau \cdot {t + 1}}]\\)
 
 Where \\(g_1\\) is defined in 1.3 and \\(g_2\\) is defined in 1.4.
 
@@ -172,19 +172,24 @@ is crucial to understanding how the circuit construction works.
 Semcaulk uses the KZG commitment scheme described in
 [KZG10](https://www.iacr.org/archive/asiacrypt2010/6477178/6477178.pdf).
 
-Given a polynomial \\(\phi\\) with \\(l\\) coefficients 
-\\([\phi_0, \ldots, \phi_{l - 1}]\\), one
-can use \\(\mathsf{srs\\_g1}\\) to
-produce a commitment in the form of a \\(\mathbb{G}_1\\) point, or
-\\(\mathsf{srs\\_g2}\\) to produce a commitment in the form of a
-\\(\mathbb{G}_2\\) point.
+Given an array of \\(t\\) values \\([m_0, \ldots, m_t]\\), we interpolate to
+derive the polynomial \\(\phi\\) such that \\(\phi(i) = m_i\\).
+
+Knowing \\(\phi\\) with \\(l\\) coefficients \\([\phi_0, \ldots, \phi_{l -
+1}]\\), one can use \\(\mathsf{srs\\_g1}\\) to produce a commitment in the form
+of a \\(\mathbb{G}_1\\) point, or \\(\mathsf{srs\\_g2}\\) to produce a
+commitment in the form of a \\(\mathbb{G}_2\\) point.
 
 \\(\mathsf{commit}(\phi, \mathsf{srs}) = \sum_{i=1}^{l} \mathsf{srs}[i] \cdot \phi_i \\)
 
 An alternative notation for \\(\mathsf{commit}\\) is:
 
-\\([\phi\]_1\\) where the commitment is a \\(\mathbb{G}_1\\) point or
-\\([\phi\]_2\\) where the commitment is a \\(\mathbb{G}_2\\) point.
+- \\([\phi\]_1\\) where the commitment is a \\(\mathbb{G}_1\\) point or
+- \\([\phi\]_2\\) where the commitment is a \\(\mathbb{G}_2\\) point.
+
+A KZG opening proof is denoted as:
+
+\\(\mathsf{open}(\mathsf{srs}, [\phi\], \phi(i))\\)
 
 ### 6. Lagrange basis polynomials
 

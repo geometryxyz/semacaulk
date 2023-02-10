@@ -2,7 +2,7 @@
 
 An insertion (via `insertIdentity()` costs around 68k gas.
 
-`broadcastSignal()`, which includes proof verification, costs 355k gas.
+`broadcastSignal()`, which includes proof verification, costs around 355k gas.
 
 By contrast, a Tornado Cash deposit (which involves inserting a leaf to a
 Merkle tree) costs [907787

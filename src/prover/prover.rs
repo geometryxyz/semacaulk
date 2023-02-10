@@ -699,10 +699,9 @@ impl Prover {
             h_zv
         };
 
-        // compute all evaluations
+        // compute all openings
         let u_prime_opening = u_prime.evaluate(&alpha);
 
-        // compute all openings
         let w0_openings = [
             w0.evaluate(&alpha),
             w0.evaluate(&omega_alpha),

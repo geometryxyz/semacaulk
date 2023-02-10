@@ -7,3 +7,9 @@ title = "Semacaulk"
 
 [output.html]
 mathjax-support = true
+
+[output.katex]
+
+[preprocessor.katex]
+renderers = ["html"]
+#inline-delimiter = {left = "\\(", right = "\\)"}
