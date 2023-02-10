@@ -83,7 +83,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="overview.html"><strong aria-hidden="true">1.</strong> Overview</a></li><li class="chapter-item expanded "><a href="quick_start.html"><strong aria-hidden="true">2.</strong> Quick start</a></li><li class="chapter-item expanded "><a href="trusted_setup.html"><strong aria-hidden="true">3.</strong> Trusted Setup</a></li><li class="chapter-item expanded "><a href="cryptographic_specification.html" class="active"><strong aria-hidden="true">4.</strong> Cryptographic Specification</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="system_invariants.html"><strong aria-hidden="true">4.1.</strong> System invariants</a></li><li class="chapter-item expanded "><a href="insertion.html"><strong aria-hidden="true">4.2.</strong> Insertion</a></li><li class="chapter-item expanded "><a href="circuit_and_gates.html"><strong aria-hidden="true">4.3.</strong> The Circuit and Gates</a></li><li class="chapter-item expanded "><a href="precomputation_and_updates.html"><strong aria-hidden="true">4.4.</strong> Precomputation and updates (TODO)</a></li><li class="chapter-item expanded "><a href="fiat_shamir_transcript.html"><strong aria-hidden="true">4.5.</strong> The Fiat-Shamir Transcript</a></li><li class="chapter-item expanded "><a href="proof_generation.html"><strong aria-hidden="true">4.6.</strong> Proof generation (TODO)</a></li><li class="chapter-item expanded "><a href="verification.html"><strong aria-hidden="true">4.7.</strong> Proof verification (TODO)</a></li></ol></li><li class="chapter-item expanded "><a href="mechanism_of_operation.html"><strong aria-hidden="true">5.</strong> Mechanism of Operation</a></li><li class="chapter-item expanded "><a href="ethereum_contracts.html"><strong aria-hidden="true">6.</strong> Ethereum contracts (TODO)</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="gas_costs.html"><strong aria-hidden="true">6.1.</strong> Gas costs</a></li></ol></li><li class="chapter-item expanded "><a href="performance_benchmarks.html"><strong aria-hidden="true">7.</strong> Performance and Benchmarks</a></li><li class="chapter-item expanded "><a href="credits.html"><strong aria-hidden="true">8.</strong> Credits</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="overview.html"><strong aria-hidden="true">1.</strong> Overview</a></li><li class="chapter-item expanded "><a href="quick_start.html"><strong aria-hidden="true">2.</strong> Quick start</a></li><li class="chapter-item expanded "><a href="trusted_setup.html"><strong aria-hidden="true">3.</strong> Trusted Setup</a></li><li class="chapter-item expanded "><a href="cryptographic_specification.html" class="active"><strong aria-hidden="true">4.</strong> Cryptographic Specification</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="system_invariants.html"><strong aria-hidden="true">4.1.</strong> System invariants</a></li><li class="chapter-item expanded "><a href="insertion.html"><strong aria-hidden="true">4.2.</strong> Insertion</a></li><li class="chapter-item expanded "><a href="circuit_and_gates.html"><strong aria-hidden="true">4.3.</strong> The Circuit and Gates</a></li><li class="chapter-item expanded "><a href="precomputation_and_updates.html"><strong aria-hidden="true">4.4.</strong> Precomputation and updates (TODO)</a></li><li class="chapter-item expanded "><a href="fiat_shamir_transcript.html"><strong aria-hidden="true">4.5.</strong> The Fiat-Shamir Transcript</a></li><li class="chapter-item expanded "><a href="proof_generation.html"><strong aria-hidden="true">4.6.</strong> Proof generation</a></li><li class="chapter-item expanded "><a href="verification.html"><strong aria-hidden="true">4.7.</strong> Proof verification (TODO)</a></li></ol></li><li class="chapter-item expanded "><a href="mechanism_of_operation.html"><strong aria-hidden="true">5.</strong> Mechanism of Operation</a></li><li class="chapter-item expanded "><a href="ethereum_contracts.html"><strong aria-hidden="true">6.</strong> Ethereum contracts (TODO)</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="gas_costs.html"><strong aria-hidden="true">6.1.</strong> Gas costs</a></li></ol></li><li class="chapter-item expanded "><a href="performance_benchmarks.html"><strong aria-hidden="true">7.</strong> Performance and Benchmarks</a></li><li class="chapter-item expanded "><a href="credits.html"><strong aria-hidden="true">8.</strong> Credits</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -282,16 +282,20 @@ is crucial to understanding how the circuit construction works.</p>
 <h3 id="5-kzg-commitments"><a class="header" href="#5-kzg-commitments">5. KZG commitments</a></h3>
 <p>Semcaulk uses the KZG commitment scheme described in
 <a href="https://www.iacr.org/archive/asiacrypt2010/6477178/6477178.pdf">KZG10</a>.</p>
-<p>Given a polynomial \(\phi\) with \(l\) coefficients 
-\([\phi_0, \ldots, \phi_{l - 1}]\), one
-can use \(\mathsf{srs\_g1}\) to
-produce a commitment in the form of a \(\mathbb{G}_1\) point, or
-\(\mathsf{srs\_g2}\) to produce a commitment in the form of a
-\(\mathbb{G}_2\) point.</p>
+<p>Given an array of \(t\) values \([m_0, \ldots, m_t]\), we interpolate to
+derive the polynomial \(\phi\) such that \(\phi(i) = m_i\).</p>
+<p>Knowing \(\phi\) with \(l\) coefficients \([\phi_0, \ldots, \phi_{l -
+1}]\), one can use \(\mathsf{srs\_g1}\) to produce a commitment in the form
+of a \(\mathbb{G}_1\) point, or \(\mathsf{srs\_g2}\) to produce a
+commitment in the form of a \(\mathbb{G}_2\) point.</p>
 <p>\(\mathsf{commit}(\phi, \mathsf{srs}) = \sum_{i=1}^{l} \mathsf{srs}[i] \cdot \phi_i \)</p>
 <p>An alternative notation for \(\mathsf{commit}\) is:</p>
-<p>\([\phi]_1\) where the commitment is a \(\mathbb{G}_1\) point or
-\([\phi]_2\) where the commitment is a \(\mathbb{G}_2\) point.</p>
+<ul>
+<li>\([\phi]_1\) where the commitment is a \(\mathbb{G}_1\) point or</li>
+<li>\([\phi]_2\) where the commitment is a \(\mathbb{G}_2\) point.</li>
+</ul>
+<p>A KZG opening proof is denoted as:</p>
+<p>\(\mathsf{open}(\mathsf{srs}, [\phi], \phi(i))\)</p>
 <h3 id="6-lagrange-basis-polynomials"><a class="header" href="#6-lagrange-basis-polynomials">6. Lagrange basis polynomials</a></h3>
 <p>Lagrange basis polynomials are an important concept and are used in several
 parts of the protocol. To understand them, we must first define roots of unity

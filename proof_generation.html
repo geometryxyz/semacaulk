@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Proof generation (TODO) - Semacaulk</title>
+        <title>Proof generation - Semacaulk</title>
 
 
         <!-- Custom HTML head -->
@@ -83,7 +83,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="overview.html"><strong aria-hidden="true">1.</strong> Overview</a></li><li class="chapter-item expanded "><a href="quick_start.html"><strong aria-hidden="true">2.</strong> Quick start</a></li><li class="chapter-item expanded "><a href="trusted_setup.html"><strong aria-hidden="true">3.</strong> Trusted Setup</a></li><li class="chapter-item expanded "><a href="cryptographic_specification.html"><strong aria-hidden="true">4.</strong> Cryptographic Specification</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="system_invariants.html"><strong aria-hidden="true">4.1.</strong> System invariants</a></li><li class="chapter-item expanded "><a href="insertion.html"><strong aria-hidden="true">4.2.</strong> Insertion</a></li><li class="chapter-item expanded "><a href="circuit_and_gates.html"><strong aria-hidden="true">4.3.</strong> The Circuit and Gates</a></li><li class="chapter-item expanded "><a href="precomputation_and_updates.html"><strong aria-hidden="true">4.4.</strong> Precomputation and updates (TODO)</a></li><li class="chapter-item expanded "><a href="fiat_shamir_transcript.html"><strong aria-hidden="true">4.5.</strong> The Fiat-Shamir Transcript</a></li><li class="chapter-item expanded "><a href="proof_generation.html" class="active"><strong aria-hidden="true">4.6.</strong> Proof generation (TODO)</a></li><li class="chapter-item expanded "><a href="verification.html"><strong aria-hidden="true">4.7.</strong> Proof verification (TODO)</a></li></ol></li><li class="chapter-item expanded "><a href="mechanism_of_operation.html"><strong aria-hidden="true">5.</strong> Mechanism of Operation</a></li><li class="chapter-item expanded "><a href="ethereum_contracts.html"><strong aria-hidden="true">6.</strong> Ethereum contracts (TODO)</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="gas_costs.html"><strong aria-hidden="true">6.1.</strong> Gas costs</a></li></ol></li><li class="chapter-item expanded "><a href="performance_benchmarks.html"><strong aria-hidden="true">7.</strong> Performance and Benchmarks</a></li><li class="chapter-item expanded "><a href="credits.html"><strong aria-hidden="true">8.</strong> Credits</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="overview.html"><strong aria-hidden="true">1.</strong> Overview</a></li><li class="chapter-item expanded "><a href="quick_start.html"><strong aria-hidden="true">2.</strong> Quick start</a></li><li class="chapter-item expanded "><a href="trusted_setup.html"><strong aria-hidden="true">3.</strong> Trusted Setup</a></li><li class="chapter-item expanded "><a href="cryptographic_specification.html"><strong aria-hidden="true">4.</strong> Cryptographic Specification</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="system_invariants.html"><strong aria-hidden="true">4.1.</strong> System invariants</a></li><li class="chapter-item expanded "><a href="insertion.html"><strong aria-hidden="true">4.2.</strong> Insertion</a></li><li class="chapter-item expanded "><a href="circuit_and_gates.html"><strong aria-hidden="true">4.3.</strong> The Circuit and Gates</a></li><li class="chapter-item expanded "><a href="precomputation_and_updates.html"><strong aria-hidden="true">4.4.</strong> Precomputation and updates (TODO)</a></li><li class="chapter-item expanded "><a href="fiat_shamir_transcript.html"><strong aria-hidden="true">4.5.</strong> The Fiat-Shamir Transcript</a></li><li class="chapter-item expanded "><a href="proof_generation.html" class="active"><strong aria-hidden="true">4.6.</strong> Proof generation</a></li><li class="chapter-item expanded "><a href="verification.html"><strong aria-hidden="true">4.7.</strong> Proof verification (TODO)</a></li></ol></li><li class="chapter-item expanded "><a href="mechanism_of_operation.html"><strong aria-hidden="true">5.</strong> Mechanism of Operation</a></li><li class="chapter-item expanded "><a href="ethereum_contracts.html"><strong aria-hidden="true">6.</strong> Ethereum contracts (TODO)</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="gas_costs.html"><strong aria-hidden="true">6.1.</strong> Gas costs</a></li></ol></li><li class="chapter-item expanded "><a href="performance_benchmarks.html"><strong aria-hidden="true">7.</strong> Performance and Benchmarks</a></li><li class="chapter-item expanded "><a href="credits.html"><strong aria-hidden="true">8.</strong> Credits</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -285,15 +285,26 @@ subgroup domain.</li>
 <p>The prover computes the polynomials:</p>
 <ul>
 <li>\(\mathsf{q}_1 = \mathsf{p}_1\)</li>
-<li>\(\mathsf{q}_2 = \mathsf{q\_mimc} + \mathsf{mimc\_cts} \cdot x_1 + \mathsf{q} \cdot {x_1}^{2} + \mathsf{u'} * {x_1}^{3} + \mathsf{p}_2 \cdot {x_1}^{4}\)</li>
+<li>\(\mathsf{q}_2 = \mathsf{q\_mimc} + 
+\mathsf{mimc\_cts} \cdot x_1 + 
+\mathsf{q} \cdot {x_1}^{2} + 
+\mathsf{u'} * {x_1}^{3} + 
+\mathsf{p}_2 \cdot {x_1}^{4}\)</li>
 <li>\(\mathsf{q}_3 = \mathsf{key}\)</li>
 <li>\(\mathsf{q}_4 = \mathsf{w}_0 + \mathsf{w}_1 \cdot x_1 + \mathsf{w}_2 \cdot {x_1} ^ 2\)</li>
 <li>\(\mathsf{f}_1 = \mathsf{q}_1 / \mathsf{z}_1\)</li>
 <li>\(\mathsf{f}_2 = \mathsf{q}_2 / \mathsf{z}_2\)</li>
 <li>\(\mathsf{f}_3 = \mathsf{q}_3 / \mathsf{z}_3\)</li>
 <li>\(\mathsf{f}_4 = \mathsf{q}_4 / \mathsf{z}_4\)</li>
-<li>\(\mathsf{f} = \mathsf{f}_1 + \mathsf{f}_2 \cdot x_2 + \mathsf{f}_3 \cdot {x_2}^2 + \mathsf{f}_4 \cdot {x_2}^3\)</li>
-<li>\(\mathsf{final} = \mathsf{f} + \mathsf{q}_1 \cdot x_4 + \mathsf{q}_2 \cdot {x_4}^2 + \mathsf{q}_3 \cdot {x_4}^3 + \mathsf{q}_4 \cdot {x_4}^4\)</li>
+<li>\(\mathsf{f} = \mathsf{f}_1 +
+\mathsf{f}_2 \cdot x_2 +
+\mathsf{f}_3 \cdot {x_2}^2 +
+\mathsf{f}_4 \cdot {x_2}^3\)</li>
+<li>\(\mathsf{final} = \mathsf{f} +
+\mathsf{q}_1 \cdot x_4 +
+\mathsf{q}_2 \cdot {x_4}^2 +
+\mathsf{q}_3 \cdot {x_4}^3 +
+\mathsf{q}_4 \cdot {x_4}^4\)</li>
 </ul>
 <p>The prover computes the openings:</p>
 <ul>
@@ -306,9 +317,10 @@ subgroup domain.</li>
 <ul>
 <li>\([\mathsf{f}]_1\)</li>
 </ul>
-<p>The prover computes a KZG opening proof:</p>
+<p>Finally, the prover computes a KZG opening proof:</p>
 <ul>
-<li>\(\mathsf{final}_\pi = \mathsf{open}(\mathsf{srs\_g1}, \mathsf{final}, x_3)\)</li>
+<li>\(\mathsf{final}_\pi = \mathsf{open}(\mathsf{srs\_g1}, \mathsf{final},
+x_3)\)</li>
 </ul>
 <h2 id="467-the-proof"><a class="header" href="#467-the-proof">4.6.7. The proof</a></h2>
 <p>The final proof consists of:</p>
@@ -320,7 +332,7 @@ subgroup domain.</li>
 <li>\(\mathsf{q3\_opening}\)</li>
 <li>\(\mathsf{q4\_opening}\)</li>
 <li>\(\mathsf{f\_cm}\)</li>
-<li>\(\mathsf{final\_poly\_proof}\)</li>
+<li>\(\mathsf{final\_\pi}\)</li>
 </ul>
 </li>
 <li>The openings
