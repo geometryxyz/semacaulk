@@ -1,9 +1,9 @@
+use super::setup_eth_backend;
+use crate::bn_solidity_utils::f_to_u256;
+use crate::transcript::Transcript;
 use ark_bn254::{Fr, G1Affine, G2Affine};
 use ark_ec::AffineCurve;
 use ethers::contract::abigen;
-use super::setup_eth_backend;
-use crate::transcript::Transcript;
-use crate::bn_solidity_utils::f_to_u256;
 
 abigen!(
     TestTranscript,
@@ -32,18 +32,26 @@ pub async fn test_transcript() {
     let anvil = eth_backend.0;
     let client = eth_backend.1;
 
-    let contract = TestTranscript::deploy(client, ()).unwrap().send().await.unwrap();
+    let contract = TestTranscript::deploy(client, ())
+        .unwrap()
+        .send()
+        .await
+        .unwrap();
     let u1 = Fr::from(100);
     let u2 = Fr::from(200);
     let g1 = G1Affine::prime_subgroup_generator();
     let g2 = G2Affine::prime_subgroup_generator();
 
-    let (ch_contract_1, ch_contract_2) = contract.test_challenges(
-        f_to_u256(u1),
-        f_to_u256(u2),
-        g1_affine_to_g1point(&g1),
-        g2_affine_to_g2point(&g2),
-    ).call().await.unwrap();
+    let (ch_contract_1, ch_contract_2) = contract
+        .test_challenges(
+            f_to_u256(u1),
+            f_to_u256(u2),
+            g1_affine_to_g1point(&g1),
+            g2_affine_to_g2point(&g2),
+        )
+        .call()
+        .await
+        .unwrap();
 
     let mut transcript = Transcript::new_transcript();
 
