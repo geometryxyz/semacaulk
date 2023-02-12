@@ -50,6 +50,7 @@ impl<E: PairingEngine> Precomputed<E> {
         c: &DensePolynomial<E::Fr>,
         domain: &GeneralEvaluationDomain<E::Fr>,
     ) {
+        // As defined in the [Caulk+ paper, section 3](https://eprint.iacr.org/2022/957.pdf).
         for index in indices {
             let w_i = domain.element(*index);
             let mut num = c.clone();
@@ -68,6 +69,7 @@ impl<E: PairingEngine> Precomputed<E> {
         indices: &[usize],
         domain: &GeneralEvaluationDomain<E::Fr>,
     ) {
+        // As defined in the [Caulk+ paper, section 3](https://eprint.iacr.org/2022/957.pdf).
         let zh: DensePolynomial<_> = domain.vanishing_polynomial().into();
         for index in indices {
             let w2_i = &zh

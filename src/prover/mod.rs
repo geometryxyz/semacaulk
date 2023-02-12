@@ -101,7 +101,15 @@ impl<E: PairingEngine> ProverPrecomputedData<E> {
             .collect();
         mimc_cts_evals.append(&mut to_append);
 
+        // A polynomial over the multiplicative subgroup which evaluates to the MiMC7 round
+        // constants at each root of unity. The subgroup size is the number of MiMC7 rounds.
         let mimc_cts_poly = DensePolynomial::from_coefficients_slice(&domain.ifft(&mimc_cts_evals));
+
+        // We first compute a polynomial which evaluates, at each root of unity in the subgroup
+        // domain, to a vector (of the size of the subgroup) consisting of the evaluations of the
+        // MiMC7 round constants, padded by dummy values. Next, we perform an FFT over the coset of
+        // the extended domain on the coefficients of this polynomial to obtain
+        // \\(\mathsf{mimc\\_cts\\_coset\\_evals}\\).
         let mimc_cts_coset_evals = extended_coset_domain.coset_fft(&mimc_cts_poly);
 
         // Compute q_mimc coset evals
@@ -113,6 +121,8 @@ impl<E: PairingEngine> ProverPrecomputedData<E> {
             .collect();
         q_mimc_evals.append(&mut zeroes);
 
+        // A polynomial whose evaluations at the roots of unity over the subgroup domain of size
+        // 128 are 91 `1` values, followed by zeroes. It represents the q_mimc selector column.
         let q_mimc = DensePolynomial::from_coefficients_slice(&domain.ifft(&q_mimc_evals));
         let q_mimc_coset_evals = extended_coset_domain.coset_fft(&q_mimc);
 
@@ -126,6 +136,8 @@ impl<E: PairingEngine> ProverPrecomputedData<E> {
         // Precompute w1 & w2 for the Caulk+ part of the proof
         let domain_t = GeneralEvaluationDomain::new(table_size).unwrap();
         let mut precomputed = Precomputed::<E>::empty();
+
+        // As defined in the [Caulk+ paper, section 3](https://eprint.iacr.org/2022/957.pdf).
         precomputed.precompute_w1(&pk.srs_g2, &[index], c, &domain_t);
         precomputed.precompute_w2(&pk.srs_g2, &[index], &domain_t);
 

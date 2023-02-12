@@ -222,13 +222,13 @@ impl Verifier {
         //
         // A: [1] is E::G2Affine::prime_subgroup_generator()
         //   A1:
-        //     C is accumulator
+        //     C is the accumulator
         //     ci is proof.commitments.ci
         //   A2:
         //     xi is hi_2
         //     (x^n - 1) is (public_input.srs_g1[common_input.domain_h.size()] + -E::G1Affine::prime_subgroup_generator())
         //   A3:
-        //   s is the separator challenge
+        //     s is the separator challenge
         //     zq is final_poly_proof.mul(x3)
         //     -y is g1.mul(final_poly_eval).neg()
         //     p is final_poly
