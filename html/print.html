@@ -84,7 +84,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="overview.html"><strong aria-hidden="true">1.</strong> Overview</a></li><li class="chapter-item expanded "><a href="quick_start.html"><strong aria-hidden="true">2.</strong> Quick start</a></li><li class="chapter-item expanded "><a href="trusted_setup.html"><strong aria-hidden="true">3.</strong> Trusted Setup</a></li><li class="chapter-item expanded "><a href="cryptographic_specification.html"><strong aria-hidden="true">4.</strong> Cryptographic Specification</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="system_invariants.html"><strong aria-hidden="true">4.1.</strong> System invariants</a></li><li class="chapter-item expanded "><a href="insertion.html"><strong aria-hidden="true">4.2.</strong> Insertion</a></li><li class="chapter-item expanded "><a href="circuit_and_gates.html"><strong aria-hidden="true">4.3.</strong> The Circuit and Gates</a></li><li class="chapter-item expanded "><a href="precomputation_and_updates.html"><strong aria-hidden="true">4.4.</strong> Precomputation and updates (TODO)</a></li><li class="chapter-item expanded "><a href="fiat_shamir_transcript.html"><strong aria-hidden="true">4.5.</strong> The Fiat-Shamir Transcript</a></li><li class="chapter-item expanded "><a href="proof_generation.html"><strong aria-hidden="true">4.6.</strong> Proof generation</a></li><li class="chapter-item expanded "><a href="verification.html"><strong aria-hidden="true">4.7.</strong> Proof verification (TODO)</a></li></ol></li><li class="chapter-item expanded "><a href="mechanism_of_operation.html"><strong aria-hidden="true">5.</strong> Mechanism of Operation</a></li><li class="chapter-item expanded "><a href="ethereum_contracts.html"><strong aria-hidden="true">6.</strong> Ethereum contracts (TODO)</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="gas_costs.html"><strong aria-hidden="true">6.1.</strong> Gas costs</a></li></ol></li><li class="chapter-item expanded "><a href="performance_benchmarks.html"><strong aria-hidden="true">7.</strong> Performance and Benchmarks</a></li><li class="chapter-item expanded "><a href="credits.html"><strong aria-hidden="true">8.</strong> Credits</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="overview.html"><strong aria-hidden="true">1.</strong> Overview</a></li><li class="chapter-item expanded "><a href="quick_start.html"><strong aria-hidden="true">2.</strong> Quick start</a></li><li class="chapter-item expanded "><a href="trusted_setup.html"><strong aria-hidden="true">3.</strong> Trusted Setup</a></li><li class="chapter-item expanded "><a href="cryptographic_specification.html"><strong aria-hidden="true">4.</strong> Cryptographic Specification</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="system_invariants.html"><strong aria-hidden="true">4.1.</strong> System invariants</a></li><li class="chapter-item expanded "><a href="insertion.html"><strong aria-hidden="true">4.2.</strong> Insertion</a></li><li class="chapter-item expanded "><a href="circuit_and_gates.html"><strong aria-hidden="true">4.3.</strong> The Circuit and Gates</a></li><li class="chapter-item expanded "><a href="precomputation_and_updates.html"><strong aria-hidden="true">4.4.</strong> Precomputation and updates</a></li><li class="chapter-item expanded "><a href="fiat_shamir_transcript.html"><strong aria-hidden="true">4.5.</strong> The Fiat-Shamir Transcript</a></li><li class="chapter-item expanded "><a href="proof_generation.html"><strong aria-hidden="true">4.6.</strong> Proof generation</a></li><li class="chapter-item expanded "><a href="verification.html"><strong aria-hidden="true">4.7.</strong> Proof verification</a></li></ol></li><li class="chapter-item expanded "><a href="lagrange_basis_polynomial_commitment_tree.html"><strong aria-hidden="true">5.</strong> The Lagrange Basis Polynomial Commitment Tree</a></li><li class="chapter-item expanded "><a href="mechanism_of_operation.html"><strong aria-hidden="true">6.</strong> Mechanism of Operation</a></li><li class="chapter-item expanded "><a href="ethereum_contracts.html"><strong aria-hidden="true">7.</strong> Ethereum contracts</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="gas_costs.html"><strong aria-hidden="true">7.1.</strong> Gas costs</a></li></ol></li><li class="chapter-item expanded "><a href="performance_benchmarks.html"><strong aria-hidden="true">8.</strong> Performance and Benchmarks</a></li><li class="chapter-item expanded "><a href="credits.html"><strong aria-hidden="true">9.</strong> Credits</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -145,7 +145,8 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="overview"><a class="header" href="#overview">Overview</a></h1>
+                        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css" integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
+<h1 id="overview"><a class="header" href="#overview">Overview</a></h1>
 <p>Semacaulk is a zero-knowledge set membership protocol that works on Ethereum.</p>
 <p>Semacaulk allows a user to <em>commit</em> to an identity, represented by two secret
 values: an identity nullifier and an identity trapdoor. Next, any user who
@@ -191,7 +192,8 @@ generic and expressive SNARK-based programs.</p>
 <h2 id="security"><a class="header" href="#security">Security</a></h2>
 <p>The code base has not been audited. We do not recommend its use in production
 until a thorough audit has been performed.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="quick-start"><a class="header" href="#quick-start">Quick start</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css" integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
+<h1 id="quick-start"><a class="header" href="#quick-start">Quick start</a></h1>
 <ol>
 <li>
 <p>Install Rust using <a href="https://www.rust-lang.org/learn/get-started">these
@@ -228,7 +230,8 @@ cd semacaulk
 insertions. To support a larger capacity, see the <a href="./trusted_setup.html#processing-the-points">Trusted Setup - Processing
 the points</a> section for
 instructions on how to do so.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="trusted-setup"><a class="header" href="#trusted-setup">Trusted Setup</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css" integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
+<h1 id="trusted-setup"><a class="header" href="#trusted-setup">Trusted Setup</a></h1>
 <p>Semacaulk requires a <a href="https://eprint.iacr.org/2017/1050.pdf">securely run trusted
 setup</a>. Specifically, for a capacity of
 \(2^n\) elements, it requires \(2^n + 1\) \({g_1}^{\tau}\) points and
@@ -275,7 +278,8 @@ node build/index.js -p powersOfTau28_hez_final_11.ptau -o ./11.hex --num-g1 2049
 </code></pre>
 <p>You are now ready to run the demo according to the instructions in <a href="./quick_start.html">the quick start
 page</a>.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="cryptographic-specification"><a class="header" href="#cryptographic-specification">Cryptographic Specification</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css" integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
+<h1 id="cryptographic-specification"><a class="header" href="#cryptographic-specification">Cryptographic Specification</a></h1>
 <p>Some of the terminology, symbols, and language has been borrowed from and
 inspired by the <a href="https://zcash.github.io/halo2">Halo2 Book</a> and the <a href="https://hackmd.io/AP6zPSgtThWxx6pjXY7R8A">MACI 1.0
 Audit Specification</a>.</p>
@@ -333,14 +337,14 @@ It follows that no-one knows the MiMC7 preimage to the NUMS value.</p>
 <h3 id="3-the-structured-reference-string-srs"><a class="header" href="#3-the-structured-reference-string-srs">3. The structured reference string (SRS)</a></h3>
 <p>Semacaulk's structured reference string (SRS) consists of an ordered list of
 \(2^n + 1\) \(\mathbb{G}_1\) points and \(2^n\) \(\mathbb{G}_2\)
-points, where the maximum capacity of the accumulator is \(2^n\).</p>
+points, where the maximum capacity of the accumulator is \(2^n = t\).</p>
 <p>We assume the existence of a secret and unknown value \(\tau\) which can be
 generated using a <a href="https://eprint.iacr.org/2017/1050.pdf">securely run trusted
 setup</a>.</p>
 <p>These points are defined as such:</p>
 <ul>
-<li>\(\mathsf{srs\_g1}\): \([g_1, g_1 \cdot {\tau}, \ldots, g_1 \cdot {\tau \cdot {n + 1}}]\)</li>
-<li>\(\mathsf{srs\_g2}\): \([g_2, g_2 \cdot {\tau}, \ldots, g_2 \cdot {\tau \cdot {n + 1}}]\)</li>
+<li>\(\mathsf{srs\_g1}\): \([g_1, g_1 \cdot {\tau}, \ldots, g_1 \cdot {\tau \cdot {t + 1}}]\)</li>
+<li>\(\mathsf{srs\_g2}\): \([g_2, g_2 \cdot {\tau}, \ldots, g_2 \cdot {\tau \cdot {t + 1}}]\)</li>
 </ul>
 <p>Where \(g_1\) is defined in 1.3 and \(g_2\) is defined in 1.4.</p>
 <h3 id="4-the-mimc7-hash-function"><a class="header" href="#4-the-mimc7-hash-function">4. The MiMC7 hash function</a></h3>
@@ -508,7 +512,8 @@ function.</li>
 <h4 id="93-the-table-domain"><a class="header" href="#93-the-table-domain">9.3. The table domain</a></h4>
 <p>An evaluation domain with a size of at least 1024. This is the upper limit on
 the number of elements that the accumulator can hold.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="system-invariants"><a class="header" href="#system-invariants">System invariants</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css" integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
+<h1 id="system-invariants"><a class="header" href="#system-invariants">System invariants</a></h1>
 <p>An <a href="https://mathworld.wolfram.com/Invariant.html">invariant</a> is a property of a
 system which remains unmodified even after operations or transformations are
 applied to it. The authors of Semacaulk intend the following to be the
@@ -563,19 +568,19 @@ commitment.</p>
 impossible to generate a proof for an invalid user.</p>
 </li>
 </ol>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="insertion"><a class="header" href="#insertion">Insertion</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css" integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
+<h1 id="insertion"><a class="header" href="#insertion">Insertion</a></h1>
 <p>As described in the <a href="./cryptographic_specification.html#7-the-accumulator">Cryptographic
 Specification</a>,
 insertions to the accumulator are easily achieved via an elliptic curve point
 multiplication and addition.</p>
-<p>To replace a value at \(w_i\) with \(v_i\) at index \(i\):</p>
-<p>\(C_{\mathsf{new}}= C + L \cdot (v_i - w_i)\)</p>
-<p>where \(L = \mathsf{commit}(L_i, \mathsf{srs\_g1})\)</p>
-<p>If only insertions are allowed, \(w_i\) is by definition the
-nothing-up-my-sleeve value. As such, on-chain insertions can be made even
-cheaper by storing is field negation \(- w_i\) as a constant in contract
-storage.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="the-circuit-and-gates"><a class="header" href="#the-circuit-and-gates">The Circuit and Gates</a></h1>
+<p>To replace a value (originally <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02691em;">w</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0269em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>) at index \(i\) with <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">v</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>:</p>
+<p><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07153em;">C</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1611em;"><span style="top:-2.55em;margin-left:-0.0715em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathsf mtight" style="margin-right:0.01389em;">new</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">C</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal">L</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">v</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02691em;">w</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0269em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span></p>
+<p>where <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal">L</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.0361em;vertical-align:-0.2861em;"></span><span class="mord"><span class="mord mathsf">commit</span></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">L</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathsf">srs</span><span class="mord"><span class="mspace newline"></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1611em;"><span style="top:-2.55em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathsf mtight" style="margin-right:0.01389em;">g</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mord mathsf">1</span></span><span class="mclose">)</span></span></span></span></p>
+<p>If only insertions are allowed, <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02691em;">w</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0269em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> is by definition the <a href="./cryptographic_specification.html#2-the-nothing-up-my-sleeve-value">nothing-up-my-sleeve
+value</a>.</p>
+<div style="break-before: page; page-break-before: always;"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css" integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
+<h1 id="the-circuit-and-gates"><a class="header" href="#the-circuit-and-gates">The Circuit and Gates</a></h1>
 <p>Semacaulk uses a custom Plonk-style proof system where a prover must convince a
 verifier that it knows of some private <em>witness</em> values which are the result of
 the correct execution of predefined logical operations upon public inputs and
@@ -705,7 +710,8 @@ equal to:</p>
 <p>\(L_0(\omega_i) \cdot (\mathsf{w}_2[i] - \mathsf{ext\_nul})\)</p>
 <p>This gate ensures that the \(\mathsf{ext\_nul}\) public input is equal to
 \(\mathsf{w}_2[0]\).</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="precomputation-and-updates"><a class="header" href="#precomputation-and-updates">Precomputation and updates</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css" integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
+<h1 id="precomputation-and-updates"><a class="header" href="#precomputation-and-updates">Precomputation and updates</a></h1>
 <p>Caulk employs a precomputation step in order to make the use of it sublinear in
 the group size. This allows neatly separating the membership proof part of
 Semacaulk from the nullifier computation, while allowing to blind the
@@ -732,41 +738,113 @@ precomputation.</p>
 <li>\(\mathsf{q\_mimc\_coset\_evals}\) </li>
 <li>\(\mathsf{l0\_coset\_evals}\) </li>
 <li>\(\mathsf{w_1\_mapping}\) </li>
-<li>\({\mathsf{W}_1}^{i}\) </li>
-<li>\({\mathsf{W}_2}^{i}\) </li>
+<li>\([{\mathsf{W}_1}^{(i)}]_2\) for all indices \(i \in I\)</li>
+<li>\([{\mathsf{W}_2}^{(i)}]_2\) for all indices \(i \in I\)</li>
 </ol>
-<p>\({\mathsf{W}_1}^{i}\) and \({\mathsf{W}_2}^{i}\) are precomputed for the 
-index \(i\), which denotes the secret position of the prover's identity
-commitment in the accumulator.</p>
-<h3 id="mathsfmimc_cts"><a class="header" href="#mathsfmimc_cts">\(\mathsf{mimc\_cts}\)</a></h3>
-<p>A polynomial over the multiplicative subgroup which evaluates to the MiMC7
+<p>The only parts of the precomputed data which rely on the secret index \(i\),
+which denotes the secret position of the prover's identity commitment in the
+accumulator, are \([{\mathsf{W}_1}^{(i)}]_2\) and \([{\mathsf{W}_2}^{(i)}]_2\).</p>
+<p>The Caulk+ paper defines:</p>
+<ul>
+<li>\({\mathsf{W}_1}^{(i)} = (C(X) - v_i) / (X - \omega^i)\)</li>
+<li>\({\mathsf{W}_2}^{(i)} = Z_H(X) / (X - \omega^i)\)</li>
+</ul>
+<h2 id="updating-commitments-to-mathsfw_1i"><a class="header" href="#updating-commitments-to-mathsfw_1i">Updating commitments to \(\mathsf{W}_1^{(i)}\)</a></h2>
+<p>For many of Semacaulk's use cases, users insert new items into the accumulator,
+and do not update existing items. As such, this section will only discuss
+how to update commitments to \(\mathsf{W}_1^{(i)}\) when the accumulator
+changes at an index \(j\) which is different from that of the user's entry
+\(i\).</p>
+<p>We can efficiently update \([{\mathsf{W}_1}^{(i)}]_2\) using the technique
+described in <a href="https://eprint.iacr.org/2020/527.pdf">TADBFK20, section 3.4.2</a>,
+where \(i \neq j\).</p>
+<p>When an element at \(j\) is updated and \(i \neq j\), and the new element
+is \(v_j = v_\mathsf{zero} + \delta\), the new accumulator is:</p>
+<p>\(C(X) - L_j(X) \cdot v_\mathsf{zero} + L_j \cdot v_j\)</p>
+<p>\(= C(X) - L_j(X) \cdot (v_\mathsf{zero} + v_j)\)</p>
+<p>\(= C(X) + \delta \cdot L_j(X)\)</p>
+<p>\({\mathsf{W{new}}_1}^{(i)}\) is therefore:</p>
+<p>\(\frac{C(X) - v_i + \delta \cdot L_j(X)}{X - \omega^i}\)
+\( = {\mathsf{W}_1}^{(i)} + \delta \cdot \frac{L_j(X)}{X - \omega^i}\)</p>
+<p>To use the homomorphic properties of KZG commitments, we need to
+compute \([\frac{L_j(X)}{X - \omega^i}]_2\), multiply it by \(\delta\), and
+add it to \([{\mathsf{W}_1}^{(i)}]_2\). Yet we must do this with lower than
+the \(O(n)\) cost of a full KZG \(\mathsf{commit}\) operation.</p>
+<p>TADBFK20 section 3.4.2 describes how to do so without performing
+\(\mathsf{commit}\) at all. This document will be updated to elaborate on the
+method.</p>
+<!--
+1. Compute \\(a_j = g \cdot (A(\tau) / (\tau / \omega^j))\\) for each \\(j \in [0
+   \ldots t]\\) during the setup.
+   Since \\(\tau\\) is unknown but we have access to \\(g \cdot \tau\\), we can
+   rewrite this formula as:
+
+   \\(a_j = g \cdot ((\tau^t - 1) / (\tau / \omega^j))\\)
+
+   \\(= g \cdot (\frac{\tau^t}{\tau - \omega^j} - \frac{1}{\tau - \omega^j})\\)
+
+   \\(= (g \cdot \frac{\tau^t}{\tau - \omega^j}) / (g \cdot \frac{1}{\tau - \omega^j})\\)
+
+   \\(= (g \cdot \frac{\tau^t}{\tau - \omega^j}) \cdot (g \cdot (\tau - \omega^j))\\)
+
+2. Compute \\(w_{i,j} = {a_i} \cdot {v_i} {a_j} \cdot {v_j}\\)
+3. Compute \\(u = {w_{i,j}} \cdot {\frac{1}{t\omega^{-j}}}\\).
+4. Compute \\([{\mathsf{W{new}}_1}^{(i)}]_2 =\\)
+    \\([{\mathsf{W}_1}^{(i)}]_2 \cdot u \cdot \delta\\)
+
+TODO: test this in code!
+-->
+<h2 id="updating-commitments-to-mathsfw_2i"><a class="header" href="#updating-commitments-to-mathsfw_2i">Updating commitments to \(\mathsf{W}_2^{(i)}\)</a></h2>
+<p>For use cases where users do not update their own entries (i.e. \(i \neq j\)),
+there is no need to update the precomputed commitments to
+\(\mathsf{W}_2^{(i)}\).</p>
+<!--
+### \\(\mathsf{mimc\\_cts}\\)
+
+A polynomial over the multiplicative subgroup which evaluates to the MiMC7
 round constants at each root of unity. The subgroup size is the number of MiMC7
 rounds defined in
-<a href="./cryptographic_specification.html#4-the-mimc7-hash-function">4</a>.</p>
-<h3 id="mathsfmimc_cts_coset_evals"><a class="header" href="#mathsfmimc_cts_coset_evals">\(\mathsf{mimc\_cts\_coset\_evals}\)</a></h3>
-<p>We first compute a polynomial which evaluates, at each root of unity in the
+[4](./cryptographic_specification.html#4-the-mimc7-hash-function).
+
+### \\(\mathsf{mimc\\_cts\\_coset\\_evals}\\)
+
+We first compute a polynomial which evaluates, at each root of unity in the
 subgroup domain, to a vector (of the size of the subgroup) consisting of the
 evaluations of the MiMC7 round constants, padded by dummy values. Next, we
-compute an FFT over the coset of the extended domain on the coefficients of
-this polynomial.  to obtain \(\mathsf{mimc\_cts\_coset\_evals}\).</p>
-<h3 id="mathsfzh_inverse_coset_evals"><a class="header" href="#mathsfzh_inverse_coset_evals">\(\mathsf{zh\_inverse\_coset\_evals}\)</a></h3>
-<p>A vector of \(\mathbb{F}_r\) elements that are the field inversions of the
-(coefficients of the vanishing polynomial over the coset??? TODO)</p>
-<h3 id="mathsfq_mimc"><a class="header" href="#mathsfq_mimc">\(\mathsf{q\_mimc}\)</a></h3>
-<p>A polynomial whose evaluations at the roots of unity over the subgroup domain
-of size 128 are \(n = 91\) <code>1</code> values, followed by zeroes. It represents the
-\(\mathsf{q\_mimc}\) <a href="./circuit_and_gates.html">selector column</a>.</p>
-<h3 id="mathsfq_mimc_coset_evals"><a class="header" href="#mathsfq_mimc_coset_evals">\(\mathsf{q\_mimc\_coset\_evals}\)</a></h3>
-<p>A vector of \(\mathbb{F}_r\) elements that are the evaluations of the
-\(\mathsf{q\_mimc}\) polynomial coefficients over the coset?? (TODO) </p>
-<h3 id="mathsfl0_coset_evals"><a class="header" href="#mathsfl0_coset_evals">\(\mathsf{l0\_coset\_evals}\)</a></h3>
-<p>Where \(L_0\) is the 0th Lagrange basis polynomial over the subgroup
-evaluation domain, this is a vector of its evaluations over the coset (?? TODO)</p>
-<h3 id="mathsfw_1i"><a class="header" href="#mathsfw_1i">\({\mathsf{W}_1}^{i}\)</a></h3>
-<p>As defined in the <a href="https://eprint.iacr.org/2022/957.pdf">Caulk+ paper, section 3</a>.</p>
-<h3 id="mathsfw_2i"><a class="header" href="#mathsfw_2i">\({\mathsf{W}_2}^{i}\)</a></h3>
-<p>As defined in the <a href="https://eprint.iacr.org/2022/957.pdf">Caulk+ paper, section 3</a>.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="the-fiat-shamir-transcript"><a class="header" href="#the-fiat-shamir-transcript">The Fiat-Shamir Transcript</a></h1>
+perform an FFT over the coset of the extended domain on the coefficients of
+this polynomial to obtain \\(\mathsf{mimc\\_cts\\_coset\\_evals}\\).
+
+### \\(\mathsf{zh\\_inverse\\_coset\\_evals}\\)
+
+A vector of \\(\mathbb{F}_r\\) elements that are the field inversions of the
+(coefficients of the vanishing polynomial over the coset??? TODO)
+
+### \\(\mathsf{q\\_mimc}\\) 
+
+A polynomial whose evaluations at the roots of unity over the subgroup domain
+of size 128 are \\(n = 91\\) `1` values, followed by zeroes. It represents the
+\\(\mathsf{q\\_mimc}\\) [selector column](./circuit_and_gates.html).
+
+### \\(\mathsf{q\\_mimc\\_coset\\_evals}\\) 
+
+A vector of \\(\mathbb{F}_r\\) elements that are the evaluations of the
+\\(\\mathsf{q\\_mimc}\\) polynomial coefficients over the coset?? (TODO) 
+
+### \\(\mathsf{l0\\_coset\\_evals}\\) 
+
+Where \\(L_0\\) is the 0th Lagrange basis polynomial over the subgroup
+evaluation domain, this is a vector of its evaluations over the coset (?? TODO)
+
+### \\({\mathsf{W}_1}^{i}\\) 
+
+As defined in the [Caulk+ paper, section 3](https://eprint.iacr.org/2022/957.pdf).
+
+### \\({\mathsf{W}_2}^{i}\\) 
+
+As defined in the [Caulk+ paper, section 3](https://eprint.iacr.org/2022/957.pdf).
+-->
+<div style="break-before: page; page-break-before: always;"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css" integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
+<h1 id="the-fiat-shamir-transcript"><a class="header" href="#the-fiat-shamir-transcript">The Fiat-Shamir Transcript</a></h1>
 <p>A transcript is an abstraction over the <a href="https://en.wikipedia.org/wiki/Fiat%E2%80%93Shamir_heuristic">Fiat-Shamir
 heuristic</a>. Both
 the prover and verifier use the transcript to deterministically generate
@@ -792,7 +870,8 @@ arrays, and appends them to the buffer in the aforementioned order.</li>
 the hash, converts the hash into a \(\mathbb{F}_r\) element (treating it
 as a big-endian buffer), and returns the \(\mathbb{F}_r\) element.</li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="proof-generation"><a class="header" href="#proof-generation">Proof generation</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css" integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
+<h1 id="proof-generation"><a class="header" href="#proof-generation">Proof generation</a></h1>
 <h2 id="461-assignment-round"><a class="header" href="#461-assignment-round">4.6.1. Assignment Round</a></h2>
 <p>Given the public and private inputs, the prover generates the assignment table
 (see <a href="./circuit_and_gates.html">4.3</a>). Each column is represented as a
@@ -878,7 +957,9 @@ paper</a>, and commits to them:</p>
 round.</p>
 <h2 id="465-opening-round"><a class="header" href="#465-opening-round">4.6.5. Opening round</a></h2>
 <p>This section is a work in progress; in the meantime, see <a href="https://hackmd.io/D-bL6-oNSbSej7Ao_-9PLA">this
-document</a> for the multiopen argument.</p>
+document</a> for the multiopen argument.
+Also see <a href="https://hackmd.io/D-bL6-oNSbSej7Ao_-9PLA">this document</a> which
+describes the argument adapted for Semacaulk.</p>
 <p>The prover computes:</p>
 <ul>
 <li>\(\omega\): the root of unity with index 1 (starting from zero) of the
@@ -921,6 +1002,8 @@ subgroup domain.</li>
 </ul>
 <p>The prover adds the above openings to the transcript in the stated order.</p>
 <h2 id="466-multiopen-argument-round"><a class="header" href="#466-multiopen-argument-round">4.6.6. Multiopen argument round</a></h2>
+<p>The steps in this are based on the Halo2 <a href="https://zcash.github.io/halo2/design/proving-system/multipoint-opening.html">multipoint opening
+argument</a>.</p>
 <p>The prover computes the vanishing polynomials:</p>
 <ul>
 <li>\(\mathsf{z}_1 = x - \mathsf{u'}_1(\alpha)\)</li>
@@ -967,7 +1050,7 @@ subgroup domain.</li>
 </ul>
 <p>Finally, the prover computes a KZG opening proof:</p>
 <ul>
-<li>\(\mathsf{final}_\pi = \mathsf{open}(\mathsf{srs\_g1}, \mathsf{final},
+<li>\(\pi_\mathsf{final} = \mathsf{open}(\mathsf{srs\_g1}, \mathsf{final},
 x_3)\)</li>
 </ul>
 <h2 id="467-the-proof"><a class="header" href="#467-the-proof">4.6.7. The proof</a></h2>
@@ -1023,13 +1106,41 @@ x_3)\)</li>
 </ul>
 </li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="proof-verification"><a class="header" href="#proof-verification">Proof verification</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css" integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
+<h1 id="proof-verification"><a class="header" href="#proof-verification">Proof verification</a></h1>
 <p>At a high level, the verifier does three main steps to verify a proof
 (<a href="proof_generation.html#466-the-proof">4.6.6</a>):</p>
 <h2 id="471-check-the-gate-openings"><a class="header" href="#471-check-the-gate-openings">4.7.1. Check the gate openings</a></h2>
+<p>Given the opening values which the prover claims to be evaluations of the
+column polynomials which correspond to the circuit, the verifier computes the
+linear combination of the evaluation of the openings based on each gate
+equations separated by the \(v\) challenge values. This linear combination
+must equal the product of the quotient opening and the evaluation of the
+vanishing polynomial, or the verifier will return false.</p>
 <h2 id="472-compute-the-multiopen-arguments-final_poly-and-final_poly_eval-values"><a class="header" href="#472-compute-the-multiopen-arguments-final_poly-and-final_poly_eval-values">4.7.2. Compute the multiopen argument's <code>final_poly</code> and <code>final_poly_eval</code> values</a></h2>
+<p>Leveraging the homomorphic properties of KZG commitments, the verifier
+reconstructs a commitment to the \(\mathsf{final}_\pi\) polynomial generated
+in the
+<a href="./proof_generation.html#466-multiopen-argument-round">prover's multiopen argument round</a>.</p>
+<p>The verifier also
+reconstructs \(\mathsf{final\_poly\_eval}\) which is the evaluation of
+\(\mathsf{final}\) at the \(x_3\) challenge.</p>
 <h2 id="473-perform-pairing-checks"><a class="header" href="#473-perform-pairing-checks">4.7.3. Perform pairing checks</a></h2>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="mechanism-of-operation"><a class="header" href="#mechanism-of-operation">Mechanism of Operation</a></h1>
+<p>A three-part pairing product is performed and the verifier returns true only if
+the result is 1.</p>
+<p>\(A * B * C == 1\)</p>
+<p>where:</p>
+<p>\(A = e(\mathsf{a}_1 + \mathsf{a}_2 + \mathsf{a}_3, [1]_2)\)</p>
+<p>\(\mathsf{a}_1 = C - [\mathsf{ci}]_1\)</p>
+<p>\(\mathsf{a}_2 = \chi_2(\mathsf{srs\_g1}[t] - [1]_1)\)</p>
+<p><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5944em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathsf">a</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">3</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">π</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathsf mtight">final</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.7333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">3</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.0444em;vertical-align:-0.35em;"></span><span class="mord"><span class="mord mathsf">final_poly_eval</span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">[</span><span class="mord"><span class="mord mathsf">final</span></span><span class="mclose"><span class="mclose">]</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">s</span></span></span></span></p>
+<p>\(B = e(-[\mathsf{zi}]_1, [\mathsf{w}]_2)\)</p>
+<p>\(C = e(-[\mathsf{final}_\pi]_1 \cdot s, [1]_2 \cdot \tau)\)</p>
+<p>and \(s\) is a separator challenge extracted from the transcript.</p>
+<div style="break-before: page; page-break-before: always;"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css" integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
+<h1 id="the-lagrange-basis-polynomial-commitment-tree"><a class="header" href="#the-lagrange-basis-polynomial-commitment-tree">The Lagrange Basis Polynomial Commitment Tree</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css" integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
+<h1 id="mechanism-of-operation"><a class="header" href="#mechanism-of-operation">Mechanism of Operation</a></h1>
 <p>The goal of Semaphore is to enable users to:</p>
 <ol>
 <li>Register their identity;</li>
@@ -1037,26 +1148,26 @@ x_3)\)</li>
 <li>Broadcast an arbitrary signal towards an external nullifier, without the
 possibility of double-signalling.</li>
 </ol>
-<h2 id="51-user-identities"><a class="header" href="#51-user-identities">5.1. User identities</a></h2>
+<h2 id="61-user-identities"><a class="header" href="#61-user-identities">6.1. User identities</a></h2>
 <p>A user's identity consists of an <em>identity nullifier</em> \(\mathsf{id\_nul}\)
 and an <em>identity trapdoor</em> \(\mathsf{id\_trap}\). These are secret values
 and are elements of \(\mathbb{F}_r\) (see <a href="./cryptographic_specification.html#11-the-bn254-scalar-field">1.1</a>).</p>
 <p>An <em>identity commitment</em> \(\mathsf{id\_comm}\) is the MiMC7 <code>multi_hash</code> (see <a href="./cryptographic_specification.html#43-the-mimc7-multi_hash-algorithm">4.3</a>)
 of \(\mathsf{id\_nul}\) and \(\mathsf{id\_trap}\):</p>
 <p>\(\mathsf{id\_comm} = \mathsf{multi\_hash}([\mathsf{id\_nul}, \mathsf{id\_trap}])\)</p>
-<h2 id="52-external-nullifiers"><a class="header" href="#52-external-nullifiers">5.2. External nullifiers</a></h2>
+<h2 id="62-external-nullifiers"><a class="header" href="#62-external-nullifiers">6.2. External nullifiers</a></h2>
 <p>An <em>external nullifier</em> \(\mathsf{ext\_nul}\) is a \(\mathbb{F}_r\) field
 element which represents a topic. A signal can only be broadcast towards each
 external nullifier once and only once.</p>
-<h2 id="53-nullifier-hashes"><a class="header" href="#53-nullifier-hashes">5.3. Nullifier hashes</a></h2>
+<h2 id="63-nullifier-hashes"><a class="header" href="#63-nullifier-hashes">6.3. Nullifier hashes</a></h2>
 <p>A nullifier hash is the MiMC7 <code>multi_hash</code> of
 \(\mathsf{id\_nul}\) and \(\mathsf{ext\_nul}\):</p>
 <p>\(\mathsf{nul\_hash} = \mathsf{multi\_hash}([\mathsf{id\_nul}, \mathsf{ext\_nul}])\)</p>
-<h2 id="54-insertions"><a class="header" href="#54-insertions">5.4. Insertions</a></h2>
+<h2 id="64-insertions"><a class="header" href="#64-insertions">6.4. Insertions</a></h2>
 <p>An <em>insertion</em> is the act of updating the on-chain accumulator with a user's
 identity commitment. This is done by invoking the <code>insertIdentity()</code> function
 of the Semacaulk smart contract.</p>
-<h2 id="55-broadcasting-a-signal"><a class="header" href="#55-broadcasting-a-signal">5.5. Broadcasting a signal</a></h2>
+<h2 id="65-broadcasting-a-signal"><a class="header" href="#65-broadcasting-a-signal">6.5. Broadcasting a signal</a></h2>
 <p>When a user <em>broadcasts a signal</em>, they generate a proof that they know the
 secret identity nullifier and identity trapdoor behind their identity
 commitment, and then submit said proof to the Semacaulk smart contract's
@@ -1066,29 +1177,92 @@ nullifier. The contract (not the user) hashes the user-provided signal using
 Keccak256 and right-shifts the result by 8 bits to derive
 \(\mathsf{sig\_hash}\), which is used as one of the public inputs to the
 verifier.</p>
-<h3 id="56-preventing-double-signalling"><a class="header" href="#56-preventing-double-signalling">5.6. Preventing double-signalling</a></h3>
+<h3 id="66-preventing-double-signalling"><a class="header" href="#66-preventing-double-signalling">6.6. Preventing double-signalling</a></h3>
 <p>The Semacaulk smart contract maintains a mapping of nullifier hashes. Each
 nullifier hash is unique to the user and an external nullifier. If the
 <code>broadcastSignal()</code> function finds that a nullifier hash has already been seen,
 it rejects the transaction, thus preventing double-signalling.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="ethereum-contracts"><a class="header" href="#ethereum-contracts">Ethereum contracts</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css" integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
+<h1 id="ethereum-contracts"><a class="header" href="#ethereum-contracts">Ethereum contracts</a></h1>
 <h2 id="semacaulksol"><a class="header" href="#semacaulksol"><code>Semacaulk.sol</code></a></h2>
+<p>The main Semacaulk contract which client applications should interact with or
+inherit. The key functions it exposes are:</p>
+<h3 id="insertidentity"><a class="header" href="#insertidentity"><code>insertIdentity</code></a></h3>
+<p>Functions signature: <code>insertIdentity(uint256 _identityCommitment, uint256 _lagrangeLeafX, uint256 _lagrangeLeafY, bytes32[] memory _lagrangeMerkleProof</code>)</p>
+<p><code>_identityCommitment</code> is the user-generated value defined in
+<a href="./mechanism_of_operation.html#61-user-identities">6.1</a>.</p>
+<p><code>_lagrangeLeafX</code> and <code>_lagrangeLeafY</code> are the respective X and Y coordinates of
+the commitment to the Lagrange basis polynomial of the index at which the user
+wishes to insert their identity commitment.</p>
+<p><code>_lagrangeMerkleProof</code> is the Merkle proof from the Keccak256 hash of
+<code>_lagrangeLeafX</code> and <code>_lagrangeLeafY</code> to the root of the <a href="./lagrange_basis_polynomial_commitment_tree.html">Lagrange Basis
+Polynomial Commitment Tree</a>.</p>
+<p>This function first verifies the Merkle proof to ensure that <code>_lagrangeLeafX</code>
+and <code>_lagrangeLeafY</code> are valid. Next, it performs field and elliptic curve
+operations to perform an <a href="./insertion.html">insertion</a> to update the
+accumulator.</p>
+<h3 id="broadcastsignal"><a class="header" href="#broadcastsignal"><code>broadcastSignal</code></a></h3>
+<p>Function signature: <code>broadcastSignal(bytes memory _signal, Types.Proof memory proof, uint256 _nullifierHash, uint256 _externalNullifier)</code></p>
+<p>This function performs the following steps:</p>
+<ol>
+<li>Revert if <code>_nullifierHash</code> has already been seen. This prevents double-signalling.</li>
+<li>Compute the <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0444em;vertical-align:-0.35em;"></span><span class="mord"><span class="mord mathsf">sig_hash</span></span></span></span></span> public input by hashing <code>_signal</code> with
+Keccak256 and right-shifting the result by 8 bits.</li>
+<li>Verify the proof and revert if it is invalid.</li>
+<li>Store the nullifier hash.</li>
+</ol>
 <h2 id="verifiersol"><a class="header" href="#verifiersol"><code>Verifier.sol</code></a></h2>
+<p>This contract exposes a <code>verify()</code> function for the Semacaulk contract's
+<code>broadcastSignal</code> function to use. It performs the steps described in
+<a href="./verification.html">4.7</a>.</p>
 <h2 id="transcriptsol"><a class="header" href="#transcriptsol"><code>Transcript.sol</code></a></h2>
+<p>This contract abstracts over the Fiat-Shamir Heuristic by providing helper
+functions to the verifier to add data to the transcript and extract the
+challenge values it needs.</p>
 <h2 id="typessol"><a class="header" href="#typessol"><code>Types.sol</code></a></h2>
+<p>A helper library that defines complex Solidity types that comprise the proof.</p>
 <h2 id="bn254sol"><a class="header" href="#bn254sol"><code>BN254.sol</code></a></h2>
+<p>Provides functions that encapsulate elliptic curve operations over the BN254
+curve.</p>
 <h2 id="keccakmtsol"><a class="header" href="#keccakmtsol"><code>KeccakMT.sol</code></a></h2>
+<p>Provides a helper function for the Semacaulk contract's <code>insertIdentity</code>
+function to verify a Merkle proof.</p>
 <h2 id="lagrangesol"><a class="header" href="#lagrangesol"><code>Lagrange.sol</code></a></h2>
+<p>Provides a helper function for the verifier contract to compute the evaluation
+of <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">L</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> at a given point <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span></span></span></span>, and the evaluation of the vanishing
+polynomial at <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span></span></span></span>.</p>
 <h2 id="constantssol"><a class="header" href="#constantssol"><code>Constants.sol</code></a></h2>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="gas-costs"><a class="header" href="#gas-costs">Gas costs</a></h1>
+<p>Contains crucial constant values:</p>
+<ul>
+<li><code>PRIME_Q</code>: the order of the BN254 base field.</li>
+<li><code>PRIME_R</code>: the order of the BN254 scalar field.</li>
+<li><code>DOMAIN_SIZE_INV</code>: the inverse of the domain size (128) over the BN254 scalar field.</li>
+<li><code>LOG2_DOMAIN_SIZE</code>: the binary logarithm of the domain size such that <code>2 ^ LOG2_DOMAIN_SIZE = 128</code>.</li>
+<li><code>OMEGA</code>: the 1st root of unity (counting from 0) of the subgroup domain.</li>
+<li><code>OMEGA_N</code>: the <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">n</span></span></span></span>th root of unity (counting from 0) of the subgroup domain.</li>
+</ul>
+<p>The following constants depend on the maximum size of the accumulator, and
+should be changed depending on how many elements the client application wishes
+to support.</p>
+<ul>
+<li><code>SRS_G1_T_X</code>: The X coordinate of <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.1em;vertical-align:-0.35em;"></span><span class="mord"><span class="mord mathsf">srs_g1</span></span><span class="mopen">[</span><span class="mord mathnormal">t</span><span class="mclose">]</span></span></span></span></li>
+<li><code>SRS_G1_T_Y</code>: The Y coordinate of <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.1em;vertical-align:-0.35em;"></span><span class="mord"><span class="mord mathsf">srs_g1</span></span><span class="mopen">[</span><span class="mord mathnormal">t</span><span class="mclose">]</span></span></span></span></li>
+<li><code>SRS_G2_1_X_0</code>: The X0 coordinate of <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.1em;vertical-align:-0.35em;"></span><span class="mord"><span class="mord mathsf">srs_g2</span></span><span class="mopen">[</span><span class="mord">1</span><span class="mclose">]</span></span></span></span></li>
+<li><code>SRS_G2_1_X_1</code>: The X1 coordinate of <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.1em;vertical-align:-0.35em;"></span><span class="mord"><span class="mord mathsf">srs_g2</span></span><span class="mopen">[</span><span class="mord">1</span><span class="mclose">]</span></span></span></span></li>
+<li><code>SRS_G2_1_Y_0</code>: The Y0 coordinate of <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.1em;vertical-align:-0.35em;"></span><span class="mord"><span class="mord mathsf">srs_g2</span></span><span class="mopen">[</span><span class="mord">1</span><span class="mclose">]</span></span></span></span></li>
+<li><code>SRS_G2_1_Y_1</code>: The Y1 coordinate of <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.1em;vertical-align:-0.35em;"></span><span class="mord"><span class="mord mathsf">srs_g2</span></span><span class="mopen">[</span><span class="mord">1</span><span class="mclose">]</span></span></span></span></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css" integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
+<h1 id="gas-costs"><a class="header" href="#gas-costs">Gas costs</a></h1>
 <p>An insertion (via <code>insertIdentity()</code> costs around 68k gas.</p>
-<p><code>broadcastSignal()</code>, which includes proof verification, costs 355k gas.</p>
+<p><code>broadcastSignal()</code>, which includes proof verification, costs around 355k gas.</p>
 <p>By contrast, a Tornado Cash deposit (which involves inserting a leaf to a
 Merkle tree) costs <a href="https://etherscan.io/tx/0x6f60a4aa7058dab153a859adfb139362d4bc395145528371ed90b127e528c7e7">907787
 gas</a>
 and a withdrawal (which involves a Groth16 verification step) costs <a href="https://etherscan.io/tx/0xf2eb3005bf1d1866b4778d6b3686aaed64f8c6b015d2e998855598226223b613">327188
 gas</a>.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="performance-and-benchmarks"><a class="header" href="#performance-and-benchmarks">Performance and Benchmarks</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css" integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
+<h1 id="performance-and-benchmarks"><a class="header" href="#performance-and-benchmarks">Performance and Benchmarks</a></h1>
 <p>These benchmarks were performed on an Intel(R) Core(TM) i7-8565U CPU @ 1.80GHz
 machine with 24 GB RAM. They represent the time taken for a native Rust binary
 (built for <code>release</code>) to perform the precomputation and proof generation steps.</p>
@@ -1101,7 +1275,8 @@ machine with 24 GB RAM. They represent the time taken for a native Rust binary
 <tr><td><code>2 ** 16 = 65536</code></td><td><code>2126</code></td><td><code>50</code></td><td><code>2176</code></td><td><code>25</code></td></tr>
 <tr><td><code>2 ** 20 = 1048576</code></td><td><code>24333</code></td><td><code>42</code></td><td><code>24375</code></td><td><code>387</code></td></tr>
 </tbody></table>
-</div><div style="break-before: page; page-break-before: always;"></div><h1 id="credits"><a class="header" href="#credits">Credits</a></h1>
+</div><div style="break-before: page; page-break-before: always;"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css" integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
+<h1 id="credits"><a class="header" href="#credits">Credits</a></h1>
 <p>Semacaulk was written by:</p>
 <ul>
 <li>Andrija Novakovic (<a href="mailto:andrija@geometry.xyz">andrija@geometry.xyz</a>)</li>

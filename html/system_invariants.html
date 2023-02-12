@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Performance and Benchmarks - Semacaulk</title>
+        <title>System invariants - Semacaulk</title>
 
 
         <!-- Custom HTML head -->
@@ -83,7 +83,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="overview.html"><strong aria-hidden="true">1.</strong> Overview</a></li><li class="chapter-item expanded "><a href="quick_start.html"><strong aria-hidden="true">2.</strong> Quick start</a></li><li class="chapter-item expanded "><a href="trusted_setup.html"><strong aria-hidden="true">3.</strong> Trusted Setup</a></li><li class="chapter-item expanded "><a href="cryptographic_specification.html"><strong aria-hidden="true">4.</strong> Cryptographic Specification</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="system_invariants.html"><strong aria-hidden="true">4.1.</strong> System invariants</a></li><li class="chapter-item expanded "><a href="insertion.html"><strong aria-hidden="true">4.2.</strong> Insertion</a></li><li class="chapter-item expanded "><a href="circuit_and_gates.html"><strong aria-hidden="true">4.3.</strong> The Circuit and Gates</a></li><li class="chapter-item expanded "><a href="precomputation_and_updates.html"><strong aria-hidden="true">4.4.</strong> Precomputation and updates (TODO)</a></li><li class="chapter-item expanded "><a href="fiat_shamir_transcript.html"><strong aria-hidden="true">4.5.</strong> The Fiat-Shamir Transcript</a></li><li class="chapter-item expanded "><a href="proof_generation.html"><strong aria-hidden="true">4.6.</strong> Proof generation</a></li><li class="chapter-item expanded "><a href="verification.html"><strong aria-hidden="true">4.7.</strong> Proof verification (TODO)</a></li></ol></li><li class="chapter-item expanded "><a href="mechanism_of_operation.html"><strong aria-hidden="true">5.</strong> Mechanism of Operation</a></li><li class="chapter-item expanded "><a href="ethereum_contracts.html"><strong aria-hidden="true">6.</strong> Ethereum contracts (TODO)</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="gas_costs.html"><strong aria-hidden="true">6.1.</strong> Gas costs</a></li></ol></li><li class="chapter-item expanded "><a href="performance_benchmarks.html" class="active"><strong aria-hidden="true">7.</strong> Performance and Benchmarks</a></li><li class="chapter-item expanded "><a href="credits.html"><strong aria-hidden="true">8.</strong> Credits</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="overview.html"><strong aria-hidden="true">1.</strong> Overview</a></li><li class="chapter-item expanded "><a href="quick_start.html"><strong aria-hidden="true">2.</strong> Quick start</a></li><li class="chapter-item expanded "><a href="trusted_setup.html"><strong aria-hidden="true">3.</strong> Trusted Setup</a></li><li class="chapter-item expanded "><a href="cryptographic_specification.html"><strong aria-hidden="true">4.</strong> Cryptographic Specification</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="system_invariants.html" class="active"><strong aria-hidden="true">4.1.</strong> System invariants</a></li><li class="chapter-item expanded "><a href="insertion.html"><strong aria-hidden="true">4.2.</strong> Insertion</a></li><li class="chapter-item expanded "><a href="circuit_and_gates.html"><strong aria-hidden="true">4.3.</strong> The Circuit and Gates</a></li><li class="chapter-item expanded "><a href="precomputation_and_updates.html"><strong aria-hidden="true">4.4.</strong> Precomputation and updates</a></li><li class="chapter-item expanded "><a href="fiat_shamir_transcript.html"><strong aria-hidden="true">4.5.</strong> The Fiat-Shamir Transcript</a></li><li class="chapter-item expanded "><a href="proof_generation.html"><strong aria-hidden="true">4.6.</strong> Proof generation</a></li><li class="chapter-item expanded "><a href="verification.html"><strong aria-hidden="true">4.7.</strong> Proof verification</a></li></ol></li><li class="chapter-item expanded "><a href="lagrange_basis_polynomial_commitment_tree.html"><strong aria-hidden="true">5.</strong> The Lagrange Basis Polynomial Commitment Tree</a></li><li class="chapter-item expanded "><a href="mechanism_of_operation.html"><strong aria-hidden="true">6.</strong> Mechanism of Operation</a></li><li class="chapter-item expanded "><a href="ethereum_contracts.html"><strong aria-hidden="true">7.</strong> Ethereum contracts</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="gas_costs.html"><strong aria-hidden="true">7.1.</strong> Gas costs</a></li></ol></li><li class="chapter-item expanded "><a href="performance_benchmarks.html"><strong aria-hidden="true">8.</strong> Performance and Benchmarks</a></li><li class="chapter-item expanded "><a href="credits.html"><strong aria-hidden="true">9.</strong> Credits</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -144,29 +144,72 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="performance-and-benchmarks"><a class="header" href="#performance-and-benchmarks">Performance and Benchmarks</a></h1>
-<p>These benchmarks were performed on an Intel(R) Core(TM) i7-8565U CPU @ 1.80GHz
-machine with 24 GB RAM. They represent the time taken for a native Rust binary
-(built for <code>release</code>) to perform the precomputation and proof generation steps.</p>
-<p>To reproduce these benchamarks, run the <code>demo</code> binary following <a href="./quick_start.html">these instructions</a>.</p>
-<h2 id="benchmarks"><a class="header" href="#benchmarks">Benchmarks</a></h2>
-<div class="table-wrapper"><table><thead><tr><th>Maximum capacity</th><th>Precomputation (ms)</th><th>Proof generation (ms)</th><th>Precomputation + proving</th><th>SRS size (uncompressed hex) (MB)</th></tr></thead><tbody>
-<tr><td><code>2 ** 11 = 2048</code></td><td><code>103</code></td><td><code>63</code></td><td><code>166</code></td><td><code>0.78</code></td></tr>
-<tr><td><code>2 ** 12 = 4096</code></td><td><code>183</code></td><td><code>51</code></td><td><code>234</code></td><td><code>1.6</code></td></tr>
-<tr><td><code>2 ** 14 = 16384</code></td><td><code>668</code></td><td><code>53</code></td><td><code>721</code></td><td><code>6.1</code></td></tr>
-<tr><td><code>2 ** 16 = 65536</code></td><td><code>2126</code></td><td><code>50</code></td><td><code>2176</code></td><td><code>25</code></td></tr>
-<tr><td><code>2 ** 20 = 1048576</code></td><td><code>24333</code></td><td><code>42</code></td><td><code>24375</code></td><td><code>387</code></td></tr>
-</tbody></table>
-</div>
+                        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css" integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
+<h1 id="system-invariants"><a class="header" href="#system-invariants">System invariants</a></h1>
+<p>An <a href="https://mathworld.wolfram.com/Invariant.html">invariant</a> is a property of a
+system which remains unmodified even after operations or transformations are
+applied to it. The authors of Semacaulk intend the following to be the
+invariants of Semacaulk:</p>
+<ol>
+<li>
+<p><strong>Privacy</strong>: No-one but the user who knows the value of the identity
+nullifier and identity trapdoor behind an identity commitment may generate a
+valid proof of set membership of the identity commitment in the accumulator.</p>
+</li>
+<li>
+<p><strong>Safe NUMS value</strong>: No-one should be able to produce a valid proof of set
+membership for the default nothing-up-my-sleeve value.</p>
+</li>
+<li>
+<p><strong>Proof non-malleability</strong>: Proofs are visible once submitted to the mempool,
+but no-one should be able to modify an existing proof, change it such that
+it is associated with a different signal, and remain valid.</p>
+</li>
+<li>
+<p><strong>Zero-knowledge</strong>: given a valid proof, no-one should be able to determine
+the index of the identity commitment the identity nullifier, or the identity
+trapdor associated with the proof.</p>
+</li>
+</ol>
+<p>Other invariants which have to do with the internal consistency and correctness
+of the system are:</p>
+<ol start="5">
+<li>
+<p>All identity commitments must be less than the BN254 scalar field size.</p>
+</li>
+<li>
+<p>Every identity commitment in the accumulator must have been added at some
+point in the past, except for the NUMS values.</p>
+</li>
+<li>
+<p>Any identity commitment besides the NUMS value may be added to the
+accumulator, unless it is full.</p>
+</li>
+<li>
+<p>The NUMS value cannot be added to the accumulator.</p>
+</li>
+<li>
+<p>There can be no valid proof associated with a NUMS value as the identity
+commitment.</p>
+</li>
+<li>
+<p>All nullifier hashes must be less than the BN254 scalar field size.</p>
+</li>
+<li>
+<p>It should only be possible to generate a proof for a valid user, and
+impossible to generate a proof for an invalid user.</p>
+</li>
+</ol>
+
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="gas_costs.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="cryptographic_specification.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next" href="credits.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next" href="insertion.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -176,11 +219,11 @@ machine with 24 GB RAM. They represent the time taken for a native Rust binary
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="gas_costs.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="cryptographic_specification.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next" href="credits.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next" href="insertion.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

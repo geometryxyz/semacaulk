@@ -83,7 +83,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="overview.html"><strong aria-hidden="true">1.</strong> Overview</a></li><li class="chapter-item expanded "><a href="quick_start.html"><strong aria-hidden="true">2.</strong> Quick start</a></li><li class="chapter-item expanded "><a href="trusted_setup.html"><strong aria-hidden="true">3.</strong> Trusted Setup</a></li><li class="chapter-item expanded "><a href="cryptographic_specification.html"><strong aria-hidden="true">4.</strong> Cryptographic Specification</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="system_invariants.html"><strong aria-hidden="true">4.1.</strong> System invariants</a></li><li class="chapter-item expanded "><a href="insertion.html"><strong aria-hidden="true">4.2.</strong> Insertion</a></li><li class="chapter-item expanded "><a href="circuit_and_gates.html"><strong aria-hidden="true">4.3.</strong> The Circuit and Gates</a></li><li class="chapter-item expanded "><a href="precomputation_and_updates.html"><strong aria-hidden="true">4.4.</strong> Precomputation and updates (TODO)</a></li><li class="chapter-item expanded "><a href="fiat_shamir_transcript.html"><strong aria-hidden="true">4.5.</strong> The Fiat-Shamir Transcript</a></li><li class="chapter-item expanded "><a href="proof_generation.html" class="active"><strong aria-hidden="true">4.6.</strong> Proof generation</a></li><li class="chapter-item expanded "><a href="verification.html"><strong aria-hidden="true">4.7.</strong> Proof verification (TODO)</a></li></ol></li><li class="chapter-item expanded "><a href="mechanism_of_operation.html"><strong aria-hidden="true">5.</strong> Mechanism of Operation</a></li><li class="chapter-item expanded "><a href="ethereum_contracts.html"><strong aria-hidden="true">6.</strong> Ethereum contracts (TODO)</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="gas_costs.html"><strong aria-hidden="true">6.1.</strong> Gas costs</a></li></ol></li><li class="chapter-item expanded "><a href="performance_benchmarks.html"><strong aria-hidden="true">7.</strong> Performance and Benchmarks</a></li><li class="chapter-item expanded "><a href="credits.html"><strong aria-hidden="true">8.</strong> Credits</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="overview.html"><strong aria-hidden="true">1.</strong> Overview</a></li><li class="chapter-item expanded "><a href="quick_start.html"><strong aria-hidden="true">2.</strong> Quick start</a></li><li class="chapter-item expanded "><a href="trusted_setup.html"><strong aria-hidden="true">3.</strong> Trusted Setup</a></li><li class="chapter-item expanded "><a href="cryptographic_specification.html"><strong aria-hidden="true">4.</strong> Cryptographic Specification</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="system_invariants.html"><strong aria-hidden="true">4.1.</strong> System invariants</a></li><li class="chapter-item expanded "><a href="insertion.html"><strong aria-hidden="true">4.2.</strong> Insertion</a></li><li class="chapter-item expanded "><a href="circuit_and_gates.html"><strong aria-hidden="true">4.3.</strong> The Circuit and Gates</a></li><li class="chapter-item expanded "><a href="precomputation_and_updates.html"><strong aria-hidden="true">4.4.</strong> Precomputation and updates</a></li><li class="chapter-item expanded "><a href="fiat_shamir_transcript.html"><strong aria-hidden="true">4.5.</strong> The Fiat-Shamir Transcript</a></li><li class="chapter-item expanded "><a href="proof_generation.html" class="active"><strong aria-hidden="true">4.6.</strong> Proof generation</a></li><li class="chapter-item expanded "><a href="verification.html"><strong aria-hidden="true">4.7.</strong> Proof verification</a></li></ol></li><li class="chapter-item expanded "><a href="lagrange_basis_polynomial_commitment_tree.html"><strong aria-hidden="true">5.</strong> The Lagrange Basis Polynomial Commitment Tree</a></li><li class="chapter-item expanded "><a href="mechanism_of_operation.html"><strong aria-hidden="true">6.</strong> Mechanism of Operation</a></li><li class="chapter-item expanded "><a href="ethereum_contracts.html"><strong aria-hidden="true">7.</strong> Ethereum contracts</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="gas_costs.html"><strong aria-hidden="true">7.1.</strong> Gas costs</a></li></ol></li><li class="chapter-item expanded "><a href="performance_benchmarks.html"><strong aria-hidden="true">8.</strong> Performance and Benchmarks</a></li><li class="chapter-item expanded "><a href="credits.html"><strong aria-hidden="true">9.</strong> Credits</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -144,7 +144,8 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="proof-generation"><a class="header" href="#proof-generation">Proof generation</a></h1>
+                        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css" integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
+<h1 id="proof-generation"><a class="header" href="#proof-generation">Proof generation</a></h1>
 <h2 id="461-assignment-round"><a class="header" href="#461-assignment-round">4.6.1. Assignment Round</a></h2>
 <p>Given the public and private inputs, the prover generates the assignment table
 (see <a href="./circuit_and_gates.html">4.3</a>). Each column is represented as a
@@ -230,7 +231,9 @@ paper</a>, and commits to them:</p>
 round.</p>
 <h2 id="465-opening-round"><a class="header" href="#465-opening-round">4.6.5. Opening round</a></h2>
 <p>This section is a work in progress; in the meantime, see <a href="https://hackmd.io/D-bL6-oNSbSej7Ao_-9PLA">this
-document</a> for the multiopen argument.</p>
+document</a> for the multiopen argument.
+Also see <a href="https://hackmd.io/D-bL6-oNSbSej7Ao_-9PLA">this document</a> which
+describes the argument adapted for Semacaulk.</p>
 <p>The prover computes:</p>
 <ul>
 <li>\(\omega\): the root of unity with index 1 (starting from zero) of the
@@ -273,6 +276,8 @@ subgroup domain.</li>
 </ul>
 <p>The prover adds the above openings to the transcript in the stated order.</p>
 <h2 id="466-multiopen-argument-round"><a class="header" href="#466-multiopen-argument-round">4.6.6. Multiopen argument round</a></h2>
+<p>The steps in this are based on the Halo2 <a href="https://zcash.github.io/halo2/design/proving-system/multipoint-opening.html">multipoint opening
+argument</a>.</p>
 <p>The prover computes the vanishing polynomials:</p>
 <ul>
 <li>\(\mathsf{z}_1 = x - \mathsf{u'}_1(\alpha)\)</li>
@@ -319,7 +324,7 @@ subgroup domain.</li>
 </ul>
 <p>Finally, the prover computes a KZG opening proof:</p>
 <ul>
-<li>\(\mathsf{final}_\pi = \mathsf{open}(\mathsf{srs\_g1}, \mathsf{final},
+<li>\(\pi_\mathsf{final} = \mathsf{open}(\mathsf{srs\_g1}, \mathsf{final},
 x_3)\)</li>
 </ul>
 <h2 id="467-the-proof"><a class="header" href="#467-the-proof">4.6.7. The proof</a></h2>
