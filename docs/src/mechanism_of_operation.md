@@ -1,6 +1,6 @@
 # Mechanism of Operation
 
-The goal of Semaphore is to enable users to:
+The goal of Semacaulk is to enable users to:
 
 1. Register their identity;
 2. Prove in zero-knowledge that they are a member of the set of registered users;

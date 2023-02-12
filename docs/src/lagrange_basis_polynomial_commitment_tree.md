@@ -1,6 +1,6 @@
 # The Lagrange Basis Polynomial Commitment Tree
 
-The Semaphore contract's `insertIdentity` function requires access to a valid
+The Semacaulk contract's `insertIdentity` function requires access to a valid
 commitment to the Lagrange basis polynomial at the index at which an insertion
 is made. This commitment is prohibitively expensive to compute on-chain, so 
 we instead have a Merkle root to the hashes of all of these commitments be set
