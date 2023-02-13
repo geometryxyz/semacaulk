@@ -17,7 +17,7 @@ jobs:
           args: mdbook@0.4.25 mdbook-katex@0.3.7
           
       - name: Build html
-        run: mdbook build ./docs
+        run: mdbook build
         
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
