@@ -14,7 +14,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: install
-          args: mdbook mdbook-katex@0.3.7
+          args: mdbook@0.4.25 mdbook-katex@0.3.7
           
       - name: Build html
         run: mdbook build ./docs
