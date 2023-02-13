@@ -10,6 +10,7 @@ Special thanks to these contributors for their feedback and support:
 
 - Nicolas Mohnblatt ([nico@geometry.xyz ](mailto:nico@geometry.xyz))
 - Tom Walton-Pocock ([tom@geometry.xyz](mailto:tom@geometry.xyz))
+- Lai Ying Tong ([yingtong@geometry.xyz](mailto:yingtong@geometry.xyz))
 
 Last but not least, we would also like to thank:
 
