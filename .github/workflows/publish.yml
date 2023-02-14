@@ -16,11 +16,15 @@ jobs:
           mdbook-version: '0.4.25'
   
       - name: Install mdbook-katex
-        uses: actions-rs/cargo@v1
+        uses: magicgh/mdbook-katex-action@v1
         with:
-          command: install
-          #args: mdbook@0.4.25 mdbook-katex@0.3.7
-          args: mdbook-katex@0.3.7
+          version: '0.3.7'
+      #- name: Install mdbook-katex
+        #uses: actions-rs/cargo@v1
+        #with:
+          #command: install
+          ##args: mdbook@0.4.25 mdbook-katex@0.3.7
+          #args: mdbook-katex@0.3.7
           
       - name: Build html
         run: mdbook build ./docs
