@@ -64,20 +64,10 @@ Run the demo:
 ./target/release/demo 11 11.ptau
 ```
 
-To run a demo with a different maximum capacity, first generate the `.hex` file
-with
-[export-ptau-points](https://github.com/geometryresearch/export-ptau-points),
-then use the `setup` executable to generate the `lagrangeComms_n` file. For
-example for a maximum capacity of `2 ^ 12`:
+To run a demo with a different maximum capacity, download a larger `.ptau` file and specify the log 2 of the desired maximum capacity:
 
 ```bash
-./target/release/demo 12 12.hex lagrangeComms_12
-```
-
-Now, run:
-
-```bash
-./target/release/demo 12 12.hex lagrangeComms_12
+./target/release/demo 16 12.ptau
 ```
 
 A future release will integrate implement the functionality of
