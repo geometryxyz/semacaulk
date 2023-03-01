@@ -48,12 +48,11 @@ To build the Semacaulk documentation, run this in the Semacaulk project root:
 mdbook serve ./docs
 ```
 
->>>>>>> 56f3e4f (more crypto specs in docs)
 ## Demo
 
-The setup files `11.hex` and `lagrangeComms_11` are already in the repository.
-To run a demo of Semacaulk with a maximum capacity of `2 ^ 11 = 2048`, first
-build the demo executable:
+The Powers of Tau output from Hermez Network (`11.ptau`) is already in the
+repository.  To run a demo of Semacaulk with a maximum capacity of `2 ^ 11 =
+2048`, first build the demo executable:
 
 ```bash
 cargo build --release
@@ -62,7 +61,7 @@ cargo build --release
 Run the demo:
 
 ```bash
-./target/release/demo 11 11.hex lagrangeComms_11
+./target/release/demo 11 11.ptau
 ```
 
 To run a demo with a different maximum capacity, first generate the `.hex` file

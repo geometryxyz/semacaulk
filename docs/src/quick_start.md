@@ -29,10 +29,10 @@ cargo test
 
 ```bash
 cargo build --release && \
-./target/release/demo 11 11.hex lagrangeComms_11
+./target/release/demo 11 11.ptau
 ```
 
-Note that the files `11.hex` and `lagrangeComms_11` support up to 2048 leaf
+Note that the Powers of Tau `11.ptau` file supports up to 2048 leaf
 insertions. To support a larger capacity, see the [Trusted Setup - Processing
 the points](./trusted_setup.html#processing-the-points) section for
 instructions on how to do so.

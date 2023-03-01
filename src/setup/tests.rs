@@ -1,4 +1,4 @@
-use super::{g1_str_to_g1, g2_str_to_g2, load_srs_from_hex, setup};
+use super::{g1_str_to_g1, g2_str_to_g2, setup};
 
 #[test]
 pub fn test_g1() {
@@ -16,14 +16,8 @@ pub fn test_g2() {
 }
 
 #[test]
-pub fn test_load_hex() {
-    let (srs_g1, srs_g2) = load_srs_from_hex("./11.hex");
-    assert_eq!(srs_g1.len(), srs_g2.len() + 1);
-}
-
-#[test]
 pub fn test_setup() {
-    let pk = setup(11, "./11.hex");
+    let pk = setup(11, "./11.ptau");
     assert_eq!(pk.0.srs_g1.len(), pk.0.srs_g2.len() + 1);
     assert_eq!(pk.1.len(), pk.0.srs_g2.len());
 }
