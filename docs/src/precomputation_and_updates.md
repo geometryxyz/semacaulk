@@ -57,16 +57,16 @@ where \\(i \neq j\\).
 When an element at \\(j\\) is updated and \\(i \neq j\\), and the new element
 is \\(v_j = v_\mathsf{zero} + \delta\\), the new accumulator is:
 
-\\(C(X) - L_j(X) \cdot v_\mathsf{zero} + L_j \cdot v_j\\)
+\\(C(X) - L_j(X) \cdot v_\mathsf{zero} + L_j(X) \cdot v_j\\)
 
-\\(= C(X) - L_j(X) \cdot (v_\mathsf{zero} + v_j)\\)
+\\(= C(X) + L_j(X) \cdot (v_j - v_\mathsf{zero})\\)
 
-\\(= C(X) + \delta \cdot L_j(X)\\)
+\\(= C(X) + L_j(X) \cdot \delta\\)
 
 \\({\mathsf{W{new}}_1}^{(i)}\\) is therefore:
 
-\\(\frac{C(X) - v_i + \delta \cdot L_j(X)}{X - \omega^i}\\)
-\\( = {\mathsf{W}_1}^{(i)} + \delta \cdot \frac{L_j(X)}{X - \omega^i}\\)
+\\(\frac{C(X) - v_i + L_j(X) \cdot \delta}{X - \omega^i}\\)
+\\( = {\mathsf{W}_1}^{(i)} + \frac{L_j(X)}{X - \omega^i} \cdot \delta\\)
 
 To use the homomorphic properties of KZG commitments, we need to
 compute \\([\frac{L_j(X)}{X - \omega^i}]_2\\), multiply it by \\(\delta\\), and

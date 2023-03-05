@@ -18,8 +18,8 @@ use crate::kzg::commit;
 */
 #[derive(CanonicalSerialize, CanonicalDeserialize, Clone, Debug)]
 pub struct Precomputed<E: PairingEngine> {
-    w1_mapping: BTreeMap<usize, E::G2Affine>,
-    w2_mapping: BTreeMap<usize, E::G2Affine>,
+    pub w1_mapping: BTreeMap<usize, E::G2Affine>,
+    pub w2_mapping: BTreeMap<usize, E::G2Affine>,
 }
 
 impl<E: PairingEngine> Precomputed<E> {
@@ -29,6 +29,7 @@ impl<E: PairingEngine> Precomputed<E> {
             w2_mapping: BTreeMap::default(),
         }
     }
+
     pub fn get_w1_i(&self, index: &usize) -> E::G2Affine {
         match self.w1_mapping.get(index) {
             Some(element) => *element,
@@ -56,7 +57,10 @@ impl<E: PairingEngine> Precomputed<E> {
             let mut num = c.clone();
             num[0] -= c.evaluate(&w_i);
 
+            // denom = (X - w_i)
             let denom = DensePolynomial::from_coefficients_slice(&[-w_i, E::Fr::one()]);
+
+            // w1_i = (C - c_i) / (X - w_i)
             let w1_i = &num / &denom;
             let w1_i = commit(srs, &w1_i);
             self.w1_mapping.insert(*index, w1_i.into());
@@ -96,7 +100,7 @@ mod precomputed_test {
     use rand::rngs::StdRng;
 
     use crate::kzg::{commit, unsafe_setup};
-    use crate::utils::construct_lagrange_basis;
+    use crate::utils::construct_lagrange_basis_polys;
 
     use super::Precomputed;
 
@@ -193,7 +197,7 @@ mod precomputed_test {
 
         let indices = [1, 3, 4, 5, 7];
         let elems: Vec<_> = indices.iter().map(|&i| domain.element(i)).collect();
-        let t_bases = construct_lagrange_basis(&elems);
+        let t_bases = construct_lagrange_basis_polys(&elems);
 
         let c_evals = [12391, 3219031, 32131, 412331, 31231, 3213, 938532, 49802342];
         let c_evals = to_field::<F>(&c_evals);
@@ -251,7 +255,7 @@ mod precomputed_test {
 
         let indices = [1, 3, 4, 5, 7];
         let elems: Vec<_> = indices.iter().map(|&i| domain.element(i)).collect();
-        let t_bases = construct_lagrange_basis(&elems);
+        let t_bases = construct_lagrange_basis_polys(&elems);
 
         let c_evals = [12391, 3219031, 32131, 412331, 31231, 3213, 938532, 49802342];
         let c_evals = to_field::<F>(&c_evals);
@@ -305,7 +309,7 @@ mod precomputed_test {
 
         let indices = [1, 3, 4, 5, 7];
         let elems: Vec<_> = indices.iter().map(|&i| domain.element(i)).collect();
-        let t_bases = construct_lagrange_basis(&elems);
+        let t_bases = construct_lagrange_basis_polys(&elems);
 
         let c_evals = [12391, 3219031, 32131, 412331, 31231, 3213, 938532, 49802342];
         let c_evals = to_field::<F>(&c_evals);
@@ -372,7 +376,7 @@ mod precomputed_test {
 
         let indices = [1, 3, 4, 5, 7];
         let elems: Vec<_> = indices.iter().map(|&i| domain.element(i)).collect();
-        let t_bases = construct_lagrange_basis(&elems);
+        let t_bases = construct_lagrange_basis_polys(&elems);
 
         let c_evals = [12391, 3219031, 32131, 412331, 31231, 3213, 938532, 49802342];
         let c_evals = to_field::<F>(&c_evals);

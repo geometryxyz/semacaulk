@@ -180,7 +180,7 @@ async fn main() {
     let c = DensePolynomial::from_coefficients_slice(&domain.ifft(&identity_commitments));
 
     let sw = Stopwatch::start_new();
-    let precomputed = ProverPrecomputedData::index(&pk, &mimc7.cts, index, &c, table_size);
+    let precomputed = ProverPrecomputedData::index(&pk, &mimc7.cts, &[index], &c, table_size);
     println!("Precomputation took {}ms", sw.elapsed_ms());
 
     let sw = Stopwatch::start_new();

@@ -20,7 +20,7 @@ use crate::{
     layouter::Assignment,
     multiopen::{prover::Prover as MultiopenProver, MultiopenProof},
     transcript::Transcript,
-    utils::construct_lagrange_basis,
+    utils::construct_lagrange_basis_polys,
     utils::shift_dense_poly,
 };
 
@@ -513,7 +513,7 @@ impl Prover {
 
         // 2. compute lagrange basis polynomial t_i over w^j for j = index
         let omega = state.domain_t.element(state.witness.index);
-        let ts = construct_lagrange_basis(&[omega]);
+        let ts = construct_lagrange_basis_polys(&[omega]);
 
         // 3. define and mask zI`
         let mut zi = DensePolynomial::<E::Fr>::from_coefficients_slice(&[r1]);

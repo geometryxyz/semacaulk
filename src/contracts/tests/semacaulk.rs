@@ -184,7 +184,7 @@ pub async fn test_semacaulk_insert_and_broadcast() {
     let accumulator = commit(&pk.srs_g1, &c).into_affine();
     assert_eq!(accumulator, acc.point);
 
-    let precomputed = ProverPrecomputedData::index(&pk, &mimc7.cts, index, &c, table_size);
+    let precomputed = ProverPrecomputedData::index(&pk, &mimc7.cts, &[index], &c, table_size);
 
     let witness = WitnessInput {
         identity_nullifier: identity_nullifiers[index],

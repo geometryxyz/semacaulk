@@ -80,7 +80,7 @@ impl<E: PairingEngine> ProverPrecomputedData<E> {
     pub fn index(
         pk: &ProvingKey<E>,
         mimc_round_constants: &Vec<E::Fr>,
-        index: usize,
+        indices: &[usize],
         c: &DensePolynomial<E::Fr>,
         table_size: usize,
     ) -> Self {
@@ -138,8 +138,8 @@ impl<E: PairingEngine> ProverPrecomputedData<E> {
         let mut precomputed = Precomputed::<E>::empty();
 
         // As defined in the [Caulk+ paper, section 3](https://eprint.iacr.org/2022/957.pdf).
-        precomputed.precompute_w1(&pk.srs_g2, &[index], c, &domain_t);
-        precomputed.precompute_w2(&pk.srs_g2, &[index], &domain_t);
+        precomputed.precompute_w1(&pk.srs_g2, indices, c, &domain_t);
+        precomputed.precompute_w2(&pk.srs_g2, indices, &domain_t);
 
         Self {
             mimc_cts: mimc_cts_poly,

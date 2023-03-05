@@ -54,24 +54,32 @@ pub fn shift_dense_poly<F: Field>(
     DensePolynomial::from_coefficients_vec(coeffs)
 }
 
+pub fn construct_lagrange_basis_poly<F: FftField>(
+    evaluation_domain: &[F],
+    index: usize
+) -> DensePolynomial<F> {
+    let mut l_i = DensePolynomial::from_coefficients_slice(&[F::one()]);
+    let x_i = evaluation_domain[index];
+
+    for (j, &x_j) in evaluation_domain.iter().enumerate() {
+        if j != index {
+            let xi_minus_xj_inv = (x_i - x_j).inverse().unwrap();
+            l_i = &l_i
+                * &DensePolynomial::from_coefficients_slice(&[
+                    -x_j * xi_minus_xj_inv,
+                    xi_minus_xj_inv,
+                ]);
+        }
+    }
+    l_i
+}
+
 // Compute the Lagrange basis polynomials in O(n^2) time. This is not recommended for domains of
 // size above 32.
-pub fn construct_lagrange_basis<F: FftField>(evaluation_domain: &[F]) -> Vec<DensePolynomial<F>> {
+pub fn construct_lagrange_basis_polys<F: FftField>(evaluation_domain: &[F]) -> Vec<DensePolynomial<F>> {
     let mut bases = Vec::with_capacity(evaluation_domain.len());
     for i in 0..evaluation_domain.len() {
-        let mut l_i = DensePolynomial::from_coefficients_slice(&[F::one()]);
-        let x_i = evaluation_domain[i];
-
-        for (j, &x_j) in evaluation_domain.iter().enumerate() {
-            if j != i {
-                let xi_minus_xj_inv = (x_i - x_j).inverse().unwrap();
-                l_i = &l_i
-                    * &DensePolynomial::from_coefficients_slice(&[
-                        -x_j * xi_minus_xj_inv,
-                        xi_minus_xj_inv,
-                    ]);
-            }
-        }
+        let l_i = construct_lagrange_basis_poly(evaluation_domain, i);
 
         bases.push(l_i);
     }
@@ -113,7 +121,7 @@ pub fn is_pow_2(x: usize) -> bool {
 
 #[cfg(test)]
 mod util_tests {
-    use super::construct_lagrange_basis;
+    use super::construct_lagrange_basis_polys;
     use ark_bn254::Fr as F;
     use ark_ff::Zero;
     use ark_poly::{
@@ -126,7 +134,7 @@ mod util_tests {
         let domain = GeneralEvaluationDomain::<F>::new(domain_size).unwrap();
 
         let elems: Vec<F> = domain.elements().collect();
-        let bases = construct_lagrange_basis(&elems);
+        let bases = construct_lagrange_basis_polys(&elems);
         assert_eq!(bases.len(), domain.size());
 
         let to_field = |x: &u64| -> F { F::from(*x) };

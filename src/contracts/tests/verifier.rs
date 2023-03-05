@@ -60,7 +60,7 @@ pub async fn test_semacaulk_verifier() {
 
     let (pk, _) = setup(log_2_table_size, "./11.ptau");
 
-    let precomputed = ProverPrecomputedData::index(&pk, &mimc7.cts, index, &c, table_size);
+    let precomputed = ProverPrecomputedData::index(&pk, &mimc7.cts, &[index], &c, table_size);
 
     let witness = WitnessInput {
         identity_nullifier,
