@@ -24,10 +24,7 @@ use semacaulk::{
     keccak_tree::{flatten_proof, KeccakTree},
 };
 
-abigen!(
-    SemacaulkContract,
-    "./src/contracts/out/Semacaulk.sol/Semacaulk.json",
-);
+abigen!(SemacaulkContract, "./src/contracts/Semacaulk.json");
 
 type SemacaulkContract = semacaulk_contract::SemacaulkContract<
     SignerMiddleware<

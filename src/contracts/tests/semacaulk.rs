@@ -26,10 +26,7 @@ use ethers::core::utils::hex;
 use ethers::middleware::SignerMiddleware;
 use ethers::providers::Http;
 
-abigen!(
-    Semacaulk,
-    "./src/contracts/out/Semacaulk.sol/Semacaulk.json",
-);
+abigen!(Semacaulk, "./src/contracts/Semacaulk.json");
 
 type SemacaulkContract = semacaulk::Semacaulk<
     SignerMiddleware<

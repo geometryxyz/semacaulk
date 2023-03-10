@@ -4,10 +4,7 @@ use crate::prover::{Commitments as RustCommitments, Openings as RustOpenings, Pr
 use ark_bn254::{Bn254, G1Affine, G2Affine};
 use ethers::prelude::abigen;
 
-abigen!(
-    SemacaulkContract,
-    "./src/contracts/out/Semacaulk.sol/Semacaulk.json"
-);
+abigen!(SemacaulkContract, "./src/contracts/Semacaulk.json");
 
 pub type ProofForSemacaulk = Proof;
 
