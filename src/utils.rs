@@ -56,7 +56,7 @@ pub fn shift_dense_poly<F: Field>(
 
 pub fn construct_lagrange_basis_poly<F: FftField>(
     evaluation_domain: &[F],
-    index: usize
+    index: usize,
 ) -> DensePolynomial<F> {
     let mut l_i = DensePolynomial::from_coefficients_slice(&[F::one()]);
     let x_i = evaluation_domain[index];
@@ -76,7 +76,9 @@ pub fn construct_lagrange_basis_poly<F: FftField>(
 
 // Compute the Lagrange basis polynomials in O(n^2) time. This is not recommended for domains of
 // size above 32.
-pub fn construct_lagrange_basis_polys<F: FftField>(evaluation_domain: &[F]) -> Vec<DensePolynomial<F>> {
+pub fn construct_lagrange_basis_polys<F: FftField>(
+    evaluation_domain: &[F],
+) -> Vec<DensePolynomial<F>> {
     let mut bases = Vec::with_capacity(evaluation_domain.len());
     for i in 0..evaluation_domain.len() {
         let l_i = construct_lagrange_basis_poly(evaluation_domain, i);

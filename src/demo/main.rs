@@ -7,8 +7,6 @@ use ark_std::{test_rng, Zero};
 use ethers::contract::abigen;
 use ethers::middleware::SignerMiddleware;
 use ethers::providers::Http;
-use std::env;
-use stopwatch::Stopwatch;
 use semacaulk::accumulator::{compute_lagrange_tree, compute_zero_leaf, Accumulator};
 use semacaulk::contracts::compute_signal_hash;
 use semacaulk::contracts::format::proof_for_semacaulk::{format_proof, ProofForSemacaulk};
@@ -23,6 +21,8 @@ use semacaulk::{
     bn_solidity_utils::{f_to_u256, u256_to_f},
     keccak_tree::{flatten_proof, KeccakTree},
 };
+use std::env;
+use stopwatch::Stopwatch;
 
 abigen!(SemacaulkContract, "./src/contracts/Semacaulk.json");
 

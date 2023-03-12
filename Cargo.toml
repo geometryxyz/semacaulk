@@ -23,6 +23,8 @@ sha3 = "0.10.6"
 tokio = { version = "1.22.0", features = ["macros"] }
 stopwatch = "0.0.7"
 ppot-rs = "0.1.1"
+clap = { version = "4.1.8", features = ["derive", "cargo"] }
+clap-num = { version = "1.0.2" }
 
 [dev-dependencies]
 rand_chacha = { version = "0.3.0", default-features = false }
@@ -37,3 +39,8 @@ path = "src/setup/main.rs"
 edition = "2021"
 name = "demo"
 path = "src/demo/main.rs"
+
+[[bin]]
+edition = "2021"
+name = "client"
+path = "src/client/main.rs"

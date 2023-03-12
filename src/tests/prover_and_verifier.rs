@@ -1,5 +1,6 @@
 use crate::prover::prover::{Prover, WitnessInput};
 use crate::setup::setup;
+use crate::utils::construct_lagrange_basis_poly;
 use crate::verifier::Verifier;
 use crate::{
     kzg::commit,
@@ -8,14 +9,13 @@ use crate::{
     prover::{ProverPrecomputedData, PublicData},
 };
 use ark_bn254::{Bn254, Fr};
-use ark_ec::{ProjectiveCurve, AffineCurve};
+use ark_ec::{AffineCurve, ProjectiveCurve};
 use ark_ff::{UniformRand, Zero};
 use ark_poly::{
-    Polynomial,
-    univariate::DensePolynomial, EvaluationDomain, GeneralEvaluationDomain, UVPolynomial,
+    univariate::DensePolynomial, EvaluationDomain, GeneralEvaluationDomain, Polynomial,
+    UVPolynomial,
 };
 use ark_std::{test_rng, One};
-use crate::utils::construct_lagrange_basis_poly;
 
 #[test]
 pub fn test_prover_and_verifier() {
@@ -118,11 +118,17 @@ pub fn test_update_precomputed_w1() {
     identity_commitments[index_alice] = identity_commitment;
 
     // Compute the accumulator
-    let accumulator_alice_poly = DensePolynomial::from_coefficients_slice(&domain.ifft(&identity_commitments));
+    let accumulator_alice_poly =
+        DensePolynomial::from_coefficients_slice(&domain.ifft(&identity_commitments));
 
     // Precompute
-    let mut precomputed =
-        ProverPrecomputedData::index(&pk, &mimc7.cts, &[index_alice, index_bob], &accumulator_alice_poly, table_size);
+    let mut precomputed = ProverPrecomputedData::index(
+        &pk,
+        &mimc7.cts,
+        &[index_alice, index_bob],
+        &accumulator_alice_poly,
+        table_size,
+    );
 
     let accumulator_alice = commit(&pk.srs_g1, &accumulator_alice_poly).into_affine();
 
@@ -146,7 +152,8 @@ pub fn test_update_precomputed_w1() {
 
     // Bob replaces the leaf at index_bob
     identity_commitments[index_bob] = identity_commitment_bob;
-    let accumulator_bob_poly = DensePolynomial::from_coefficients_slice(&domain.ifft(&identity_commitments));
+    let accumulator_bob_poly =
+        DensePolynomial::from_coefficients_slice(&domain.ifft(&identity_commitments));
     let accumulator_bob = commit(&pk.srs_g1, &accumulator_bob_poly).into_affine();
     assert_ne!(accumulator_alice, accumulator_bob);
 
@@ -159,7 +166,6 @@ pub fn test_update_precomputed_w1() {
     let new_c = accumulator_alice + l_j_delta_comm;
     assert_eq!(new_c, accumulator_bob);
 
-    
     // L_j(X) / (X - w_i)
     let elems: Vec<Fr> = domain.elements().collect();
     let l_j = construct_lagrange_basis_poly(&elems, index_bob);
@@ -171,9 +177,12 @@ pub fn test_update_precomputed_w1() {
     let delta_p_comm = p_comm.mul(delta);
 
     let w_old = precomputed.caulk_plus_precomputed.get_w1_i(&index_alice);
-    let w_new = w_old  + delta_p_comm.into();
+    let w_new = w_old + delta_p_comm.into();
 
-    precomputed.caulk_plus_precomputed.w1_mapping.insert(index_alice, w_new);
+    precomputed
+        .caulk_plus_precomputed
+        .w1_mapping
+        .insert(index_alice, w_new);
 
     // Generate proof for Alice
     let witness = WitnessInput {
@@ -217,5 +226,5 @@ pub fn test_update_precomputed_w1() {
     );
     assert!(is_valid);
     /*
-    */
+     */
 }
