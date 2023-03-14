@@ -1,6 +1,6 @@
 use ark_bn254::{Bn254, Fq, Fr};
 use ark_std::Zero;
-use ark_ff::bytes::FromBytes;
+use ark_ff::PrimeField;
 use clap::{arg, command, Parser, Subcommand};
 use clap_num::number_range;
 use std::string::String;
@@ -19,12 +19,20 @@ use semacaulk::mimc7::init_mimc7;
 use semacaulk::accumulator::{compute_lagrange_tree, compute_zero_leaf, Accumulator};
 use semacaulk::{
     bn_solidity_utils::{f_to_u256},
+    keccak_tree::flatten_proof,
 };
 
-#[derive(Debug)]
+/*
+RPC: https://rpc2.sepolia.org
+Address: 0xaaaa553ECd8C7cFBcA9396A5746956ef738BeEd4
+Private key: cf3a4fe3eaa7533fd3a5b19f874a0ff67749a926b80d4074 cc3b1c634b536c47 (remove the space)
+*/
+
+#[derive(Debug, PartialEq)]
 pub enum Error {
     InvalidSk,
     InvalidLog2Capacity,
+    InvalidIdNulOrTrap,
 }
 
 #[derive(Debug, Parser)] // requires `derive` feature
@@ -69,6 +77,10 @@ enum Commands {
         #[arg(short, long, required = false, default_value = "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",)]
         sk: String,
 
+        /// The powers of tau (PTAU) file containing a phase 1 trusted setup output
+        #[arg(short, long, required = true,)]
+        ptau: String,
+
         /// The Semacaulk contract
         #[arg(short, long, required = true,)]
         contract: String,
@@ -80,6 +92,10 @@ enum Commands {
         /// The identity trapdoor, in hexadecimal
         #[arg(long = "id_trap", short = 't', required = true,)]
         id_trap: String,
+
+        // The capacity of the accumulator expressed in log_2 (e.g. log_2(1024) = 10)
+        #[arg(short, long, required = false, default_value = "10", value_parser=log_2_capacity_range)]
+        log_2_capacity: u8,
     }
 }
 
@@ -91,8 +107,8 @@ async fn main() {
         Commands::Deploy { rpc, sk, ptau, log_2_capacity } => {
             result = deploy(&rpc, &sk, &ptau, log_2_capacity).await;
         },
-        Commands::Insert { rpc, sk, contract, id_nul, id_trap } => {
-            result = insert(&rpc, &sk, &contract, &id_nul, &id_trap).await;
+        Commands::Insert { rpc, sk, ptau, contract, id_nul, id_trap, log_2_capacity } => {
+            result = insert(&rpc, &sk, &ptau, &contract, &id_nul, &id_trap, log_2_capacity).await;
         }
     };
 
@@ -100,6 +116,7 @@ async fn main() {
         match result.unwrap_err() {
             Error::InvalidLog2Capacity => println!("--log2_capacity should be between 10 and 28 (inclusive)."),
             Error::InvalidSk => println!("--sk should be a valid hexadecimal value."),
+            Error::InvalidIdNulOrTrap => println!("-n or -t should be a valid hexadecimal value."),
         };
         process::exit(1);
     }
@@ -114,8 +131,7 @@ type SemacaulkContract = semacaulk_contract::SemacaulkContract<
     >,
 >;
 
-fn parse_hex(s: &String) -> Result<String, Error> {
-    //let mut bytes = Vec::with_capacity(s.len());
+fn parse_sk(s: &String) -> Result<String, Error> {
     let mut bytes = s.as_bytes();
 
     if s.starts_with("0x") {
@@ -155,25 +171,51 @@ async fn create_client(rpc: &String, sk: &String) -> Result<EthersClient, Error>
     Ok(client)
 }
 
-fn hex_to_fr(hex: &String) -> Result<Fr, Error> {
-    let hex = parse_hex(&hex)?;
+fn parse_id_nul_or_trap<F: PrimeField>(s: &String) -> Result<F, Error> {
+    let mut bytes = s.as_bytes();
+    if s.starts_with("0x") {
+        if s.len() > 66 {
+            return Err(Error::InvalidIdNulOrTrap);
+        }
 
-    let bytes_vec = hex::decode(hex).unwrap();
-    let bytes_slice: &[u8] = bytes_vec.as_slice();
-    Ok(Fr::read(bytes_slice).unwrap())
+        bytes = &bytes[2..];
+    } else {
+        if s.len() > 64 {
+            return Err(Error::InvalidIdNulOrTrap);
+        }
+    }
+
+    let hex_str = std::str::from_utf8(bytes);
+    if hex_str.is_err() {
+        return Err(Error::InvalidIdNulOrTrap);
+    }
+    let hex_str = hex_str.unwrap();
+    let mut h = hex_str.to_string();
+    while h.len() < 64 {
+        h = format!("0{}", &h);
+    }
+    let hex_str = h;
+    let hex_buf = hex::decode(hex_str).unwrap();
+    let hex_buf: Vec<u8> = hex_buf.iter().copied().rev().collect();
+
+    Ok(F::read(hex_buf.as_slice()).unwrap())
 }
 
 async fn insert(
     rpc: &String,
     sk: &String,
+    ptau: &String,
     contract: &String,
     id_nul: &String,
     id_trap: &String,
+    log_2_capacity: u8,
 ) -> Result<(), Error> {
-    let id_nul = hex_to_fr(id_nul)?;
-    let id_trap = hex_to_fr(id_trap)?;
+    let id_nul = parse_id_nul_or_trap::<Fr>(id_nul)?;
+    let id_trap = parse_id_nul_or_trap::<Fr>(id_trap)?;
 
-    let client = create_client(rpc, &parse_hex(&sk)?).await?;
+    let (_pk, lagrange_comms) = setup(log_2_capacity as usize, ptau);
+
+    let client = create_client(rpc, &parse_sk(&sk)?).await?;
 
     let mut c: String = contract.clone();
     if contract.starts_with("0x") {
@@ -183,13 +225,22 @@ async fn insert(
     let a = ethers::types::H160::from_slice(address.as_slice());
     let semacaulk_contract = SemacaulkContract::new(a, client);
 
+    // Get the index to insert to
     let index: usize = semacaulk_contract.get_current_index().call().await.unwrap().as_u64() as usize;
 
     let mimc7 = init_mimc7::<Fr>();
     let new_leaf = mimc7.multi_hash(&[id_nul, id_trap], Fr::zero());
 
-    // Compute Lagrange commitment
-    /*
+    // Construct the tree of commitments to the Lagrange bases
+    let tree = compute_lagrange_tree::<Bn254>(&lagrange_comms);
+
+    let proof = tree.proof(index).unwrap();
+    let flattened_proof = flatten_proof(&proof);
+    let l_i = lagrange_comms[index];
+    let l_i_x = f_to_u256(l_i.x);
+    let l_i_y = f_to_u256(l_i.y);
+
+    
     // Insert the leaf on chain
     let result = semacaulk_contract
         .insert_identity(f_to_u256(new_leaf), l_i_x, l_i_y, flattened_proof)
@@ -200,7 +251,11 @@ async fn insert(
         .unwrap()
         .expect("no receipt found");
 
-    */
+    let tx_hash = result.transaction_hash;
+    let event_index = result.logs[0].topics[1];
+    println!("Transaction hash:\n{:?}", tx_hash);
+    println!("Identity index:\n{:?}", event_index);
+    
     Ok(())
 }
 
@@ -213,7 +268,7 @@ async fn deploy(
     if log_2_capacity < 10 || log_2_capacity > 28 {
         return Err(Error::InvalidLog2Capacity);
     }
-    let client = create_client(rpc, &parse_hex(&sk)?).await?;
+    let client = create_client(rpc, &parse_sk(&sk)?).await?;
 
     let (_pk, lagrange_comms) = setup(log_2_capacity as usize, ptau);
 
@@ -234,4 +289,22 @@ async fn deploy(
     println!("{:?}", semacaulk_contract.address());
 
     Ok(())
+}
+
+#[test]
+pub fn test_parse_id_nul_or_trap() {
+    let s = String::from("0x1");
+    assert_eq!(parse_id_nul_or_trap::<Fr>(&s).unwrap(), Fr::from(1));
+
+    let s = String::from("0x01");
+    assert_eq!(parse_id_nul_or_trap::<Fr>(&s).unwrap(), Fr::from(1));
+
+    let s = String::from("0x0000000000000000000000000000000000000000000000000000000000000001");
+    assert_eq!(parse_id_nul_or_trap::<Fr>(&s).unwrap(), Fr::from(1));
+
+    let s = String::from("0x0101");
+    assert_eq!(parse_id_nul_or_trap::<Fr>(&s).unwrap(), Fr::from(257));
+
+    let s = String::from("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    assert_eq!(parse_id_nul_or_trap::<Fr>(&s).unwrap_err(), Error::InvalidIdNulOrTrap);
 }
