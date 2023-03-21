@@ -63,7 +63,7 @@ enum Commands {
         #[arg(short, long, required = true,)]
         ptau: String,
 
-        // The capacity of the accumulator expressed in log_2 (e.g. log_2(1024) = 10)
+        /// The capacity of the accumulator expressed in log_2 (e.g. log_2(1024) = 10)
         #[arg(short, long, required = false, default_value = "10", value_parser=log_2_capacity_range)]
         log_2_capacity: u8,
     },
@@ -93,7 +93,7 @@ enum Commands {
         #[arg(long = "id_trap", short = 't', required = true,)]
         id_trap: String,
 
-        // The capacity of the accumulator expressed in log_2 (e.g. log_2(1024) = 10)
+        /// The capacity of the accumulator expressed in log_2 (e.g. log_2(1024) = 10)
         #[arg(short, long, required = false, default_value = "10", value_parser=log_2_capacity_range)]
         log_2_capacity: u8,
     }
