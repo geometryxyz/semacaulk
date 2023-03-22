@@ -1,26 +1,35 @@
 use ark_bn254::{Bn254, Fq, Fr};
-use ark_std::Zero;
+use ark_serialize::CanonicalSerialize;
+use ark_std::{test_rng, Zero};
 use ark_ff::PrimeField;
+use ark_poly::{
+    univariate::DensePolynomial, EvaluationDomain, GeneralEvaluationDomain, UVPolynomial,
+};
 use clap::{arg, command, Parser, Subcommand};
 use clap_num::number_range;
 use std::string::String;
 use ethers::signers::{LocalWallet, Signer};
 use ethers::core::k256::ecdsa::SigningKey;
 use ethers::prelude::Wallet;
-use ethers::providers::{Http, Provider, Middleware};
+use ethers::providers::{StreamExt, Http, Provider, Middleware};
 use ethers::contract::abigen;
 use ethers::middleware::SignerMiddleware;
 use std::sync::Arc;
 use std::time::Duration;
 use std::process;
 use std::convert::TryFrom;
-use semacaulk::setup::setup;
-use semacaulk::mimc7::init_mimc7;
-use semacaulk::accumulator::{compute_lagrange_tree, compute_zero_leaf, Accumulator};
 use semacaulk::{
-    bn_solidity_utils::{f_to_u256},
+    layouter::Layouter,
+    setup::setup,
+    accumulator::{compute_lagrange_tree, compute_zero_leaf, Accumulator},
+    bn_solidity_utils::{f_to_u256, u256_to_f},
     keccak_tree::flatten_proof,
+    mimc7::init_mimc7,
+    prover::{Proof as SemacaulkProof, ProverPrecomputedData, PublicData},
+    contracts::compute_signal_hash,
+    verifier::Verifier as SemacaulkVerifier,
 };
+use semacaulk::prover::prover::{Prover, WitnessInput};
 
 /*
 RPC: https://rpc2.sepolia.org
@@ -68,7 +77,7 @@ enum Commands {
         log_2_capacity: u8,
     },
     /// Insert an identity into an existing Semacaulk contract
-    Insert{
+    Insert {
         /// The Ethereum node URL
         #[arg(short, long, required = false, default_value = "http://127.0.0.1:8545",)]
         rpc: String,
@@ -96,6 +105,52 @@ enum Commands {
         /// The capacity of the accumulator expressed in log_2 (e.g. log_2(1024) = 10)
         #[arg(short, long, required = false, default_value = "10", value_parser=log_2_capacity_range)]
         log_2_capacity: u8,
+    },
+    /// Insert an identity into an existing Semacaulk contract
+    Prove {
+        /// The Ethereum node URL
+        #[arg(short, long, required = false, default_value = "http://127.0.0.1:8545",)]
+        rpc: String,
+
+        /// The deployer's Etheruem private key 
+        #[arg(short, long, required = false, default_value = "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",)]
+        sk: String,
+
+        /// The powers of tau (PTAU) file containing a phase 1 trusted setup output
+        #[arg(short, long, required = true,)]
+        ptau: String,
+
+        /// The Semacaulk contract
+        #[arg(short, long, required = true,)]
+        contract: String,
+
+        /// The index of the value in the accumulator
+        #[arg(short, long, required = false)]
+        index: usize,
+
+        /// The external_nullifier nullifier, in hexadecimal
+        #[arg(long = "ext_nul", short = 'e', required = true,)]
+        ext_nul: String,
+
+        /// The identity nullifier, in hexadecimal
+        #[arg(long = "id_nul", short = 'n', required = true,)]
+        id_nul: String,
+
+        /// The identity trapdoor, in hexadecimal
+        #[arg(long = "id_trap", short = 't', required = true,)]
+        id_trap: String,
+
+        /// The identity trapdoor, in hexadecimal
+        #[arg(long = "signal", short, required = true,)]
+        signal: String,
+
+        /// The capacity of the accumulator expressed in log_2 (e.g. log_2(1024) = 10)
+        #[arg(short, long, required = false, default_value = "10", value_parser=log_2_capacity_range)]
+        log_2_capacity: u8,
+
+        /// If specified, use this semacaulk_precompute endpoint to privately retrieve precomputed data
+        #[arg(short, long, required = false,)]
+        semacaulk_precompute_endpoint: Option<String>,
     }
 }
 
@@ -109,7 +164,10 @@ async fn main() {
         },
         Commands::Insert { rpc, sk, ptau, contract, id_nul, id_trap, log_2_capacity } => {
             result = insert(&rpc, &sk, &ptau, &contract, &id_nul, &id_trap, log_2_capacity).await;
-        }
+        },
+        Commands::Prove { rpc, sk, ptau, contract, index, ext_nul, id_nul, id_trap, signal, semacaulk_precompute_endpoint, log_2_capacity } => {
+            result = prove(&rpc, &sk, &ptau, &contract, index, &ext_nul, &id_nul, &id_trap, &signal, semacaulk_precompute_endpoint, log_2_capacity).await;
+        },
     };
 
     if result.is_err() {
@@ -201,6 +259,141 @@ fn parse_id_nul_or_trap<F: PrimeField>(s: &String) -> Result<F, Error> {
     Ok(F::read(hex_buf.as_slice()).unwrap())
 }
 
+async fn prove(
+    rpc: &String,
+    sk: &String,
+    ptau: &String,
+    contract: &String,
+    index: usize,
+    ext_nul: &String,
+    id_nul: &String,
+    id_trap: &String,
+    signal: &String,
+    semacaulk_precompute_endpoint: Option<String>,
+    log_2_capacity: u8,
+) -> Result<(), Error> {
+    let ext_nul = parse_id_nul_or_trap::<Fr>(ext_nul)?;
+    let id_nul = parse_id_nul_or_trap::<Fr>(id_nul)?;
+    let id_trap = parse_id_nul_or_trap::<Fr>(id_trap)?;
+
+    let table_size = 2u64.pow(log_2_capacity as u32) as usize;
+    let (pk, lagrange_comms) = setup(log_2_capacity as usize, ptau);
+
+    let zero = compute_zero_leaf::<Fr>();
+    let mut acc = Accumulator::<Bn254>::new(zero, &lagrange_comms);
+
+    let client = create_client(rpc, &parse_sk(&sk)?).await?;
+    let c: String = remove_address_prefix(contract.clone());
+    let address = hex::decode(c).unwrap();
+    let a = ethers::types::H160::from_slice(address.as_slice());
+    let semacaulk_contract = SemacaulkContract::new(a, client);
+    let events = semacaulk_contract.event::<InsertIdentityFilter>().from_block(0);
+    let num_leaves = semacaulk_contract.get_current_index().call().await.unwrap();
+    let mut stream = events.stream().await.unwrap().take(num_leaves.as_usize());
+
+    let mut identity_commitments: Vec<Fr> = vec![zero; table_size];
+    let mut i = 0;
+    while let Some(Ok(f)) = stream.next().await {
+        let id_comm = u256_to_f(f.identity_commitment);
+        identity_commitments[i] = id_comm;
+        acc.update(i, id_comm);
+        i += 1;
+    }
+
+    let mimc7 = init_mimc7::<Fr>();
+
+    let leaf = mimc7.multi_hash(&[id_nul, id_trap], Fr::zero());
+    assert_eq!(identity_commitments[index], leaf);
+
+    let acc_on_chain = semacaulk_contract.get_accumulator().call().await.unwrap();
+    assert_eq!(u256_to_f::<Fq>(acc_on_chain.x), acc.point.x);
+    assert_eq!(u256_to_f::<Fq>(acc_on_chain.y), acc.point.y);
+
+    let nullifier_hash = mimc7.multi_hash(&[id_nul, ext_nul], Fr::zero());
+
+    let mut rng = test_rng();
+
+    let assignment = Layouter::assign(
+        id_nul,
+        id_trap,
+        ext_nul,
+        &mimc7.cts,
+        &mut rng,
+    );
+
+    let domain = GeneralEvaluationDomain::<Fr>::new(table_size).unwrap();
+    let c = DensePolynomial::from_coefficients_slice(&domain.ifft(&identity_commitments));
+    let precomputed = ProverPrecomputedData::index(&pk, &mimc7.cts, &[index], &c, table_size);
+
+    let witness = WitnessInput {
+        identity_nullifier: id_nul,
+        identity_trapdoor: id_trap,
+        identity_commitment: identity_commitments[index],
+        index,
+    };
+
+    // TODO: pass in signal as a string
+    let signal_hash = compute_signal_hash(signal);
+    let signal_hash_f: Fr = u256_to_f(signal_hash);
+
+    let public_input = PublicData::<Bn254> {
+        accumulator: acc.point,
+        external_nullifier: ext_nul,
+        nullifier_hash,
+        signal_hash: signal_hash_f,
+    };
+
+    let proof: SemacaulkProof<Bn254> = Prover::prove(
+        &pk,
+        &witness,
+        &assignment,
+        &public_input,
+        &precomputed,
+        &mut rng,
+        table_size,
+    );
+
+    let is_valid = SemacaulkVerifier::verify(
+        &proof,
+        pk.srs_g1[table_size],
+        pk.srs_g2[1],
+        acc.point,
+        &public_input,
+    );
+
+    assert!(is_valid);
+    // Serialise and print proof
+    let mut serialised_proof = vec![];
+    let _ = proof.serialize(&mut serialised_proof);
+    let proof_hex = hex::encode(serialised_proof.as_slice());
+    println!("Serialised proof:\n{}", proof_hex);
+
+    /*
+    let precomputed;
+    if semacaulk_precompute_endpoint.is_some() {
+        let mut endpoint = semacaulk_precompute_endpoint.unwrap();
+        while endpoint.ends_with("/") {
+            endpoint.pop();
+        }
+        // Fetch precomputed data
+        let url = format!("{endpoint}/{index}");
+        let mut res = reqwest::blocking::get(url).unwrap();
+        let mut body = String::new();
+        res.read_to_string(&mut body).unwrap();
+        precomputed = g2_str_to_g2(&body);
+    } else {
+    }
+    */
+    Ok(())
+}
+
+pub fn remove_address_prefix(addr: String) -> String {
+    if addr.starts_with("0x") {
+        return addr.chars().skip(2).collect::<String>();
+    }
+    return addr;
+}
+
 async fn insert(
     rpc: &String,
     sk: &String,
@@ -217,10 +410,7 @@ async fn insert(
 
     let client = create_client(rpc, &parse_sk(&sk)?).await?;
 
-    let mut c: String = contract.clone();
-    if contract.starts_with("0x") {
-        c = contract.chars().skip(2).collect::<String>();
-    }
+    let c: String = remove_address_prefix(contract.clone());
     let address = hex::decode(c).unwrap();
     let a = ethers::types::H160::from_slice(address.as_slice());
     let semacaulk_contract = SemacaulkContract::new(a, client);

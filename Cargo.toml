@@ -25,6 +25,7 @@ stopwatch = "0.0.7"
 ppot-rs = "0.1.1"
 clap = { version = "4.1.8", features = ["derive", "cargo"] }
 clap-num = { version = "1.0.2" }
+reqwest = "0.11.15"
 
 [dev-dependencies]
 rand_chacha = { version = "0.3.0", default-features = false }

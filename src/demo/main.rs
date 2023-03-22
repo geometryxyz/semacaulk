@@ -78,12 +78,16 @@ pub async fn deploy_semacaulk(
 
 #[tokio::main]
 async fn main() {
+    let args: Vec<String> = env::args().collect();
+    if args.len() < 2 {
+        println!("Usage: demo <log_2_table_size> <ptau_filename>");
+        return;
+    }
     // demo <log_2_table_size> <ptau_filename>
     let _ = 1; // Change this value between builds to force the compiler to rebuild the binary properly
     let sw = Stopwatch::start_new();
     println!("Started");
 
-    let args: Vec<String> = env::args().collect();
     assert!(args.len() > 2);
     let log_2_table_size = &args[args.len() - 2];
     let ptau_filename = &args[args.len() - 1];
@@ -117,7 +121,7 @@ async fn main() {
     let signal_hash_f: Fr = u256_to_f(signal_hash);
 
     #[allow(clippy::needless_range_loop)]
-    for index in 0..8 {
+    for index in 0..1 {
         let proof = tree.proof(index).unwrap();
         let flattened_proof = flatten_proof(&proof);
 
@@ -125,8 +129,10 @@ async fn main() {
         let l_i_x = f_to_u256(l_i.x);
         let l_i_y = f_to_u256(l_i.y);
 
-        let identity_nullifier = Fr::rand(&mut rng);
-        let identity_trapdoor = Fr::rand(&mut rng);
+        //let identity_nullifier = Fr::rand(&mut rng);
+        //let identity_trapdoor = Fr::rand(&mut rng);
+        let identity_nullifier = Fr::from(index as u64);
+        let identity_trapdoor = Fr::from(index as u64);
         let new_leaf = mimc7.multi_hash(&[identity_nullifier, identity_trapdoor], Fr::zero());
 
         identity_nullifiers.push(identity_nullifier);
@@ -152,6 +158,8 @@ async fn main() {
         acc.update(index, new_leaf);
     }
 
+    println!("acc.point: {}", acc.point);
+
     // Broadcast a signal using the identity behind leaf 1
     let pk = ProvingKey::<Bn254> {
         srs_g1: srs_g1.clone(),
@@ -159,11 +167,14 @@ async fn main() {
     };
     let mut rng = test_rng();
 
-    let index = 1;
+    let index = 0;
     let nullifier_hash = mimc7.multi_hash(
         &[identity_nullifiers[index], external_nullifier],
         Fr::zero(),
     );
+
+    println!("nullifier_hash: {}", nullifier_hash);
+    println!("identity_commitment: {}", identity_commitments[index]);
 
     let assignment = Layouter::assign(
         identity_nullifiers[index],
