@@ -16,7 +16,7 @@ use ethers::signers::{LocalWallet, Signer};
 use semacaulk::prover::prover::{Prover, WitnessInput};
 use semacaulk::{
     accumulator::{compute_lagrange_tree, compute_zero_leaf, Accumulator},
-    bn_solidity_utils::{f_to_u256, u256_to_f},
+    bn_solidity_utils::{f_to_u256, u256_to_f, f_to_hex},
     contracts::compute_signal_hash,
     keccak_tree::flatten_proof,
     layouter::Layouter,
@@ -518,9 +518,8 @@ async fn prove(
     let mut serialised_proof = vec![];
     let _ = proof.serialize(&mut serialised_proof);
     let proof_hex = hex::encode(serialised_proof.as_slice());
-    println!("Nullifier hash:\n{}", nullifier_hash);
+    println!("Nullifier hash:\n{}", f_to_hex(nullifier_hash));
     println!("Serialised proof:\n{}", proof_hex);
-    println!("{}", proof.openings.q_mimc);
     Ok(())
 }
 
