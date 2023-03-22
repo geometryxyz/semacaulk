@@ -80,7 +80,7 @@ pub async fn test_semacaulk_insert_and_broadcast() {
 
     // During development, remember to update Constants.sol's SRS values if you change the table
     // size!
-    let log_2_table_size = 11;
+    let log_2_table_size = 10;
     let table_size: usize = 1 << log_2_table_size;
 
     let r = deploy_semacaulk(client, log_2_table_size, "./11.ptau").await;

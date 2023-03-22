@@ -121,7 +121,7 @@ async fn main() {
     let signal_hash_f: Fr = u256_to_f(signal_hash);
 
     #[allow(clippy::needless_range_loop)]
-    for index in 0..1 {
+    for index in 0..8 {
         let proof = tree.proof(index).unwrap();
         let flattened_proof = flatten_proof(&proof);
 

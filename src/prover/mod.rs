@@ -22,13 +22,13 @@ use crate::prover::precomputed::CaulkPlusPrecomputed;
 #[derive(CanonicalSerialize, CanonicalDeserialize, Clone, Debug)]
 pub struct Proof<E: PairingEngine> {
     pub(crate) multiopen_proof: MultiopenProof<E>,
-    pub(crate) openings: Openings<E>,
+    pub openings: Openings<E>,
     pub(crate) commitments: Commitments<E>,
 }
 
 #[derive(CanonicalSerialize, CanonicalDeserialize, Clone, Debug)]
 pub struct Openings<E: PairingEngine> {
-    pub(crate) q_mimc: E::Fr,
+    pub q_mimc: E::Fr,
     pub(crate) mimc_cts: E::Fr,
     pub(crate) quotient: E::Fr,
     pub(crate) u_prime: E::Fr,
@@ -92,9 +92,7 @@ impl<E: PairingEngine> ProverPrecomputedData<E> {
     }
 
     /// Precompute only fixed data
-    pub fn precompute_fixed(
-        mimc_round_constants: &Vec<E::Fr>,
-    ) -> Self {
+    pub fn precompute_fixed(mimc_round_constants: &Vec<E::Fr>) -> Self {
         let domain = GeneralEvaluationDomain::<E::Fr>::new(SUBGROUP_SIZE).unwrap();
         let extended_coset_domain =
             GeneralEvaluationDomain::<E::Fr>::new(EXTENDED_DOMAIN_FACTOR * SUBGROUP_SIZE).unwrap();
@@ -160,35 +158,28 @@ impl<E: PairingEngine> ProverPrecomputedData<E> {
     }
 
     /// Update one W1 commitment
-    pub fn update_w1(
-        &mut self,
-        index: usize,
-        new_w1: E::G2Affine,
-    ) {
+    pub fn update_w1(&mut self, index: usize, new_w1: E::G2Affine) {
         self.caulk_plus_precomputed.w1_mapping.insert(index, new_w1);
     }
 
     /// Precompute the W1 commitments
     pub fn precompute_w1(
-        self: &mut Self,
+        &mut self,
         pk: &ProvingKey<E>,
         indices: &[usize],
         c: &DensePolynomial<E::Fr>,
         table_size: usize,
     ) {
         let domain_t = GeneralEvaluationDomain::new(table_size).unwrap();
-        self.caulk_plus_precomputed.precompute_w1(&pk.srs_g2, indices, c, &domain_t);
+        self.caulk_plus_precomputed
+            .precompute_w1(&pk.srs_g2, indices, c, &domain_t);
     }
 
     /// Precompute the W2 commitments
-    pub fn precompute_w2(
-        self: &mut Self,
-        pk: &ProvingKey<E>,
-        indices: &[usize],
-        table_size: usize,
-    ) {
+    pub fn precompute_w2(&mut self, pk: &ProvingKey<E>, indices: &[usize], table_size: usize) {
         let domain_t = GeneralEvaluationDomain::new(table_size).unwrap();
-        self.caulk_plus_precomputed.precompute_w2(&pk.srs_g2, indices, &domain_t);
+        self.caulk_plus_precomputed
+            .precompute_w2(&pk.srs_g2, indices, &domain_t);
     }
 }
 

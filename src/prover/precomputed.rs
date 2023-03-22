@@ -18,8 +18,8 @@ use crate::kzg::commit;
 */
 #[derive(CanonicalSerialize, CanonicalDeserialize, Clone, Debug)]
 pub struct CaulkPlusPrecomputed<E: PairingEngine> {
-    pub w1_mapping: BTreeMap<usize, E::G2Affine>,
-    pub w2_mapping: BTreeMap<usize, E::G2Affine>,
+    pub(crate) w1_mapping: BTreeMap<usize, E::G2Affine>,
+    pub(crate) w2_mapping: BTreeMap<usize, E::G2Affine>,
 }
 
 impl<E: PairingEngine> CaulkPlusPrecomputed<E> {
