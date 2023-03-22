@@ -17,7 +17,7 @@ pub mod precomputed;
 #[allow(clippy::module_inception)]
 pub mod prover;
 
-use crate::prover::precomputed::Precomputed;
+use crate::prover::precomputed::CaulkPlusPrecomputed;
 
 #[derive(CanonicalSerialize, CanonicalDeserialize, Clone, Debug)]
 pub struct Proof<E: PairingEngine> {
@@ -73,16 +73,27 @@ pub struct ProverPrecomputedData<E: PairingEngine> {
     pub(crate) q_mimc: DensePolynomial<E::Fr>,
     pub(crate) q_mimc_coset_evals: Vec<E::Fr>,
     pub(crate) l0_coset_evals: Vec<E::Fr>,
-    pub(crate) caulk_plus_precomputed: Precomputed<E>,
+    pub caulk_plus_precomputed: CaulkPlusPrecomputed<E>,
 }
 
 impl<E: PairingEngine> ProverPrecomputedData<E> {
+    /// Precompute everything (both fixed data, W1, and W2)
     pub fn index(
         pk: &ProvingKey<E>,
         mimc_round_constants: &Vec<E::Fr>,
         indices: &[usize],
         c: &DensePolynomial<E::Fr>,
         table_size: usize,
+    ) -> Self {
+        let mut p = ProverPrecomputedData::precompute_fixed(mimc_round_constants);
+        p.precompute_w1(pk, indices, c, table_size);
+        p.precompute_w2(pk, indices, table_size);
+        p
+    }
+
+    /// Precompute only fixed data
+    pub fn precompute_fixed(
+        mimc_round_constants: &Vec<E::Fr>,
     ) -> Self {
         let domain = GeneralEvaluationDomain::<E::Fr>::new(SUBGROUP_SIZE).unwrap();
         let extended_coset_domain =
@@ -134,12 +145,8 @@ impl<E: PairingEngine> ProverPrecomputedData<E> {
         let l0_coset_evals = extended_coset_domain.coset_fft(&l0);
 
         // Precompute w1 & w2 for the Caulk+ part of the proof
-        let domain_t = GeneralEvaluationDomain::new(table_size).unwrap();
-        let mut precomputed = Precomputed::<E>::empty();
-
-        // As defined in the [Caulk+ paper, section 3](https://eprint.iacr.org/2022/957.pdf).
-        precomputed.precompute_w1(&pk.srs_g2, indices, c, &domain_t);
-        precomputed.precompute_w2(&pk.srs_g2, indices, &domain_t);
+        //let domain_t = GeneralEvaluationDomain::new(table_size).unwrap();
+        let caulk_plus_precomputed = CaulkPlusPrecomputed::<E>::empty();
 
         Self {
             mimc_cts: mimc_cts_poly,
@@ -148,8 +155,40 @@ impl<E: PairingEngine> ProverPrecomputedData<E> {
             q_mimc,
             q_mimc_coset_evals,
             l0_coset_evals,
-            caulk_plus_precomputed: precomputed,
+            caulk_plus_precomputed,
         }
+    }
+
+    /// Update one W1 commitment
+    pub fn update_w1(
+        &mut self,
+        index: usize,
+        new_w1: E::G2Affine,
+    ) {
+        self.caulk_plus_precomputed.w1_mapping.insert(index, new_w1);
+    }
+
+    /// Precompute the W1 commitments
+    pub fn precompute_w1(
+        self: &mut Self,
+        pk: &ProvingKey<E>,
+        indices: &[usize],
+        c: &DensePolynomial<E::Fr>,
+        table_size: usize,
+    ) {
+        let domain_t = GeneralEvaluationDomain::new(table_size).unwrap();
+        self.caulk_plus_precomputed.precompute_w1(&pk.srs_g2, indices, c, &domain_t);
+    }
+
+    /// Precompute the W2 commitments
+    pub fn precompute_w2(
+        self: &mut Self,
+        pk: &ProvingKey<E>,
+        indices: &[usize],
+        table_size: usize,
+    ) {
+        let domain_t = GeneralEvaluationDomain::new(table_size).unwrap();
+        self.caulk_plus_precomputed.precompute_w2(&pk.srs_g2, indices, &domain_t);
     }
 }
 

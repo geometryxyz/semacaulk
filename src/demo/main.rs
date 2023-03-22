@@ -129,15 +129,12 @@ async fn main() {
         let l_i_x = f_to_u256(l_i.x);
         let l_i_y = f_to_u256(l_i.y);
 
-        //let identity_nullifier = Fr::rand(&mut rng);
-        //let identity_trapdoor = Fr::rand(&mut rng);
-        let identity_nullifier = Fr::from(index as u64);
-        let identity_trapdoor = Fr::from(index as u64);
+        let identity_nullifier = Fr::rand(&mut rng);
+        let identity_trapdoor = Fr::rand(&mut rng);
         let new_leaf = mimc7.multi_hash(&[identity_nullifier, identity_trapdoor], Fr::zero());
 
         identity_nullifiers.push(identity_nullifier);
         identity_trapdoors.push(identity_trapdoor);
-        //identity_commitments.push(new_leaf);
         identity_commitments[index] = new_leaf;
 
         // Insert the leaf on chain
@@ -158,8 +155,6 @@ async fn main() {
         acc.update(index, new_leaf);
     }
 
-    println!("acc.point: {}", acc.point);
-
     // Broadcast a signal using the identity behind leaf 1
     let pk = ProvingKey::<Bn254> {
         srs_g1: srs_g1.clone(),
@@ -172,9 +167,6 @@ async fn main() {
         &[identity_nullifiers[index], external_nullifier],
         Fr::zero(),
     );
-
-    println!("nullifier_hash: {}", nullifier_hash);
-    println!("identity_commitment: {}", identity_commitments[index]);
 
     let assignment = Layouter::assign(
         identity_nullifiers[index],

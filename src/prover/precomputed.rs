@@ -17,12 +17,12 @@ use crate::kzg::commit;
    so we optimize precomputed data needed to store
 */
 #[derive(CanonicalSerialize, CanonicalDeserialize, Clone, Debug)]
-pub struct Precomputed<E: PairingEngine> {
+pub struct CaulkPlusPrecomputed<E: PairingEngine> {
     pub w1_mapping: BTreeMap<usize, E::G2Affine>,
     pub w2_mapping: BTreeMap<usize, E::G2Affine>,
 }
 
-impl<E: PairingEngine> Precomputed<E> {
+impl<E: PairingEngine> CaulkPlusPrecomputed<E> {
     pub fn empty() -> Self {
         Self {
             w1_mapping: BTreeMap::default(),
@@ -102,7 +102,7 @@ mod precomputed_test {
     use crate::kzg::{commit, unsafe_setup};
     use crate::utils::construct_lagrange_basis_polys;
 
-    use super::Precomputed;
+    use super::CaulkPlusPrecomputed;
 
     // TODO: make this as a macro
     fn to_field<F: Field>(evals: &[u64]) -> Vec<F> {
@@ -111,7 +111,7 @@ mod precomputed_test {
 
     // zH = w2 * zI
     fn compute_w2<E: PairingEngine>(
-        precomputed: &Precomputed<E>,
+        precomputed: &CaulkPlusPrecomputed<E>,
         indices: &[usize],
         domain: &GeneralEvaluationDomain<E::Fr>,
     ) -> E::G2Affine {
@@ -135,7 +135,7 @@ mod precomputed_test {
 
     // C - cI = zH * w1
     fn compute_w1<E: PairingEngine>(
-        precomputed: &Precomputed<E>,
+        precomputed: &CaulkPlusPrecomputed<E>,
         indices: &[usize],
         domain: &GeneralEvaluationDomain<E::Fr>,
     ) -> E::G2Affine {
@@ -170,7 +170,7 @@ mod precomputed_test {
 
         let indices = [1, 3, 4, 5, 7];
 
-        let mut precomputed = Precomputed::<Bn254>::empty();
+        let mut precomputed = CaulkPlusPrecomputed::<Bn254>::empty();
 
         precomputed.precompute_w2(&srs_g2, &indices, &domain);
 
@@ -222,7 +222,7 @@ mod precomputed_test {
         let c_commitment = commit(&srs_g1, &c);
         let ci_commitment = commit(&srs_g1, &ci);
 
-        let mut precomputed = Precomputed::<Bn254>::empty();
+        let mut precomputed = CaulkPlusPrecomputed::<Bn254>::empty();
 
         precomputed.precompute_w1(&srs_g2, &indices, &c, &domain);
 
@@ -273,7 +273,7 @@ mod precomputed_test {
         let c_commitment = commit(&srs_g1, &c);
         let ci_commitment = commit(&srs_g1, &ci);
 
-        let mut precomputed = Precomputed::<Bn254>::empty();
+        let mut precomputed = CaulkPlusPrecomputed::<Bn254>::empty();
 
         precomputed.precompute_w1(&srs_g2, &indices, &c, &domain);
         precomputed.precompute_w2(&srs_g2, &indices, &domain);
@@ -344,7 +344,7 @@ mod precomputed_test {
         let c_blinder = &DensePolynomial::from_coefficients_slice(&[r2, r3, r4]);
         let c_blinder_commitment = commit(&srs_g2, c_blinder);
 
-        let mut precomputed = Precomputed::<Bn254>::empty();
+        let mut precomputed = CaulkPlusPrecomputed::<Bn254>::empty();
 
         precomputed.precompute_w1(&srs_g2, &indices, &c, &domain);
         precomputed.precompute_w2(&srs_g2, &indices, &domain);
@@ -390,7 +390,7 @@ mod precomputed_test {
 
         let (_, srs_g2) = unsafe_setup::<Bn254, StdRng>(max_power, max_power, &mut rng);
 
-        let mut precomputed = Precomputed::<Bn254>::empty();
+        let mut precomputed = CaulkPlusPrecomputed::<Bn254>::empty();
 
         precomputed.precompute_w1(&srs_g2, &indices, &c, &domain);
         precomputed.precompute_w2(&srs_g2, &indices, &domain);

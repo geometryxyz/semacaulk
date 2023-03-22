@@ -1,5 +1,5 @@
 use ark_bn254::{Bn254, Fq, Fr};
-use ark_serialize::CanonicalSerialize;
+use ark_serialize::{Read, CanonicalSerialize};
 use ark_std::{test_rng, Zero};
 use ark_ff::PrimeField;
 use ark_poly::{
@@ -20,7 +20,7 @@ use std::process;
 use std::convert::TryFrom;
 use semacaulk::{
     layouter::Layouter,
-    setup::setup,
+    setup::{setup, g2_str_to_g2},
     accumulator::{compute_lagrange_tree, compute_zero_leaf, Accumulator},
     bn_solidity_utils::{f_to_u256, u256_to_f},
     keccak_tree::flatten_proof,
@@ -323,7 +323,28 @@ async fn prove(
 
     let domain = GeneralEvaluationDomain::<Fr>::new(table_size).unwrap();
     let c = DensePolynomial::from_coefficients_slice(&domain.ifft(&identity_commitments));
-    let precomputed = ProverPrecomputedData::index(&pk, &mimc7.cts, &[index], &c, table_size);
+
+    let mut precomputed = ProverPrecomputedData::precompute_fixed(&mimc7.cts);
+    precomputed.precompute_w2(&pk, &[index], table_size);
+
+    if semacaulk_precompute_endpoint.is_some() {
+        let mut endpoint = semacaulk_precompute_endpoint.unwrap();
+        while endpoint.ends_with("/") {
+            endpoint.pop();
+        }
+
+        // Fetch precomputed data
+        println!("Fetching precomputed data from the Blyss proxy at {endpoint}...");
+        let url = format!("{endpoint}/{index}");
+        let mut res = reqwest::blocking::get(url).unwrap();
+        let mut body = String::new();
+        res.read_to_string(&mut body).unwrap();
+        let w1 = g2_str_to_g2(&body);
+
+        precomputed.update_w1(index, w1);
+    } else {
+        precomputed.precompute_w1(&pk, &[index], &c, table_size);
+    }
 
     let witness = WitnessInput {
         identity_nullifier: id_nul,
@@ -332,7 +353,6 @@ async fn prove(
         index,
     };
 
-    // TODO: pass in signal as a string
     let signal_hash = compute_signal_hash(signal);
     let signal_hash_f: Fr = u256_to_f(signal_hash);
 
@@ -342,6 +362,8 @@ async fn prove(
         nullifier_hash,
         signal_hash: signal_hash_f,
     };
+    //println!("{:?}", precomputed.caulk_plus_precomputed.w1_mapping);
+    //println!("{:?}", precomputed.caulk_plus_precomputed.w2_mapping);
 
     let proof: SemacaulkProof<Bn254> = Prover::prove(
         &pk,
@@ -367,23 +389,6 @@ async fn prove(
     let _ = proof.serialize(&mut serialised_proof);
     let proof_hex = hex::encode(serialised_proof.as_slice());
     println!("Serialised proof:\n{}", proof_hex);
-
-    /*
-    let precomputed;
-    if semacaulk_precompute_endpoint.is_some() {
-        let mut endpoint = semacaulk_precompute_endpoint.unwrap();
-        while endpoint.ends_with("/") {
-            endpoint.pop();
-        }
-        // Fetch precomputed data
-        let url = format!("{endpoint}/{index}");
-        let mut res = reqwest::blocking::get(url).unwrap();
-        let mut body = String::new();
-        res.read_to_string(&mut body).unwrap();
-        precomputed = g2_str_to_g2(&body);
-    } else {
-    }
-    */
     Ok(())
 }
 

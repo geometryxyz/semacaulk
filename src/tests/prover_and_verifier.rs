@@ -51,7 +51,9 @@ pub fn test_prover_and_verifier() {
     identity_commitments[index] = identity_commitment;
     let c = DensePolynomial::from_coefficients_slice(&domain.ifft(&identity_commitments));
 
-    let precomputed = ProverPrecomputedData::index(&pk, &mimc7.cts, &[index], &c, table_size);
+    let mut precomputed = ProverPrecomputedData::precompute_fixed(&mimc7.cts);
+    precomputed.precompute_w1(&pk, &[index], &c, table_size);
+    precomputed.precompute_w2(&pk, &[index], table_size);
 
     let witness = WitnessInput {
         identity_nullifier,
@@ -179,10 +181,8 @@ pub fn test_update_precomputed_w1() {
     let w_old = precomputed.caulk_plus_precomputed.get_w1_i(&index_alice);
     let w_new = w_old + delta_p_comm.into();
 
-    precomputed
-        .caulk_plus_precomputed
-        .w1_mapping
-        .insert(index_alice, w_new);
+    // Use update_w1() to update Alice's precomputed data
+    precomputed.update_w1(index_alice, w_new);
 
     // Generate proof for Alice
     let witness = WitnessInput {
