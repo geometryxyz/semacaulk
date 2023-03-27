@@ -52,52 +52,12 @@ changes at an index \\(j\\) which is different from that of the user's entry
 
 We can efficiently update \\([{\mathsf{W}_1}^{(i)}]_2\\) using the technique
 described in [TADBFK20, section 3.4.2](https://eprint.iacr.org/2020/527.pdf),
-where \\(i \neq j\\).
-
-When an element at \\(j\\) is updated and \\(i \neq j\\), and the new element
-is \\(v_j = v_\mathsf{zero} + \delta\\), the new accumulator is:
-
-\\(C(X) - L_j(X) \cdot v_\mathsf{zero} + L_j(X) \cdot v_j\\)
-
-\\(= C(X) + L_j(X) \cdot (v_j - v_\mathsf{zero})\\)
-
-\\(= C(X) + L_j(X) \cdot \delta\\)
-
-\\({\mathsf{W{new}}_1}^{(i)}\\) is therefore:
-
-\\(\frac{C(X) - v_i + L_j(X) \cdot \delta}{X - \omega^i}\\)
-\\( = {\mathsf{W}_1}^{(i)} + \frac{L_j(X)}{X - \omega^i} \cdot \delta\\)
-
-To use the homomorphic properties of KZG commitments, we need to
-compute \\([\frac{L_j(X)}{X - \omega^i}]_2\\), multiply it by \\(\delta\\), and
-add it to \\([{\mathsf{W}_1}^{(i)}]_2\\). Yet we must do this with lower than
-the \\(O(n)\\) cost of a full KZG \\(\mathsf{commit}\\) operation.
-
-TADBFK20 section 3.4.2 describes how to do so without performing
-\\(\mathsf{commit}\\) at all. This document will be updated to elaborate on the
-method.
-
-<!--
-1. Compute \\(a_j = g \cdot (A(\tau) / (\tau / \omega^j))\\) for each \\(j \in [0
-   \ldots t]\\) during the setup.
-   Since \\(\tau\\) is unknown but we have access to \\(g \cdot \tau\\), we can
-   rewrite this formula as:
-
-   \\(a_j = g \cdot ((\tau^t - 1) / (\tau / \omega^j))\\)
-
-   \\(= g \cdot (\frac{\tau^t}{\tau - \omega^j} - \frac{1}{\tau - \omega^j})\\)
-
-   \\(= (g \cdot \frac{\tau^t}{\tau - \omega^j}) / (g \cdot \frac{1}{\tau - \omega^j})\\)
-
-   \\(= (g \cdot \frac{\tau^t}{\tau - \omega^j}) \cdot (g \cdot (\tau - \omega^j))\\)
-
-2. Compute \\(w_{i,j} = {a_i} \cdot {v_i} {a_j} \cdot {v_j}\\)
-3. Compute \\(u = {w_{i,j}} \cdot {\frac{1}{t\omega^{-j}}}\\).
-4. Compute \\([{\mathsf{W{new}}_1}^{(i)}]_2 =\\)
-    \\([{\mathsf{W}_1}^{(i)}]_2 \cdot u \cdot \delta\\)
-
-TODO: test this in code!
--->
+where \\(i \neq j\\). An implementation of this approach can be found in the
+[`quotient-pir`](https://github.com/geometryresearch/quotient-pir) repository.
+Additionally, a proof of concept of precomputation-as-a-service can be found in
+the
+[`semacaulk-precompute`](https://github.com/geometryresearch/semacaulk-precompute)
+repository.
 
 ## Updating commitments to \\(\mathsf{W}_2^{(i)}\\)
 
