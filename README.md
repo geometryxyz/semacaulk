@@ -72,7 +72,7 @@ then use the `setup` executable to generate the `lagrangeComms_n` file. For
 example for a maximum capacity of `2 ^ 12`:
 
 ```bash
-./target/release/demo 12 12.hex lagrangeComms_12
+./target/release/setup 12 12.hex lagrangeComms_12
 ```
 
 Now, run:
