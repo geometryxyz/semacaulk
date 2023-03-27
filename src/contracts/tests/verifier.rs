@@ -1,10 +1,11 @@
 use super::setup_eth_backend;
 use crate::contracts::format::proof_for_verifier::{format_proof, ProofForVerifier};
-use crate::prover::{Prover, WitnessInput};
+use crate::prover::prover::{Prover, WitnessInput};
+use crate::setup::load_srs_from_hex;
 use crate::verifier::Verifier as SemacaulkVerifier;
 use crate::{
     bn_solidity_utils::f_to_u256,
-    kzg::{commit, unsafe_setup},
+    kzg::commit,
     layouter::Layouter,
     mimc7::init_mimc7,
     prover::{ProverPrecomputedData, ProvingKey, PublicData},
@@ -18,7 +19,6 @@ use ark_poly::{
 use ark_std::test_rng;
 use ethers::prelude::abigen;
 use ethers::types::U256;
-use rand::rngs::StdRng;
 
 abigen!(
     TestVerifier,
@@ -29,7 +29,7 @@ abigen!(
 pub async fn test_semacaulk_verifier() {
     let mut rng = test_rng();
 
-    let table_size: usize = 1024;
+    let table_size: usize = 2048;
     let domain = GeneralEvaluationDomain::<Fr>::new(table_size).unwrap();
 
     let mimc7 = init_mimc7::<Fr>();
@@ -57,7 +57,7 @@ pub async fn test_semacaulk_verifier() {
     identity_commitments[index] = identity_commitment;
     let c = DensePolynomial::from_coefficients_slice(&domain.ifft(&identity_commitments));
 
-    let (srs_g1, srs_g2) = unsafe_setup::<Bn254, StdRng>(table_size, table_size, &mut rng);
+    let (srs_g1, srs_g2) = load_srs_from_hex("./11.hex");
     let pk = ProvingKey::<Bn254> {
         srs_g1,
         srs_g2: srs_g2.clone(),
@@ -79,6 +79,8 @@ pub async fn test_semacaulk_verifier() {
         nullifier_hash,
         signal_hash,
     };
+    //println!("{}", pk.srs_g1[table_size].clone());
+    //println!("{}", srs_g2[1].clone());
 
     let proof = Prover::prove(
         &pk,

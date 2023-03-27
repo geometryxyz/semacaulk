@@ -9,12 +9,16 @@ use ethers::{
 };
 use std::{convert::TryFrom, sync::Arc, time::Duration};
 
-mod semacaulk;
+#[cfg(test)]
+pub mod semacaulk;
 
+#[cfg(test)]
 mod keccak_mt;
 
+#[cfg(test)]
 mod crypto;
 
+#[cfg(test)]
 mod verifier;
 
 pub type EthersClient = Arc<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>>;
