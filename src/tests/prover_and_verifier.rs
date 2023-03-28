@@ -140,7 +140,7 @@ pub fn test_update_precomputed_w1() {
         mimc7.multi_hash(&[identity_nullifier_bob, identity_trapdoor_bob], Fr::zero());
 
     // The identity commitment which Bob replaces
-    let original_bob = identity_commitments[index_bob].clone();
+    let original_bob = identity_commitments[index_bob];
 
     // Check w1_alice
     let w_old = precomputed.caulk_plus_precomputed.get_w1_i(&index_alice);
