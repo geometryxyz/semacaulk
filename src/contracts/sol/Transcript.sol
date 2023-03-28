@@ -72,14 +72,19 @@ library TranscriptLibrary {
         }
     }
 
-    function round1(
+    function round0PublicInputs(
         Transcript memory transcript, 
-        Types.Proof memory proof,
         uint256[3] memory publicInputs
     ) internal pure {
         updateWithF(transcript, publicInputs[0]);
         updateWithF(transcript, publicInputs[1]);
         updateWithF(transcript, publicInputs[2]);
+    }
+
+    function round1(
+        Transcript memory transcript, 
+        Types.Proof memory proof
+    ) internal pure {
         updateWithG1(transcript, proof.commitments.w0);
         updateWithG1(transcript, proof.commitments.key);
         updateWithG1(transcript, proof.commitments.w1);

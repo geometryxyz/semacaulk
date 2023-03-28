@@ -26,15 +26,13 @@ impl Verifier {
         let mut transcript = Transcript::new_transcript();
 
         // Update transcript and derive challenges
-        transcript.round_1(
-            [
-                &proof.commitments.w0,
-                &proof.commitments.key,
-                &proof.commitments.w1,
-                &proof.commitments.w2,
-            ],
-            [external_nullifier, nullifier_hash, signal_hash],
-        );
+        transcript.round_0_public_inputs([external_nullifier, nullifier_hash, signal_hash]);
+        transcript.round_1([
+            &proof.commitments.w0,
+            &proof.commitments.key,
+            &proof.commitments.w1,
+            &proof.commitments.w2,
+        ]);
 
         let v = transcript.get_challenge();
 

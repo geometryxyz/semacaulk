@@ -21,10 +21,13 @@ impl Transcript {
         [0u8; 32]
     }
 
-    pub fn round_1(&mut self, g1_vals: [&G1Affine; 4], f_vals: [Fr; 3]) {
+    pub fn round_0_public_inputs(&mut self, f_vals: [Fr; 3]) {
         for val in f_vals {
             self.update_with_f(val);
         }
+    }
+
+    pub fn round_1(&mut self, g1_vals: [&G1Affine; 4]) {
         for val in g1_vals {
             self.update_with_g1(val);
         }
