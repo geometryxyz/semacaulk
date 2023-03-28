@@ -23,7 +23,8 @@ contract Verifier is BN254 {
         Types.ChallengeTranscript memory challengeTranscript;
         Types.VerifierTranscript memory verifierTranscript;
 
-        TranscriptLibrary.round1(transcript, proof, publicInputs);
+        TranscriptLibrary.round0PublicInputs(transcript, publicInputs);
+        TranscriptLibrary.round1(transcript, proof);
 
         challengeTranscript.v = TranscriptLibrary.getChallenge(transcript);
 

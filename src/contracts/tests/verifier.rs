@@ -1,14 +1,14 @@
 use super::setup_eth_backend;
 use crate::contracts::format::proof_for_verifier::{format_proof, ProofForVerifier};
 use crate::prover::prover::{Prover, WitnessInput};
-use crate::setup::load_srs_from_hex;
+use crate::setup::setup;
 use crate::verifier::Verifier as SemacaulkVerifier;
 use crate::{
     bn_solidity_utils::f_to_u256,
     kzg::commit,
     layouter::Layouter,
     mimc7::init_mimc7,
-    prover::{ProverPrecomputedData, ProvingKey, PublicData},
+    prover::{ProverPrecomputedData, PublicData},
 };
 use ark_bn254::{Bn254, Fr};
 use ark_ec::ProjectiveCurve;
@@ -29,7 +29,8 @@ abigen!(
 pub async fn test_semacaulk_verifier() {
     let mut rng = test_rng();
 
-    let table_size: usize = 2048;
+    let log_2_table_size = 11;
+    let table_size: usize = 1 << log_2_table_size;
     let domain = GeneralEvaluationDomain::<Fr>::new(table_size).unwrap();
 
     let mimc7 = init_mimc7::<Fr>();
@@ -57,13 +58,9 @@ pub async fn test_semacaulk_verifier() {
     identity_commitments[index] = identity_commitment;
     let c = DensePolynomial::from_coefficients_slice(&domain.ifft(&identity_commitments));
 
-    let (srs_g1, srs_g2) = load_srs_from_hex("./11.hex");
-    let pk = ProvingKey::<Bn254> {
-        srs_g1,
-        srs_g2: srs_g2.clone(),
-    };
+    let (pk, _) = setup(log_2_table_size, "./11.ptau");
 
-    let precomputed = ProverPrecomputedData::index(&pk, &mimc7.cts, index, &c, table_size);
+    let precomputed = ProverPrecomputedData::index(&pk, &mimc7.cts, &[index], &c, table_size);
 
     let witness = WitnessInput {
         identity_nullifier,
@@ -79,8 +76,6 @@ pub async fn test_semacaulk_verifier() {
         nullifier_hash,
         signal_hash,
     };
-    //println!("{}", pk.srs_g1[table_size].clone());
-    //println!("{}", srs_g2[1].clone());
 
     let proof = Prover::prove(
         &pk,
@@ -95,7 +90,7 @@ pub async fn test_semacaulk_verifier() {
     let is_valid = SemacaulkVerifier::verify(
         &proof,
         pk.srs_g1[table_size],
-        srs_g2[1],
+        pk.srs_g2[1],
         accumulator,
         &public_input,
     );
@@ -157,7 +152,7 @@ fn p_to_p(p: &ProofForVerifier) -> Proof {
 
     let o = Openings {
         q_mimc: p.openings.q_mimc,
-        c: p.openings.c,
+        mimc_cts: p.openings.mimc_cts,
         quotient: p.openings.quotient,
         u_prime: p.openings.u_prime,
         p_1: p.openings.p_1,
@@ -192,9 +187,9 @@ fn p_to_p(p: &ProofForVerifier) -> Proof {
             x: p.commitments.key.x,
             y: p.commitments.key.y,
         },
-        c: G1Point {
-            x: p.commitments.c.x,
-            y: p.commitments.c.y,
+        mimc_cts: G1Point {
+            x: p.commitments.mimc_cts.x,
+            y: p.commitments.mimc_cts.y,
         },
         quotient: G1Point {
             x: p.commitments.quotient.x,

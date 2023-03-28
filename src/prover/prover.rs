@@ -13,12 +13,14 @@ use rand::RngCore;
 
 use crate::{
     constants::{EXTENDED_DOMAIN_FACTOR, NUMBER_OF_MIMC_ROUNDS, SUBGROUP_SIZE},
-    gates::{ExternalNullifierGate, KeyCopyGate, KeyEquality, Mimc7RoundGate, NullifierGate},
+    gates::{
+        ExternalNullifierGate, KeyCopyGate, KeyEqualityGate, Mimc7RoundGate, NullifierHashGate,
+    },
     kzg::commit,
     layouter::Assignment,
     multiopen::{prover::Prover as MultiopenProver, MultiopenProof},
     transcript::Transcript,
-    utils::construct_lagrange_basis,
+    utils::construct_lagrange_basis_polys,
     utils::shift_dense_poly,
 };
 
@@ -146,14 +148,13 @@ impl Prover {
 
         let (w0, key, w1, w2) = Self::assignment_round(&mut state);
 
-        transcript.round_1(
-            [&w0, &key, &w1, &w2],
-            [
-                public_input.external_nullifier,
-                public_input.nullifier_hash,
-                public_input.signal_hash,
-            ],
-        );
+        transcript.round_0_public_inputs([
+            public_input.external_nullifier,
+            public_input.nullifier_hash,
+            public_input.signal_hash,
+        ]);
+
+        transcript.round_1([&w0, &key, &w1, &w2]);
 
         let v = transcript.get_challenge();
 
@@ -186,7 +187,7 @@ impl Prover {
             key_openings_0,
             key_openings_1,
             q_mimc_opening,
-            c_opening,
+            mimc_cts_opening,
             quotient_opening,
             u_prime_opening,
             p1_opening,
@@ -198,9 +199,9 @@ impl Prover {
         //// Sanity check multiopen_proof
         //if cfg!(debug_assertions) {
         //let mut transcript = Transcript::new_transcript();
-        //transcript.update_with_u256(public_input.external_nullifier);
-        //transcript.update_with_u256(public_input.nullifier_hash);
-        //transcript.update_with_u256(public_input.signal_hash);
+        //transcript.update_with_f(public_input.external_nullifier);
+        //transcript.update_with_f(public_input.nullifier_hash);
+        //transcript.update_with_f(public_input.signal_hash);
         //transcript.update_with_g1(&w0);
         //transcript.update_with_g1(&key);
         //transcript.update_with_g1(&w1);
@@ -215,28 +216,28 @@ impl Prover {
         //transcript.update_with_g2(&w);
         //transcript.update_with_g1(&h);
         //let alpha = transcript.get_challenge();
-        //transcript.update_with_u256(w0_openings_0);
-        //transcript.update_with_u256(w0_openings_1);
-        //transcript.update_with_u256(w0_openings_2);
+        //transcript.update_with_f(w0_openings_0);
+        //transcript.update_with_f(w0_openings_1);
+        //transcript.update_with_f(w0_openings_2);
 
-        //transcript.update_with_u256(w1_openings_0);
-        //transcript.update_with_u256(w1_openings_1);
-        //transcript.update_with_u256(w1_openings_2);
+        //transcript.update_with_f(w1_openings_0);
+        //transcript.update_with_f(w1_openings_1);
+        //transcript.update_with_f(w1_openings_2);
 
-        //transcript.update_with_u256(w2_openings_0);
-        //transcript.update_with_u256(w2_openings_1);
-        //transcript.update_with_u256(w2_openings_2);
+        //transcript.update_with_f(w2_openings_0);
+        //transcript.update_with_f(w2_openings_1);
+        //transcript.update_with_f(w2_openings_2);
 
-        //transcript.update_with_u256(key_openings_0);
-        //transcript.update_with_u256(key_openings_1);
+        //transcript.update_with_f(key_openings_0);
+        //transcript.update_with_f(key_openings_1);
 
-        //transcript.update_with_u256(q_mimc_opening);
-        //transcript.update_with_u256(c_opening);
-        //transcript.update_with_u256(quotient_opening);
+        //transcript.update_with_f(q_mimc_opening);
+        //transcript.update_with_f(mimc_cts_opening);
+        //transcript.update_with_f(quotient_opening);
 
-        //transcript.update_with_u256(u_prime_opening);
-        //transcript.update_with_u256(p1_opening);
-        //transcript.update_with_u256(p2_opening);
+        //transcript.update_with_f(u_prime_opening);
+        //transcript.update_with_f(p1_opening);
+        //transcript.update_with_f(p2_opening);
 
         //let n = SUBGROUP_SIZE;
         //let domain = GeneralEvaluationDomain::new(n).unwrap();
@@ -260,7 +261,7 @@ impl Prover {
         //&q_mimc,
         //q_mimc_opening,
         //&c,
-        //c_opening,
+        //mimc_cts_opening,
         //&quotient,
         //quotient_opening,
         //&u_prime,
@@ -279,7 +280,7 @@ impl Prover {
         //}
 
         let q_mimc = commit(&state.proving_key.srs_g1, &state.precomputed.q_mimc).into_affine();
-        let c = commit(&state.proving_key.srs_g1, &state.precomputed.c).into_affine();
+        let mimc_cts = commit(&state.proving_key.srs_g1, &state.precomputed.mimc_cts).into_affine();
         let p1 = commit(&state.proving_key.srs_g1, &p1).into_affine();
         let p2 = commit(&state.proving_key.srs_g1, &p2).into_affine();
 
@@ -288,7 +289,7 @@ impl Prover {
             w1,
             w2,
             key,
-            c,
+            mimc_cts,
             quotient,
             u_prime,
             zi,
@@ -302,7 +303,7 @@ impl Prover {
 
         let openings = Openings {
             q_mimc: q_mimc_opening,
-            c: c_opening,
+            mimc_cts: mimc_cts_opening,
             quotient: quotient_opening,
             u_prime: u_prime_opening,
             p1: p1_opening,
@@ -397,7 +398,7 @@ impl Prover {
                     i,
                     &w0_coset_evals,
                     &zeroes,
-                    &state.precomputed.c_coset_evals,
+                    &state.precomputed.mimc_cts_coset_evals,
                     &state.precomputed.q_mimc_coset_evals,
                 );
 
@@ -407,7 +408,7 @@ impl Prover {
                     i,
                     &w1_coset_evals,
                     &key_coset_evals,
-                    &state.precomputed.c_coset_evals,
+                    &state.precomputed.mimc_cts_coset_evals,
                     &state.precomputed.q_mimc_coset_evals,
                 );
 
@@ -417,13 +418,13 @@ impl Prover {
                     i,
                     &w2_coset_evals,
                     &key_coset_evals,
-                    &state.precomputed.c_coset_evals,
+                    &state.precomputed.mimc_cts_coset_evals,
                     &state.precomputed.q_mimc_coset_evals,
                 );
 
             // Gate 3:
             numerator_coset_evals[i] += v_powers[3]
-                * KeyEquality::compute_in_coset(
+                * KeyEqualityGate::compute_in_coset(
                     i,
                     &key_coset_evals,
                     &state.precomputed.q_mimc_coset_evals,
@@ -440,7 +441,7 @@ impl Prover {
 
             // Gate 5:
             numerator_coset_evals[i] += v_powers[5]
-                * NullifierGate::compute_in_coset(
+                * NullifierHashGate::compute_in_coset(
                     i,
                     &w2_coset_evals,
                     &key_coset_evals,
@@ -511,7 +512,7 @@ impl Prover {
 
         // 2. compute lagrange basis polynomial t_i over w^j for j = index
         let omega = state.domain_t.element(state.witness.index);
-        let ts = construct_lagrange_basis(&[omega]);
+        let ts = construct_lagrange_basis_polys(&[omega]);
 
         // 3. define and mask zI`
         let mut zi = DensePolynomial::<E::Fr>::from_coefficients_slice(&[r1]);
@@ -669,7 +670,7 @@ impl Prover {
         let key = state.key.as_ref().unwrap();
         let quotient = state.quotient.as_ref().unwrap();
 
-        let c = &state.precomputed.c;
+        let mimc_cts = &state.precomputed.mimc_cts;
         let q_mimc = &state.precomputed.q_mimc;
 
         let zi = state.zi.as_ref().unwrap();
@@ -697,10 +698,9 @@ impl Prover {
             h_zv
         };
 
-        // compute all evaluations
-        let v = u_prime.evaluate(&alpha);
-
         // compute all openings
+        let u_prime_opening = u_prime.evaluate(&alpha);
+
         let w0_openings = [
             w0.evaluate(&alpha),
             w0.evaluate(&omega_alpha),
@@ -722,10 +722,9 @@ impl Prover {
         let key_openings = [key.evaluate(&alpha), key.evaluate(&omega_alpha)];
 
         let q_mimc_opening = q_mimc.evaluate(&alpha);
-        let c_opening = c.evaluate(&alpha);
+        let mimc_cts_opening = mimc_cts.evaluate(&alpha);
         let quotient_opening = quotient.evaluate(&alpha);
-        let u_prime_opening = v;
-        let p1_opening = p1.evaluate(&v);
+        let p1_opening = p1.evaluate(&u_prime_opening);
         let p2_opening = p2.evaluate(&alpha);
 
         assert_eq!(p2_opening, Fr::zero());
@@ -743,14 +742,14 @@ impl Prover {
             key_openings[0],
             key_openings[1],
             q_mimc_opening,
-            c_opening,
+            mimc_cts_opening,
             quotient_opening,
             u_prime_opening,
             p1_opening,
             p2_opening,
         ]);
 
-        // compute proof
+        // Compute the multiopen proof
         let m = MultiopenProver::prove(
             &state.proving_key.srs_g1,
             w0,
@@ -758,12 +757,12 @@ impl Prover {
             w2,
             key,
             q_mimc,
-            c,
+            mimc_cts,
             quotient,
             u_prime,
             &p1,
             &p2,
-            v,
+            u_prime_opening,
             alpha,
             omega_alpha,
             omega_n_alpha,
@@ -784,7 +783,7 @@ impl Prover {
             key_openings[0],
             key_openings[1],
             q_mimc_opening,
-            c_opening,
+            mimc_cts_opening,
             quotient_opening,
             u_prime_opening,
             p1_opening,

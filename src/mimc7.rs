@@ -53,13 +53,32 @@ impl<F: PrimeField> Mimc7<F> {
         r
     }
 
+    pub fn multi_hash_two(&self, arr: &[F], key: F) -> F {
+        assert_eq!(arr.len(), 2);
+        let mut r = key;
+        let h0 = self.hash(arr[0], r); // n round functions, then add key
+        r += arr[0] + h0;
+        let h1 = self.hash(arr[1], r); // n round functions, then add arr[0] + h0
+        r += arr[1] + h1;
+        r
+    }
+
     pub fn hash(&self, x: F, k: F) -> F {
-        let seven = [7u64, 0, 0, 0];
-        let mut round_digest = (x + k).pow(seven);
+        //let seven = [7u64, 0, 0, 0];
+        //let mut round_digest = (x + k).pow(seven);
+        //for i in 1..self.n_rounds {
+        //round_digest = (round_digest + self.cts[i] + k).pow(seven);
+        //}
+        let mut round_digest = self.round_function(0, x, k);
         for i in 1..self.n_rounds {
-            round_digest = (round_digest + self.cts[i] + k).pow(seven);
+            round_digest = self.round_function(i, round_digest, k);
         }
         round_digest + k
+    }
+
+    fn round_function(&self, i: usize, digest: F, k: F) -> F {
+        let seven = [7u64, 0, 0, 0];
+        (digest + self.cts[i] + k).pow(seven)
     }
 
     fn initialize_constants(seed: &str, n_rounds: usize) -> Vec<F> {
@@ -130,5 +149,8 @@ mod mimc7_tests {
                 "5233261170300319370386085858846328736737478911451874673953613863492170606314"
             )
         );
+
+        let hash2 = mimc7.multi_hash_two(&[F::from(1), F::from(2)], F::from(0));
+        assert_eq!(hash, hash2);
     }
 }

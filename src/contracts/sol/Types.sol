@@ -72,7 +72,7 @@ library Types {
         /* 0x40  */ Types.G1Point w1;
         /* 0x80  */ Types.G1Point w2;
         /* 0xc0  */ Types.G1Point key;
-        /* 0x100 */ Types.G1Point c;
+        /* 0x100 */ Types.G1Point mimc_cts;
         /* 0x140 */ Types.G1Point quotient;
         /* 0x180 */ Types.G1Point u_prime;
         /* 0x1c0 */ Types.G1Point zi;
@@ -86,7 +86,7 @@ library Types {
 
     struct Openings {
         /* 0x00  */ uint256 q_mimc;
-        /* 0x20  */ uint256 c;
+        /* 0x20  */ uint256 mimc_cts;
         /* 0x40  */ uint256 quotient;
         /* 0x60  */ uint256 u_prime;
         /* 0x80  */ uint256 p1;

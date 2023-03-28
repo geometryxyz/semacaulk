@@ -26,15 +26,13 @@ impl Verifier {
         let mut transcript = Transcript::new_transcript();
 
         // Update transcript and derive challenges
-        transcript.round_1(
-            [
-                &proof.commitments.w0,
-                &proof.commitments.key,
-                &proof.commitments.w1,
-                &proof.commitments.w2,
-            ],
-            [external_nullifier, nullifier_hash, signal_hash],
-        );
+        transcript.round_0_public_inputs([external_nullifier, nullifier_hash, signal_hash]);
+        transcript.round_1([
+            &proof.commitments.w0,
+            &proof.commitments.key,
+            &proof.commitments.w1,
+            &proof.commitments.w2,
+        ]);
 
         let v = transcript.get_challenge();
 
@@ -63,7 +61,7 @@ impl Verifier {
         let key_openings = [proof.openings.key_0, proof.openings.key_1];
 
         let q_mimc_opening = proof.openings.q_mimc;
-        let c_opening = proof.openings.c;
+        let mimc_cts_opening = proof.openings.mimc_cts;
         let w0_openings = [
             proof.openings.w0_0,
             proof.openings.w0_1,
@@ -94,17 +92,18 @@ impl Verifier {
         // combination of the gate evaluations should equal
         let pow_7 = |x: Fr| x.pow([7, 0, 0, 0]);
 
-        // Gate 0: q_mimc_opening * ((w0_openings[0] + c_opening) ^ 7 - w0_openings[1])
-        let gate_0_eval = q_mimc_opening * (pow_7(w0_openings[0] + c_opening) - w0_openings[1]);
+        // Gate 0: q_mimc_opening * ((w0_openings[0] + mimc_cts_opening) ^ 7 - w0_openings[1])
+        let gate_0_eval =
+            q_mimc_opening * (pow_7(w0_openings[0] + mimc_cts_opening) - w0_openings[1]);
 
-        // Gate 1: q_mimc_opening * ((w1_openings[0] + key_openings[0] + c_opening) ^ 7 - w1_openings[1])
-        let gate_1_eval =
-            q_mimc_opening * (pow_7(w1_openings[0] + key_openings[0] + c_opening) - w1_openings[1]);
+        // Gate 1: q_mimc_opening * ((w1_openings[0] + key_openings[0] + mimc_cts_opening) ^ 7 - w1_openings[1])
+        let gate_1_eval = q_mimc_opening
+            * (pow_7(w1_openings[0] + key_openings[0] + mimc_cts_opening) - w1_openings[1]);
 
         // Gate 2:
-        // q_mimc_opening * ((w2_openings[0] + key_openings[0] + c_opening) ^ 7 - w2_openings[1])
-        let gate_2_eval =
-            q_mimc_opening * (pow_7(w2_openings[0] + key_openings[0] + c_opening) - w2_openings[1]);
+        // q_mimc_opening * ((w2_openings[0] + key_openings[0] + mimc_cts_opening) ^ 7 - w2_openings[1])
+        let gate_2_eval = q_mimc_opening
+            * (pow_7(w2_openings[0] + key_openings[0] + mimc_cts_opening) - w2_openings[1]);
 
         // Gate 3:
         // q_mimc_opening * (key_openings[0] - key_openings[1])
@@ -158,7 +157,7 @@ impl Verifier {
             proof.openings.key_0,
             proof.openings.key_1,
             q_mimc_opening,
-            c_opening,
+            mimc_cts_opening,
             proof.openings.quotient,
             proof.openings.u_prime,
             proof.openings.p1,
@@ -190,8 +189,8 @@ impl Verifier {
             &[proof.openings.key_0, proof.openings.key_1],
             &proof.commitments.q_mimc,
             q_mimc_opening,
-            &proof.commitments.c,
-            c_opening,
+            &proof.commitments.mimc_cts,
+            mimc_cts_opening,
             &proof.commitments.quotient,
             quotient_opening,
             &proof.commitments.u_prime,
@@ -221,13 +220,13 @@ impl Verifier {
         //
         // A: [1] is E::G2Affine::prime_subgroup_generator()
         //   A1:
-        //     C is accumulator
+        //     C is the accumulator
         //     ci is proof.commitments.ci
         //   A2:
         //     xi is hi_2
         //     (x^n - 1) is (public_input.srs_g1[common_input.domain_h.size()] + -E::G1Affine::prime_subgroup_generator())
         //   A3:
-        //   s is the separator challenge
+        //     s is the separator challenge
         //     zq is final_poly_proof.mul(x3)
         //     -y is g1.mul(final_poly_eval).neg()
         //     p is final_poly

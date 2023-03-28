@@ -157,9 +157,7 @@ impl Verifier {
             .take(4)
             .collect();
 
-        /* BEGIN: construct qi-s */
-
-        //q1
+        // q1
         let q1 = *p1;
         let q1_eval = p1_opening;
 
@@ -194,8 +192,6 @@ impl Verifier {
         let q4_at_omega_n_alpha =
             w0_openings[2] + x1_powers[0] * w1_openings[2] + x1_powers[1] * w2_openings[2];
         let q4_evals = [q4_at_alpha, q4_at_omega_alpha, q4_at_omega_n_alpha];
-
-        /* END: construct qi-s */
 
         let (f1, f2, f3, f4) = Self::evaluate_fs(
             q1_eval,

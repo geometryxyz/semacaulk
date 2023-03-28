@@ -4,10 +4,7 @@ use crate::prover::{Commitments as RustCommitments, Openings as RustOpenings, Pr
 use ark_bn254::{Bn254, G1Affine, G2Affine};
 use ethers::prelude::abigen;
 
-abigen!(
-    SemacaulkContract,
-    "./src/contracts/out/Semacaulk.sol/Semacaulk.json"
-);
+abigen!(SemacaulkContract, "./src/contracts/Semacaulk.json");
 
 pub type ProofForSemacaulk = Proof;
 
@@ -44,7 +41,7 @@ pub fn format_commitments(commitments: &RustCommitments<Bn254>) -> Commitments {
         w_1: g1_affine_to_g1point(&commitments.w1),
         w_2: g1_affine_to_g1point(&commitments.w2),
         key: g1_affine_to_g1point(&commitments.key),
-        c: g1_affine_to_g1point(&commitments.c),
+        mimc_cts: g1_affine_to_g1point(&commitments.mimc_cts),
         quotient: g1_affine_to_g1point(&commitments.quotient),
         u_prime: g1_affine_to_g1point(&commitments.u_prime),
         zi: g1_affine_to_g1point(&commitments.zi),
@@ -60,7 +57,7 @@ pub fn format_commitments(commitments: &RustCommitments<Bn254>) -> Commitments {
 pub fn format_openings(openings: &RustOpenings<Bn254>) -> Openings {
     Openings {
         q_mimc: f_to_u256(openings.q_mimc),
-        c: f_to_u256(openings.c),
+        mimc_cts: f_to_u256(openings.mimc_cts),
         quotient: f_to_u256(openings.quotient),
         u_prime: f_to_u256(openings.u_prime),
         p_1: f_to_u256(openings.p1),

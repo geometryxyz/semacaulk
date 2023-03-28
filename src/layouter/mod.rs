@@ -77,7 +77,7 @@ impl<F: PrimeField> Layouter<F> {
         Self::blind(&mut identity_commitment_col, rng);
 
         //---------------------------------------------------------------------
-        // Assign the nullifier_external column
+        // Assign the external_nullifier column
         let mut external_nullifier_col = Vec::<F>::with_capacity(SUBGROUP_SIZE);
         external_nullifier_col.push(external_nullifier);
 
@@ -141,7 +141,7 @@ mod layouter_tests {
         let nullifier = mimc7.hash(identity_nullifier, Fr::zero());
         let identity_commitment =
             mimc7.multi_hash(&[identity_nullifier, identity_trapdoor], Fr::zero());
-        let nullifier_external =
+        let nullifier_hash =
             mimc7.multi_hash(&[identity_nullifier, external_nullifier], Fr::zero());
 
         let assignment = Layouter::assign(
@@ -197,7 +197,7 @@ mod layouter_tests {
 
         // Check that the public nullifier is calculated correctly
         assert_eq!(
-            nullifier_external,
+            nullifier_hash,
             assignment.external_nullifier[n_rounds]
                 + external_nullifier
                 + Fr::from(2u64) * assignment.key[0]

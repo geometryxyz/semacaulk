@@ -47,9 +47,10 @@ library TranscriptLibrary {
         return bytes32(x);
     }
 
-    function updateWithU256(Transcript memory self, uint256 value) internal pure {
+    function updateWithF(Transcript memory self, uint256 value) internal pure {
         bytes memory dataPtr = self.data;
         assembly {
+            let v := mod(value, PRIME_R)
             // update length of transcript data
             let array_length := mload(dataPtr)
             mstore(dataPtr, add(0x20, array_length))
@@ -71,14 +72,19 @@ library TranscriptLibrary {
         }
     }
 
-    function round1(
+    function round0PublicInputs(
         Transcript memory transcript, 
-        Types.Proof memory proof,
         uint256[3] memory publicInputs
     ) internal pure {
-        updateWithU256(transcript, publicInputs[0]);
-        updateWithU256(transcript, publicInputs[1]);
-        updateWithU256(transcript, publicInputs[2]);
+        updateWithF(transcript, publicInputs[0]);
+        updateWithF(transcript, publicInputs[1]);
+        updateWithF(transcript, publicInputs[2]);
+    }
+
+    function round1(
+        Transcript memory transcript, 
+        Types.Proof memory proof
+    ) internal pure {
         updateWithG1(transcript, proof.commitments.w0);
         updateWithG1(transcript, proof.commitments.key);
         updateWithG1(transcript, proof.commitments.w1);
@@ -107,23 +113,23 @@ library TranscriptLibrary {
         Transcript memory transcript, 
         Types.Proof memory proof
     ) internal pure {
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.w0_0);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.w0_1);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.w0_2);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.w1_0);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.w1_1);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.w1_2);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.w2_0);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.w2_1);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.w2_2);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.key_0);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.key_1);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.q_mimc);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.c);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.quotient);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.u_prime);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.p1);
-        TranscriptLibrary.updateWithU256(transcript, proof.openings.p2);
+        TranscriptLibrary.updateWithF(transcript, proof.openings.w0_0);
+        TranscriptLibrary.updateWithF(transcript, proof.openings.w0_1);
+        TranscriptLibrary.updateWithF(transcript, proof.openings.w0_2);
+        TranscriptLibrary.updateWithF(transcript, proof.openings.w1_0);
+        TranscriptLibrary.updateWithF(transcript, proof.openings.w1_1);
+        TranscriptLibrary.updateWithF(transcript, proof.openings.w1_2);
+        TranscriptLibrary.updateWithF(transcript, proof.openings.w2_0);
+        TranscriptLibrary.updateWithF(transcript, proof.openings.w2_1);
+        TranscriptLibrary.updateWithF(transcript, proof.openings.w2_2);
+        TranscriptLibrary.updateWithF(transcript, proof.openings.key_0);
+        TranscriptLibrary.updateWithF(transcript, proof.openings.key_1);
+        TranscriptLibrary.updateWithF(transcript, proof.openings.q_mimc);
+        TranscriptLibrary.updateWithF(transcript, proof.openings.mimc_cts);
+        TranscriptLibrary.updateWithF(transcript, proof.openings.quotient);
+        TranscriptLibrary.updateWithF(transcript, proof.openings.u_prime);
+        TranscriptLibrary.updateWithF(transcript, proof.openings.p1);
+        TranscriptLibrary.updateWithF(transcript, proof.openings.p2);
     }
 
     function round5(

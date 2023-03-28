@@ -21,6 +21,9 @@ mod crypto;
 #[cfg(test)]
 mod verifier;
 
+#[cfg(test)]
+mod transcript;
+
 pub type EthersClient = Arc<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>>;
 
 pub async fn setup_eth_backend() -> (AnvilInstance, EthersClient) {

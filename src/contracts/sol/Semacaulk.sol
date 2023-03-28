@@ -30,8 +30,10 @@ contract Semacaulk is KeccakMT, BN254, Verifier {
         uint256(keccak256(abi.encodePacked('Semacaulk'))) % Constants.PRIME_R;
 
     mapping (uint256 => bool) public nullifierHashHistory;
+    mapping (uint256 => bool) public identityCommitmentHistory;
 
     // Custom errors
+    error InvalidIdentityCommitment(uint256 _identityCommitment);
     error RootMismatch(bytes32 _generatedRoot);
     error NullifierHashAlreadySeen(uint256 _nullifierHash);
     error InvalidProof();
@@ -58,6 +60,13 @@ contract Semacaulk is KeccakMT, BN254, Verifier {
         uint256 _lagrangeLeafY,
         bytes32[] memory _lagrangeMerkleProof
     ) public {
+        if (
+            _identityCommitment > Constants.PRIME_R ||
+            _identityCommitment == NOTHING_UP_MY_SLEEVE_ZERO
+        ) {
+            revert InvalidIdentityCommitment({ _identityCommitment: _identityCommitment });
+        }
+
         uint256 index = currentIndex;
         bytes32 lagrangeLeaf = keccak256(abi.encodePacked(_lagrangeLeafX, _lagrangeLeafY));
 
@@ -92,7 +101,7 @@ contract Semacaulk is KeccakMT, BN254, Verifier {
 
     function broadcastSignal(
         bytes memory _signal,
-        Types.Proof memory proof,
+        Types.Proof memory _proof,
         uint256 _nullifierHash,
         uint256 _externalNullifier
     ) public {
@@ -109,7 +118,7 @@ contract Semacaulk is KeccakMT, BN254, Verifier {
         publicInputs[2] = signalHash;
 
         // Verify the proof and revert if it is invalid
-        bool isValid = verify(proof, getAccumulator(), publicInputs);
+        bool isValid = verify(_proof, getAccumulator(), publicInputs);
         if (!isValid) {
             revert InvalidProof();
         }

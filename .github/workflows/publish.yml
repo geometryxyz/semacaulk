@@ -1,0 +1,32 @@
+name: publish
+
+on:
+  push:
+    branches: ["docs"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install mdbook
+        uses: peaceiris/actions-mdbook@v1
+        with:
+          mdbook-version: '0.4.25'
+  
+      - name: Install mdbook-katex
+        uses: actions-rs/cargo@v1
+        with:
+          command: install
+          #args: mdbook@0.4.25 mdbook-katex@0.3.7
+          args: mdbook-katex@0.3.7
+          
+      - name: Build html
+        run: mdbook build ./docs
+        
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/book/html

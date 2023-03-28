@@ -1,0 +1,15 @@
+[book]
+authors = ["Andrija Novakovic", "Koh Wei Jie", "Kobi Gurkan"]
+language = "en"
+multilingual = false
+src = "src"
+title = "Semacaulk"
+
+[output.html]
+mathjax-support = true
+
+[output.katex]
+
+[preprocessor.katex]
+renderers = ["html"]
+#inline-delimiter = {left = "\\(", right = "\\)"}
