@@ -67,7 +67,13 @@ Run the demo:
 To run a demo with a different maximum capacity, download a larger `.ptau` file and specify the log 2 of the desired maximum capacity:
 
 ```bash
-./target/release/demo 16 12.ptau
+./target/release/setup 12 12.hex lagrangeComms_12
+```
+
+Now, run:
+
+```bash
+./target/release/demo 12 12.hex lagrangeComms_12
 ```
 
 A future release will integrate implement the functionality of
