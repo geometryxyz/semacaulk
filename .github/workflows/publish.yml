@@ -2,7 +2,7 @@ name: publish
 
 on:
   push:
-    branches: ["docs"]
+    branches: ["main"]
 
 jobs:
   deploy:
